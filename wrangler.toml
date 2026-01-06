@@ -1,0 +1,24 @@
+name = "senpai-collective-app"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "senpai-collective-app"
+
+# Build configuration for Vue.js/Vite app
+[build]
+command = "npm run build"
+cwd = "."
+watch_dir = "src"
+
+[build.upload]
+format = "modules"
+dir = "dist"
+main = "./dist/index.html"
+
+# Environment variables
+[vars]
+NODE_ENV = "production"
+
+# Pages configuration
+[pages]
+compatibility_flags = ["nodejs_compat"]
