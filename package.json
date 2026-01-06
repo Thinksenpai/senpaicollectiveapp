@@ -8,7 +8,7 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler pages deploy dist --project-name senpai-collective-app",
-    "deploy:prod": "npm run build && wrangler pages deploy dist --project-name senpai-collective-app --env production"
+    "deploy:prod": "npm run build && wrangler pages deploy dist --project-name senpai-collective-app --commit-id=\"$(git rev-parse HEAD)\""
   },
   "dependencies": {
     "vue": "^3.5.24"
