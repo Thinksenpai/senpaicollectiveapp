@@ -189,82 +189,14 @@ function handleLogout() {
     </div>
 
     <DisclosurePanel class="sm:hidden">
-      <div class="space-y-1 pb-3 pt-2">
-        <template v-for="item in navigation" :key="item.name">
-          <DisclosureButton
-            v-if="!item.requiresAuth || authStore.isAuthenticated"
-            v-show="!item.requiresApproved || authStore.isApproved"
-            as="a"
-            :href="item.href"
-            class="block py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-senpai-600"
+      <div v-if="!authStore.isAuthenticated" class="border-t border-gray-200 pb-3 pt-4">
+        <div class="px-4">
+          <RouterLink
+            to="/join"
+            class="flex w-full items-center justify-center rounded-md bg-senpai-500 px-4 py-3 text-base font-medium text-white hover:bg-senpai-600"
           >
-            {{ item.name }}
-          </DisclosureButton>
-        </template>
-      </div>
-      <div v-if="authStore.isAuthenticated" class="border-t border-gray-200 pb-3 pt-4">
-        <div class="flex items-center px-4">
-          <UserCircleIcon class="h-10 w-10 text-gray-400" />
-          <div class="ml-3">
-            <div class="text-base font-medium text-gray-800">
-              {{ authStore.member?.profile?.full_name || 'Member' }}
-            </div>
-            <div class="text-sm font-medium text-gray-500">
-              {{ authStore.member?.email }}
-            </div>
-          </div>
-        </div>
-        <div class="mt-3 space-y-1">
-          <DisclosureButton
-            as="a"
-            href="/profile"
-            class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-          >
-            Your Profile
-          </DisclosureButton>
-          <template v-if="authStore.isApproved">
-            <DisclosureButton
-              v-for="item in jobNavigation"
-              :key="item.name"
-              as="a"
-              :href="item.href"
-              class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            >
-              {{ item.name }}
-            </DisclosureButton>
-          </template>
-          <DisclosureButton
-            as="a"
-            href="/settings"
-            class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-          >
-            Settings
-          </DisclosureButton>
-          <DisclosureButton
-            as="button"
-            @click="handleLogout"
-            class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-          >
-            Sign out
-          </DisclosureButton>
-        </div>
-      </div>
-      <div v-else class="border-t border-gray-200 pb-3 pt-4">
-        <div class="space-y-1">
-          <DisclosureButton
-            as="a"
-            href="/login"
-            class="block px-4 py-2 text-base font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-          >
-            Sign in
-          </DisclosureButton>
-          <DisclosureButton
-            as="a"
-            href="/join"
-            class="block px-4 py-2 text-base font-medium text-senpai-600 hover:bg-gray-100"
-          >
-            Join Now
-          </DisclosureButton>
+            Apply Now
+          </RouterLink>
         </div>
       </div>
     </DisclosurePanel>
