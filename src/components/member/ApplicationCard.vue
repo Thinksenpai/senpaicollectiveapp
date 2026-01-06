@@ -60,7 +60,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 }
 
 const status = computed(() => statusConfig[props.application.status] || statusConfig.submitted)
-const StatusIcon = computed(() => status.value.icon)
+const StatusIcon = computed(() => status.value?.icon || ClockIcon)
 
 const canWithdraw = computed(() => {
   return ['submitted', 'viewed', 'shortlisted'].includes(props.application.status)
@@ -110,11 +110,11 @@ const formattedDate = computed(() => {
           <span
             :class="[
               'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-              status.color
+              status?.color || 'bg-gray-100 text-gray-700'
             ]"
           >
             <component :is="StatusIcon" class="h-4 w-4 mr-1" />
-            {{ status.label }}
+            {{ status?.label || 'Unknown' }}
           </span>
         </div>
       </div>

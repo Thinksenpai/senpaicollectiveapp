@@ -234,7 +234,8 @@ async function submitDeliverable() {
                 />
 
                 <BaseTextarea
-                  v-model="deliverableForm.description"
+                  :model-value="deliverableForm.description || ''"
+                  @update:modelValue="deliverableForm.description = $event"
                   label="Description (Optional)"
                   placeholder="Describe what you're delivering..."
                   :rows="2"

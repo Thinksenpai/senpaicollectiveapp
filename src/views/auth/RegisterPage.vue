@@ -311,9 +311,9 @@ function goToLogin() {
             </div>
 
             <!-- Mission - Full Version -->
-            <div class="bg-gray-900 rounded-2xl p-8">
-              <h3 class="text-lg font-semibold text-white mb-4">Our Mission</h3>
-              <p class="text-white text-lg leading-relaxed whitespace-pre-line">{{ SENPAI_MANIFESTO.mission }}</p>
+            <div class="bg-gray-100 rounded-2xl p-8 border border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Our Mission</h3>
+              <p class="text-gray-700 leading-relaxed whitespace-pre-line">{{ SENPAI_MANIFESTO.mission }}</p>
             </div>
 
             <!-- Core Values - Vertical List -->

@@ -108,7 +108,7 @@ const activeFilterCount = computed(() => {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <BaseMultiSelect
           :model-value="selectedSkills"
-          @update:model-value="emit('update:selectedSkills', $event)"
+          @update:model-value="emit('update:selectedSkills', $event as number[])"
           :options="skillOptions"
           label="Skills"
           placeholder="Filter by skills"
@@ -116,7 +116,7 @@ const activeFilterCount = computed(() => {
 
         <BaseMultiSelect
           :model-value="selectedJobTypes"
-          @update:model-value="emit('update:selectedJobTypes', $event)"
+          @update:model-value="emit('update:selectedJobTypes', $event as JobType[])"
           :options="jobTypeOptions"
           label="Job Type"
           placeholder="Filter by job type"

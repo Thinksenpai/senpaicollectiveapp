@@ -79,7 +79,7 @@ const isPremium = computed(() => props.job.listing_type === 'premium')
             v-if="isFeatured"
             :class="[
               'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
-              listingTypeStyles.featured.badge
+              listingTypeStyles.featured?.badge || ''
             ]"
           >
             <StarIcon class="h-3 w-3 mr-1" />
@@ -89,7 +89,7 @@ const isPremium = computed(() => props.job.listing_type === 'premium')
             v-if="isPremium"
             :class="[
               'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
-              listingTypeStyles.premium.badge
+              listingTypeStyles.premium?.badge || ''
             ]"
           >
             <StarIcon class="h-3 w-3 mr-1" />

@@ -181,7 +181,8 @@ async function handleSubmit() {
           <!-- Written Review -->
           <div>
             <BaseTextarea
-              v-model="form.review_text"
+              :model-value="form.review_text || ''"
+              @update:modelValue="form.review_text = $event"
               label="Your Review (Optional)"
               placeholder="Share your experience working with this member..."
               :rows="4"

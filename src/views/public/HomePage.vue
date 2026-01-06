@@ -436,91 +436,74 @@ const authStore = useAuthStore()
       </div>
     </section>
 
-    <!-- What You Get Section -->
+    <!-- What The Collective Provides Section -->
     <section class="py-20 bg-gray-50">
-      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">What You Get As A Member</h2>
-          <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-            Membership isn't just access — it's transformation. Here's what the collective provides.
+          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">What The Collective Provides</h2>
+          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+            Most creatives fail not because they lack talent — but because they lack access. Access to information. Access to structure. Access to people who've done it before.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <!-- Row 1 -->
-          <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <div class="flex items-center gap-3 mb-3">
-              <UserGroupIcon class="h-5 w-5 text-senpai-500" />
-              <h3 class="font-semibold text-gray-900">Member Directory</h3>
+        <div class="space-y-12">
+          <!-- Information -->
+          <div class="flex gap-6">
+            <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
+              <AcademicCapIcon class="h-7 w-7 text-senpai-600" />
             </div>
-            <p class="text-gray-600 text-sm">
-              Browse and connect with every member. Search by skill, location, or availability. Find collaborators, co-founders, and mentors.
-            </p>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900 mb-3">The Information You Need</h3>
+              <p class="text-gray-600 mb-3">
+                How do you price your work? How do you negotiate a contract? How do you build a personal brand? How do you actually get clients?
+              </p>
+              <p class="text-gray-700">
+                The answers exist — but they're scattered, gatekept, or buried in expensive courses. We bring that knowledge together. Members share what works. No gatekeeping. No fluff.
+              </p>
+            </div>
           </div>
 
-          <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <div class="flex items-center gap-3 mb-3">
-              <BriefcaseIcon class="h-5 w-5 text-senpai-500" />
-              <h3 class="font-semibold text-gray-900">Exclusive Job Board</h3>
-            </div>
-            <p class="text-gray-600 text-sm">
-              Access opportunities from companies specifically seeking Senpai Collective talent. Get matched to jobs that fit your skills.
-            </p>
-          </div>
-
-          <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <div class="flex items-center gap-3 mb-3">
-              <AcademicCapIcon class="h-5 w-5 text-senpai-500" />
-              <h3 class="font-semibold text-gray-900">Events & Workshops</h3>
-            </div>
-            <p class="text-gray-600 text-sm">
-              Virtual and in-person gatherings. Learn from industry experts. Build real relationships with your peers.
-            </p>
-          </div>
-
-          <!-- Row 2 -->
-          <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <div class="flex items-center gap-3 mb-3">
-              <SparklesIcon class="h-5 w-5 text-senpai-500" />
-              <h3 class="font-semibold text-gray-900">Public Profile</h3>
-            </div>
-            <p class="text-gray-600 text-sm">
-              A professional profile that showcases your work, skills, and contributions. Your creative passport that travels with you.
-            </p>
-          </div>
-
-          <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <div class="flex items-center gap-3 mb-3">
-              <svg class="h-5 w-5 text-senpai-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+          <!-- Structure -->
+          <div class="flex gap-6">
+            <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
+              <svg class="h-7 w-7 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
               </svg>
-              <h3 class="font-semibold text-gray-900">Mentorship Network</h3>
             </div>
-            <p class="text-gray-600 text-sm">
-              Learn from those ahead of you. Teach those behind you. The knowledge compounds as you grow within the collective.
-            </p>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900 mb-3">The Structure to Execute</h3>
+              <p class="text-gray-600 mb-3">
+                Talent without structure goes nowhere. You know what you want to do — but the path from here to there is unclear.
+              </p>
+              <p class="text-gray-700">
+                The collective provides frameworks, accountability, and a clear path forward. We help you turn ambition into action — with people who hold you to it.
+              </p>
+            </div>
           </div>
 
-          <div class="bg-white rounded-xl p-6 border border-gray-200">
-            <div class="flex items-center gap-3 mb-3">
-              <svg class="h-5 w-5 text-senpai-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-              </svg>
-              <h3 class="font-semibold text-gray-900">Reputation System</h3>
+          <!-- People -->
+          <div class="flex gap-6">
+            <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
+              <UserGroupIcon class="h-7 w-7 text-senpai-600" />
             </div>
-            <p class="text-gray-600 text-sm">
-              Your contributions are tracked. Your growth is visible. Excellence is recognized and rewarded within the community.
-            </p>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900 mb-3">The People Who Get It</h3>
+              <p class="text-gray-600 mb-3">
+                Your environment shapes you. If everyone around you thinks small, you'll think small. If no one around you has done what you want to do, you'll doubt it's possible.
+              </p>
+              <p class="text-gray-700">
+                The collective surrounds you with people who are building, shipping, growing. People who've walked the path you're on — and people walking it alongside you.
+              </p>
+            </div>
           </div>
         </div>
 
-        <!-- Bottom Summary -->
-        <div class="bg-senpai-50 border border-senpai-200 rounded-2xl p-8 text-center">
-          <p class="text-lg text-gray-800 mb-2">
-            <span class="font-semibold">Membership is currently free</span> — but not open to everyone.
+        <div class="mt-16 text-center">
+          <p class="text-xl font-semibold text-gray-900">
+            This is what it takes to maximize your creative potential.
           </p>
-          <p class="text-gray-600">
-            We're building something valuable, and we're selective about who joins. Your application tells us if you're ready.
+          <p class="text-gray-600 mt-2">
+            Not more content. Not another course. Real access. Real structure. Real people.
           </p>
         </div>
       </div>
@@ -565,20 +548,88 @@ const authStore = useAuthStore()
     </section>
 
     <!-- Hire Section -->
-    <section class="py-20 bg-gray-100">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-bold text-gray-900">Looking to Hire?</h2>
-        <p class="mt-4 text-lg text-gray-600">
-          Access our curated network of vetted African creative professionals.
-          Post a job and find the right talent for your project.
-        </p>
-        <RouterLink
-          to="/submit-job"
-          class="mt-8 inline-flex items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors"
-        >
-          <BriefcaseIcon class="h-5 w-5 mr-2" />
-          Post a Job
-        </RouterLink>
+    <section class="py-20 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <!-- Left: Value proposition -->
+          <div>
+            <p class="text-senpai-500 font-semibold mb-3">For Companies & Clients</p>
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
+              Skip the Search.<br />Hire From The Collective.
+            </h2>
+            <p class="text-lg text-gray-600 mb-8">
+              Stop sifting through endless portfolios. Our members are pre-vetted, values-aligned, and ready to build. When you hire from Senpai Collective, you're not just getting talent — you're getting builders who take ownership.
+            </p>
+
+            <div class="space-y-4 mb-8">
+              <div class="flex items-start gap-3">
+                <div class="shrink-0 w-6 h-6 rounded-full bg-senpai-100 flex items-center justify-center mt-0.5">
+                  <svg class="w-4 h-4 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+                <p class="text-gray-700"><span class="font-semibold">Pre-vetted talent</span> — Every member passed our selective application process</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="shrink-0 w-6 h-6 rounded-full bg-senpai-100 flex items-center justify-center mt-0.5">
+                  <svg class="w-4 h-4 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+                <p class="text-gray-700"><span class="font-semibold">Diverse skills</span> — Designers, developers, founders, artists, and more</p>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="shrink-0 w-6 h-6 rounded-full bg-senpai-100 flex items-center justify-center mt-0.5">
+                  <svg class="w-4 h-4 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                </div>
+                <p class="text-gray-700"><span class="font-semibold">Values-driven</span> — Members committed to excellence and collaboration</p>
+              </div>
+            </div>
+
+            <RouterLink
+              to="/submit-job"
+              class="inline-flex items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors"
+            >
+              <BriefcaseIcon class="h-5 w-5 mr-2" />
+              Post a Job
+            </RouterLink>
+          </div>
+
+          <!-- Right: Visual card -->
+          <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white">
+            <h3 class="text-xl font-bold mb-6">How It Works</h3>
+            <div class="space-y-6">
+              <div class="flex gap-4">
+                <div class="shrink-0 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold">1</div>
+                <div>
+                  <h4 class="font-semibold mb-1">Submit Your Brief</h4>
+                  <p class="text-gray-400 text-sm">Tell us what you're building and what skills you need.</p>
+                </div>
+              </div>
+              <div class="flex gap-4">
+                <div class="shrink-0 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold">2</div>
+                <div>
+                  <h4 class="font-semibold mb-1">We Match You</h4>
+                  <p class="text-gray-400 text-sm">Our team reviews and connects you with the right members.</p>
+                </div>
+              </div>
+              <div class="flex gap-4">
+                <div class="shrink-0 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-bold">3</div>
+                <div>
+                  <h4 class="font-semibold mb-1">Start Building</h4>
+                  <p class="text-gray-400 text-sm">Work directly with talent that fits your needs and culture.</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-white/10">
+              <p class="text-gray-400 text-sm">
+                Questions? <a href="mailto:hire@senpaicollective.com" class="text-white underline hover:no-underline">hire@senpaicollective.com</a>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
