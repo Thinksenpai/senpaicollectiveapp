@@ -22,38 +22,52 @@ const authStore = useAuthStore()
             <img src="/senpai_logo.svg" alt="Senpai Collective" class="h-8 w-auto" />
           </RouterLink>
           <div class="flex items-center gap-4">
-            <RouterLink
-              to="/manifesto"
-              class="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Manifesto
-            </RouterLink>
-            <RouterLink
-              to="/submit-job"
-              class="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Post a Job
-            </RouterLink>
-            <template v-if="authStore.isAuthenticated">
+            <!-- Desktop only navigation -->
+            <div class="hidden sm:flex items-center gap-4">
               <RouterLink
-                to="/dashboard"
+                to="/manifesto"
                 class="text-sm font-medium text-gray-700 hover:text-gray-900"
               >
-                Dashboard
+                Manifesto
               </RouterLink>
-            </template>
-            <template v-else>
               <RouterLink
-                to="/login"
+                to="/submit-job"
                 class="text-sm font-medium text-gray-700 hover:text-gray-900"
               >
-                Sign in
+                Post a Job
               </RouterLink>
+              <template v-if="authStore.isAuthenticated">
+                <RouterLink
+                  to="/dashboard"
+                  class="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Dashboard
+                </RouterLink>
+              </template>
+              <template v-else>
+                <RouterLink
+                  to="/login"
+                  class="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Sign in
+                </RouterLink>
+              </template>
+            </div>
+            <!-- Always visible Apply button -->
+            <template v-if="!authStore.isAuthenticated">
               <RouterLink
                 to="/join"
                 class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
               >
-                Apply to Join
+                Apply Now
+              </RouterLink>
+            </template>
+            <template v-else>
+              <RouterLink
+                to="/dashboard"
+                class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+              >
+                Dashboard
               </RouterLink>
             </template>
           </div>

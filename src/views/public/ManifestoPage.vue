@@ -13,17 +13,20 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
             <img src="/senpai_logo.svg" alt="Senpai Collective" class="h-8 w-auto" />
           </RouterLink>
           <div class="flex items-center gap-4">
-            <RouterLink
-              to="/"
-              class="text-sm font-medium text-gray-700 hover:text-gray-900"
-            >
-              Home
-            </RouterLink>
+            <!-- Desktop only navigation -->
+            <div class="hidden sm:flex items-center gap-4">
+              <RouterLink
+                to="/"
+                class="text-sm font-medium text-gray-700 hover:text-gray-900"
+              >
+                Home
+              </RouterLink>
+            </div>
             <RouterLink
               to="/join"
               class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
             >
-              Apply to Join
+              Apply Now
             </RouterLink>
           </div>
         </div>
