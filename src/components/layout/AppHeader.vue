@@ -195,7 +195,7 @@ function handleLogout() {
             to="/join"
             class="flex w-full items-center justify-center rounded-md bg-senpai-500 px-4 py-3 text-base font-medium text-white hover:bg-senpai-600"
           >
-            Apply Now
+            Apply to Join
           </RouterLink>
         </div>
       </div>

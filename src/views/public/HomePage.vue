@@ -59,7 +59,7 @@ const authStore = useAuthStore()
                 to="/join"
                 class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
               >
-                Apply Now
+                Apply to Join
               </RouterLink>
             </template>
             <template v-else>
