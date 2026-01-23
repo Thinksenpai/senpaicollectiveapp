@@ -61,46 +61,20 @@ onUnmounted(() => {
   }
 })
 
-// Waitlist form
-const waitlistEmail = ref('')
-const waitlistName = ref('')
-const isSubmitting = ref(false)
+// Waitlist form state (for showing success after redirect back)
 const isSubmitted = ref(false)
-const submitError = ref('')
+const redirectUrl = ref('')
 
-async function submitWaitlist() {
-  if (!waitlistEmail.value || !waitlistName.value) return
-
-  isSubmitting.value = true
-  submitError.value = ''
-
-  try {
-    const response = await fetch('https://app.loops.so/api/newsletter-form/cmk2uv4xf05a10i3v38dwi20z', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: waitlistEmail.value,
-        firstName: waitlistName.value.split(' ')[0],
-        lastName: waitlistName.value.split(' ').slice(1).join(' ') || '',
-        userGroup: 'waitlist'
-      })
-    })
-
-    if (response.ok) {
-      isSubmitted.value = true
-      waitlistEmail.value = ''
-      waitlistName.value = ''
-    } else {
-      submitError.value = 'Something went wrong. Please try again.'
-    }
-  } catch (error) {
-    submitError.value = 'Something went wrong. Please try again.'
-  } finally {
-    isSubmitting.value = false
+// Check URL params for success state (Loops redirects back with ?waitlist=success)
+onMounted(() => {
+  redirectUrl.value = `${window.location.origin}/?waitlist=success`
+  const urlParams = new URLSearchParams(window.location.search)
+  if (urlParams.get('waitlist') === 'success') {
+    isSubmitted.value = true
+    // Clean up the URL
+    window.history.replaceState({}, '', window.location.pathname)
   }
-}
+})
 </script>
 
 <template>
@@ -220,18 +194,25 @@ async function submitWaitlist() {
               <p class="text-green-800 font-medium">You're on the waitlist!</p>
               <p class="text-green-600 text-sm mt-1">We'll notify you when applications open.</p>
             </div>
-            <form v-else @submit.prevent="submitWaitlist" class="space-y-3">
+            <form
+              v-else
+              action="https://app.loops.so/api/newsletter-form/cmk2uv4xf05a10i3v38dwi20z"
+              method="POST"
+              class="space-y-3"
+            >
+              <input type="hidden" name="userGroup" value="waitlist" />
+              <input type="hidden" name="redirectUrl" :value="redirectUrl" />
               <p class="text-gray-600 text-sm mb-4">Join the waitlist to be notified when applications open.</p>
               <div class="flex flex-col sm:flex-row gap-3">
                 <input
-                  v-model="waitlistName"
+                  name="firstName"
                   type="text"
                   placeholder="Your name"
                   required
                   class="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
                 />
                 <input
-                  v-model="waitlistEmail"
+                  name="email"
                   type="email"
                   placeholder="Your email"
                   required
@@ -240,12 +221,10 @@ async function submitWaitlist() {
               </div>
               <button
                 type="submit"
-                :disabled="isSubmitting"
-                class="w-full px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors"
               >
-                {{ isSubmitting ? 'Joining...' : 'Join the Waitlist' }}
+                Join the Waitlist
               </button>
-              <p v-if="submitError" class="text-red-500 text-sm text-center">{{ submitError }}</p>
             </form>
           </div>
 
@@ -823,17 +802,24 @@ async function submitWaitlist() {
             <p class="text-white font-medium">You're on the waitlist!</p>
             <p class="text-gray-400 text-sm mt-1">We'll notify you when applications open.</p>
           </div>
-          <form v-else @submit.prevent="submitWaitlist" class="space-y-3">
+          <form
+            v-else
+            action="https://app.loops.so/api/newsletter-form/cmk2uv4xf05a10i3v38dwi20z"
+            method="POST"
+            class="space-y-3"
+          >
+            <input type="hidden" name="userGroup" value="waitlist" />
+            <input type="hidden" name="redirectUrl" :value="redirectUrl" />
             <div class="flex flex-col sm:flex-row gap-3">
               <input
-                v-model="waitlistName"
+                name="firstName"
                 type="text"
                 placeholder="Your name"
                 required
                 class="flex-1 px-4 py-3 rounded-lg border-0 bg-white text-gray-900 focus:ring-2 focus:ring-white outline-none"
               />
               <input
-                v-model="waitlistEmail"
+                name="email"
                 type="email"
                 placeholder="Your email"
                 required
@@ -842,10 +828,9 @@ async function submitWaitlist() {
             </div>
             <button
               type="submit"
-              :disabled="isSubmitting"
-              class="w-full px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors"
             >
-              {{ isSubmitting ? 'Joining...' : 'Join the Waitlist' }}
+              Join the Waitlist
             </button>
           </form>
         </div>
