@@ -61,20 +61,18 @@ onUnmounted(() => {
   }
 })
 
-// Waitlist form state (for showing success after redirect back)
+// Waitlist form - using iframe target to prevent page navigation
+const isSubmitting = ref(false)
 const isSubmitted = ref(false)
-const redirectUrl = ref('')
 
-// Check URL params for success state (Loops redirects back with ?waitlist=success)
-onMounted(() => {
-  redirectUrl.value = `${window.location.origin}/?waitlist=success`
-  const urlParams = new URLSearchParams(window.location.search)
-  if (urlParams.get('waitlist') === 'success') {
+function handleFormSubmit() {
+  isSubmitting.value = true
+  // Show success after a short delay to allow form submission
+  setTimeout(() => {
+    isSubmitting.value = false
     isSubmitted.value = true
-    // Clean up the URL
-    window.history.replaceState({}, '', window.location.pathname)
-  }
-})
+  }, 1000)
+}
 </script>
 
 <template>
@@ -198,10 +196,11 @@ onMounted(() => {
               v-else
               action="https://app.loops.so/api/newsletter-form/cmk2uv4xf05a10i3v38dwi20z"
               method="POST"
+              target="loops-iframe"
+              @submit="handleFormSubmit"
               class="space-y-3"
             >
               <input type="hidden" name="userGroup" value="waitlist" />
-              <input type="hidden" name="redirectUrl" :value="redirectUrl" />
               <p class="text-gray-600 text-sm mb-4">Join the waitlist to be notified when applications open.</p>
               <div class="flex flex-col sm:flex-row gap-3">
                 <input
@@ -221,9 +220,10 @@ onMounted(() => {
               </div>
               <button
                 type="submit"
-                class="w-full px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors"
+                :disabled="isSubmitting"
+                class="w-full px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Join the Waitlist
+                {{ isSubmitting ? 'Joining...' : 'Join the Waitlist' }}
               </button>
             </form>
           </div>
@@ -806,10 +806,11 @@ onMounted(() => {
             v-else
             action="https://app.loops.so/api/newsletter-form/cmk2uv4xf05a10i3v38dwi20z"
             method="POST"
+            target="loops-iframe"
+            @submit="handleFormSubmit"
             class="space-y-3"
           >
             <input type="hidden" name="userGroup" value="waitlist" />
-            <input type="hidden" name="redirectUrl" :value="redirectUrl" />
             <div class="flex flex-col sm:flex-row gap-3">
               <input
                 name="firstName"
@@ -828,9 +829,10 @@ onMounted(() => {
             </div>
             <button
               type="submit"
-              class="w-full px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors"
+              :disabled="isSubmitting"
+              class="w-full px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Join the Waitlist
+              {{ isSubmitting ? 'Joining...' : 'Join the Waitlist' }}
             </button>
           </form>
         </div>
@@ -856,5 +858,8 @@ onMounted(() => {
         </div>
       </div>
     </footer>
+
+    <!-- Hidden iframe for form submission -->
+    <iframe name="loops-iframe" style="display: none;" />
   </div>
 </template>
