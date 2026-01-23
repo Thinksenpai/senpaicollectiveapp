@@ -19,10 +19,10 @@ export const membersApi = {
     city: string
     country: string
     bio: string
-    want_to_learn: string
-    can_teach: string
+    recent_work: string
+    unique_view: string
     portfolio_url: string
-    additional_links: string[]
+    additional_links: { label?: string; url: string }[]
     photo_url: string
   }>): Promise<ApiResponse> {
     return apiClient.put('/members/me', data)
@@ -43,6 +43,9 @@ export const membersApi = {
     }
     if (filters.experience_levels) {
       filters.experience_levels.forEach(level => params.append('experience_levels', level))
+    }
+    if (filters.roles) {
+      filters.roles.forEach(role => params.append('roles', role))
     }
     if (filters.sort_by) params.append('sort_by', filters.sort_by)
     if (filters.limit) params.append('limit', filters.limit.toString())

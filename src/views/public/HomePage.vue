@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { SENPAI_MANIFESTO } from '@/content/manifesto'
@@ -6,10 +7,100 @@ import {
   UserGroupIcon,
   BriefcaseIcon,
   AcademicCapIcon,
-  SparklesIcon
+  SparklesIcon,
+  ClockIcon
 } from '@heroicons/vue/24/outline'
+import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 
 const authStore = useAuthStore()
+
+// Countdown timer - set to 10 days from now
+const APPLICATION_OPEN_DATE = new Date('2026-02-02T00:00:00') // 10 days from Jan 23, 2026
+
+const countdown = ref({
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0
+})
+
+const isApplicationOpen = computed(() => {
+  return new Date() >= APPLICATION_OPEN_DATE
+})
+
+let countdownInterval: ReturnType<typeof setInterval> | null = null
+
+function updateCountdown() {
+  const now = new Date()
+  const diff = APPLICATION_OPEN_DATE.getTime() - now.getTime()
+
+  if (diff <= 0) {
+    countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
+    if (countdownInterval) {
+      clearInterval(countdownInterval)
+    }
+    return
+  }
+
+  countdown.value = {
+    days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+    minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+    seconds: Math.floor((diff % (1000 * 60)) / 1000)
+  }
+}
+
+onMounted(() => {
+  updateCountdown()
+  countdownInterval = setInterval(updateCountdown, 1000)
+})
+
+onUnmounted(() => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+  }
+})
+
+// Waitlist form
+const waitlistEmail = ref('')
+const waitlistName = ref('')
+const isSubmitting = ref(false)
+const isSubmitted = ref(false)
+const submitError = ref('')
+
+async function submitWaitlist() {
+  if (!waitlistEmail.value || !waitlistName.value) return
+
+  isSubmitting.value = true
+  submitError.value = ''
+
+  try {
+    const response = await fetch('https://app.loops.so/api/newsletter-form/cmk2uv4xf05a10i3v38dwi20z', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: waitlistEmail.value,
+        firstName: waitlistName.value.split(' ')[0],
+        lastName: waitlistName.value.split(' ').slice(1).join(' ') || '',
+        userGroup: 'waitlist'
+      })
+    })
+
+    if (response.ok) {
+      isSubmitted.value = true
+      waitlistEmail.value = ''
+      waitlistName.value = ''
+    } else {
+      submitError.value = 'Something went wrong. Please try again.'
+    }
+  } catch (error) {
+    submitError.value = 'Something went wrong. Please try again.'
+  } finally {
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -55,12 +146,12 @@ const authStore = useAuthStore()
             </div>
             <!-- Always visible Apply button -->
             <template v-if="!authStore.isAuthenticated">
-              <RouterLink
-                to="/join"
-                class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+              <span
+                class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-400 text-white text-sm font-medium cursor-not-allowed"
+                title="Applications opening soon"
               >
-                Apply to Join
-              </RouterLink>
+                Coming Soon
+              </span>
             </template>
             <template v-else>
               <RouterLink
@@ -94,19 +185,79 @@ const authStore = useAuthStore()
         <p class="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           Senpai Collective is an elite community of creatives building the future of Africa through culture, technology, business, art, and systems. This is not a network. It's a movement.
         </p>
-        <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-          <RouterLink
-            to="/join"
-            class="inline-flex items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors"
-          >
-            Apply to Join
-          </RouterLink>
-          <RouterLink
-            to="/manifesto"
-            class="inline-flex items-center justify-center px-8 py-4 rounded-lg border border-gray-300 text-gray-700 text-lg font-medium hover:bg-gray-50 transition-colors"
-          >
-            Read Our Manifesto
-          </RouterLink>
+        <!-- Countdown Timer & Waitlist -->
+        <div class="mt-10">
+          <!-- Countdown Display -->
+          <div class="mb-6">
+            <p class="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
+              <ClockIcon class="h-4 w-4 inline-block mr-1 -mt-0.5" />
+              Applications Open In
+            </p>
+            <div class="flex justify-center gap-3 sm:gap-4">
+              <div class="bg-gray-900 text-white rounded-lg px-4 py-3 min-w-[70px]">
+                <div class="text-2xl sm:text-3xl font-bold">{{ countdown.days }}</div>
+                <div class="text-xs text-gray-400 uppercase">Days</div>
+              </div>
+              <div class="bg-gray-900 text-white rounded-lg px-4 py-3 min-w-[70px]">
+                <div class="text-2xl sm:text-3xl font-bold">{{ countdown.hours }}</div>
+                <div class="text-xs text-gray-400 uppercase">Hours</div>
+              </div>
+              <div class="bg-gray-900 text-white rounded-lg px-4 py-3 min-w-[70px]">
+                <div class="text-2xl sm:text-3xl font-bold">{{ countdown.minutes }}</div>
+                <div class="text-xs text-gray-400 uppercase">Min</div>
+              </div>
+              <div class="bg-gray-900 text-white rounded-lg px-4 py-3 min-w-[70px]">
+                <div class="text-2xl sm:text-3xl font-bold">{{ countdown.seconds }}</div>
+                <div class="text-xs text-gray-400 uppercase">Sec</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Waitlist Form -->
+          <div class="max-w-md mx-auto">
+            <div v-if="isSubmitted" class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <CheckCircleIcon class="h-8 w-8 text-green-500 mx-auto mb-2" />
+              <p class="text-green-800 font-medium">You're on the waitlist!</p>
+              <p class="text-green-600 text-sm mt-1">We'll notify you when applications open.</p>
+            </div>
+            <form v-else @submit.prevent="submitWaitlist" class="space-y-3">
+              <p class="text-gray-600 text-sm mb-4">Join the waitlist to be notified when applications open.</p>
+              <div class="flex flex-col sm:flex-row gap-3">
+                <input
+                  v-model="waitlistName"
+                  type="text"
+                  placeholder="Your name"
+                  required
+                  class="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
+                />
+                <input
+                  v-model="waitlistEmail"
+                  type="email"
+                  placeholder="Your email"
+                  required
+                  class="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                :disabled="isSubmitting"
+                class="w-full px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {{ isSubmitting ? 'Joining...' : 'Join the Waitlist' }}
+              </button>
+              <p v-if="submitError" class="text-red-500 text-sm text-center">{{ submitError }}</p>
+            </form>
+          </div>
+
+          <!-- Manifesto Link -->
+          <div class="mt-6">
+            <RouterLink
+              to="/manifesto"
+              class="inline-flex items-center justify-center px-8 py-4 rounded-lg border border-gray-300 text-gray-700 text-lg font-medium hover:bg-gray-50 transition-colors"
+            >
+              Read Our Manifesto
+            </RouterLink>
+          </div>
         </div>
       </div>
     </section>
@@ -664,14 +815,43 @@ const authStore = useAuthStore()
           <p>Builders who refuse to wait.</p>
         </div>
         <p class="text-xl text-white font-semibold mb-8">Is that you?</p>
-        <RouterLink
-          to="/join"
-          class="inline-flex items-center justify-center px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors"
-        >
-          Apply to Join the Collective
-        </RouterLink>
+
+        <!-- Waitlist Form (Bottom CTA) -->
+        <div class="max-w-md mx-auto">
+          <div v-if="isSubmitted" class="bg-white/10 border border-white/20 rounded-lg p-4 text-center">
+            <CheckCircleIcon class="h-8 w-8 text-green-400 mx-auto mb-2" />
+            <p class="text-white font-medium">You're on the waitlist!</p>
+            <p class="text-gray-400 text-sm mt-1">We'll notify you when applications open.</p>
+          </div>
+          <form v-else @submit.prevent="submitWaitlist" class="space-y-3">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input
+                v-model="waitlistName"
+                type="text"
+                placeholder="Your name"
+                required
+                class="flex-1 px-4 py-3 rounded-lg border-0 bg-white text-gray-900 focus:ring-2 focus:ring-white outline-none"
+              />
+              <input
+                v-model="waitlistEmail"
+                type="email"
+                placeholder="Your email"
+                required
+                class="flex-1 px-4 py-3 rounded-lg border-0 bg-white text-gray-900 focus:ring-2 focus:ring-white outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              :disabled="isSubmitting"
+              class="w-full px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {{ isSubmitting ? 'Joining...' : 'Join the Waitlist' }}
+            </button>
+          </form>
+        </div>
+
         <p class="mt-6 text-gray-500 text-sm">
-          Applications are reviewed within 7 days. Not everyone gets in — and that's the point.
+          Applications open in {{ countdown.days }} days. Not everyone gets in — and that's the point.
         </p>
       </div>
     </section>

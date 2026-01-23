@@ -3,19 +3,26 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
+import type { Role } from '@/types'
 import {
   UserCircleIcon,
   MapPinIcon,
   LinkIcon,
   PencilIcon,
-  AcademicCapIcon,
-  LightBulbIcon
+  SparklesIcon,
+  RocketLaunchIcon
 } from '@heroicons/vue/24/outline'
+import {
+  ShieldCheckIcon,
+  StarIcon,
+  SparklesIcon as SparklesSolidIcon
+} from '@heroicons/vue/24/solid'
 
 const authStore = useAuthStore()
 
 const member = computed(() => authStore.member)
 const profile = computed(() => authStore.member?.profile)
+const roles = computed(() => member.value?.roles || [])
 
 const experienceLevelLabels: Record<string, string> = {
   none: 'No professional experience',
@@ -24,13 +31,35 @@ const experienceLevelLabels: Record<string, string> = {
   senior: 'Senior (5+ years)'
 }
 
-const badges = computed(() => {
-  const result: string[] = []
-  if (profile.value?.is_og_member) result.push('OG Member')
-  if (authStore.isScout) result.push('Scout')
-  if (authStore.isAdmin) result.push('Admin')
-  return result
-})
+// Role styling based on role name
+const getRoleStyle = (roleName: string) => {
+  switch (roleName.toLowerCase()) {
+    case 'admin':
+      return {
+        bg: 'bg-red-50',
+        text: 'text-red-700',
+        icon: ShieldCheckIcon,
+        iconColor: 'text-red-500'
+      }
+    case 'scout':
+      return {
+        bg: 'bg-amber-50',
+        text: 'text-amber-700',
+        icon: StarIcon,
+        iconColor: 'text-amber-500'
+      }
+    default:
+      return {
+        bg: 'bg-indigo-50',
+        text: 'text-indigo-700',
+        icon: SparklesSolidIcon,
+        iconColor: 'text-indigo-500'
+      }
+  }
+}
+
+// Check for OG Member badge (comes from profile, not roles)
+const isOGMember = computed(() => profile.value?.is_og_member)
 </script>
 
 <template>
@@ -38,7 +67,7 @@ const badges = computed(() => {
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Profile Header -->
       <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="h-32 bg-gradient-to-r from-indigo-500 to-purple-600" />
+        <div class="h-32 bg-gradient-to-r from-indigo-500 to-indigo-600" />
         <div class="px-6 pb-6">
           <div class="flex flex-col sm:flex-row sm:items-end -mt-12 sm:-mt-16">
             <div class="flex-shrink-0">
@@ -66,14 +95,39 @@ const badges = computed(() => {
             </div>
           </div>
 
-          <!-- Badges -->
-          <div v-if="badges.length > 0" class="mt-4 flex flex-wrap gap-2">
+          <!-- Roles & Badges -->
+          <div v-if="roles.length > 0 || isOGMember" class="mt-4 flex flex-wrap gap-2">
+            <!-- OG Member Badge -->
             <span
-              v-for="badge in badges"
-              :key="badge"
-              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+              v-if="isOGMember"
+              class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 cursor-help"
             >
-              {{ badge }}
+              <SparklesSolidIcon class="h-3.5 w-3.5 text-indigo-500" />
+              OG Member
+              <!-- Tooltip -->
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                Original community member
+              </span>
+            </span>
+            <!-- Role Badges -->
+            <span
+              v-for="role in roles"
+              :key="role.id"
+              :class="[
+                'group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-help',
+                getRoleStyle(role.name).bg,
+                getRoleStyle(role.name).text
+              ]"
+            >
+              <component :is="getRoleStyle(role.name).icon" :class="['h-3.5 w-3.5', getRoleStyle(role.name).iconColor]" />
+              {{ role.name.charAt(0).toUpperCase() + role.name.slice(1) }}
+              <!-- Tooltip with description -->
+              <span
+                v-if="role.description"
+                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 max-w-xs text-center"
+              >
+                {{ role.description }}
+              </span>
             </span>
           </div>
 
@@ -119,23 +173,22 @@ const badges = computed(() => {
         </div>
       </div>
 
-      <!-- Learning & Teaching -->
-      <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <div v-if="profile?.want_to_learn" class="bg-white rounded-lg shadow-sm p-6">
-          <div class="flex items-center mb-3">
-            <AcademicCapIcon class="h-5 w-5 text-indigo-600 mr-2" />
-            <h2 class="text-lg font-semibold text-gray-900">Want to Learn</h2>
-          </div>
-          <p class="text-gray-700">{{ profile.want_to_learn }}</p>
+      <!-- Recent Work -->
+      <div v-if="profile?.recent_work" class="mt-6 bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center mb-3">
+          <RocketLaunchIcon class="h-5 w-5 text-indigo-600 mr-2" />
+          <h2 class="text-lg font-semibold text-gray-900">Recent Work</h2>
         </div>
+        <p class="text-gray-700 whitespace-pre-line">{{ profile.recent_work }}</p>
+      </div>
 
-        <div v-if="profile?.can_teach" class="bg-white rounded-lg shadow-sm p-6">
-          <div class="flex items-center mb-3">
-            <LightBulbIcon class="h-5 w-5 text-yellow-500 mr-2" />
-            <h2 class="text-lg font-semibold text-gray-900">Can Teach</h2>
-          </div>
-          <p class="text-gray-700">{{ profile.can_teach }}</p>
+      <!-- Unique View -->
+      <div v-if="profile?.unique_view" class="mt-6 bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center mb-3">
+          <SparklesIcon class="h-5 w-5 text-indigo-500 mr-2" />
+          <h2 class="text-lg font-semibold text-gray-900">My Unique View</h2>
         </div>
+        <p class="text-gray-700 whitespace-pre-line">{{ profile.unique_view }}</p>
       </div>
 
       <!-- Portfolio & Links -->
@@ -155,22 +208,16 @@ const badges = computed(() => {
           <a
             v-for="(link, index) in profile?.additional_links"
             :key="index"
-            :href="link"
+            :href="link.url"
             target="_blank"
             rel="noopener noreferrer"
             class="flex items-center text-indigo-600 hover:text-indigo-800"
           >
             <LinkIcon class="h-4 w-4 mr-2" />
-            {{ link }}
+            <span v-if="link.label" class="text-gray-500 mr-1">{{ link.label }}:</span>
+            {{ link.url }}
           </a>
         </div>
-      </div>
-
-      <!-- Why Senpai (Private) -->
-      <div v-if="profile?.why_senpai" class="mt-6 bg-gray-50 rounded-lg p-6 border border-gray-200">
-        <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Private - Only visible to you</p>
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">Why I Joined Senpai</h2>
-        <p class="text-gray-700">{{ profile.why_senpai }}</p>
       </div>
     </div>
   </AppLayout>

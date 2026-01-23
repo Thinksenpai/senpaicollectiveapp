@@ -1,6 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+// SEO metadata for pages
+interface RouteMeta {
+  title?: string
+  description?: string
+  guest?: boolean
+  requiresAuth?: boolean
+  requiresApproved?: boolean
+  requiresAdmin?: boolean
+  requiresScout?: boolean
+}
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -8,24 +19,40 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/public/HomePage.vue')
+      component: () => import('@/views/public/HomePage.vue'),
+      meta: {
+        title: "Senpai Collective | Africa's Elite Creative Community",
+        description: "Join Africa's elite community of creatives building the future through culture, technology, business, art, and systems."
+      }
     },
     {
       path: '/manifesto',
       name: 'manifesto',
-      component: () => import('@/views/public/ManifestoPage.vue')
+      component: () => import('@/views/public/ManifestoPage.vue'),
+      meta: {
+        title: 'Our Manifesto | Senpai Collective',
+        description: "Read the Senpai Collective manifesto. Our core values, beliefs, and the movement we're building for African creatives."
+      }
     },
     {
       path: '/join',
       name: 'join',
       component: () => import('@/views/auth/RegisterPage.vue'),
-      meta: { guest: true }
+      meta: {
+        guest: true,
+        title: 'Apply to Join | Senpai Collective',
+        description: 'Apply to join the Senpai Collective. We review every application looking for builders with skill, ambition, and character.'
+      }
     },
     {
       path: '/login',
       name: 'login',
       component: () => import('@/views/auth/LoginPage.vue'),
-      meta: { guest: true }
+      meta: {
+        guest: true,
+        title: 'Sign In | Senpai Collective',
+        description: 'Sign in to your Senpai Collective account to access the member dashboard, directory, and opportunities.'
+      }
     },
     {
       path: '/forgot-password',
@@ -47,22 +74,38 @@ const router = createRouter({
     {
       path: '/m/:id',
       name: 'public-profile',
-      component: () => import('@/views/public/PublicProfilePage.vue')
+      component: () => import('@/views/public/PublicProfilePage.vue'),
+      meta: {
+        title: 'Member Profile | Senpai Collective',
+        description: 'View this Senpai Collective member profile. Connect with talented African creatives.'
+      }
     },
     {
       path: '/submit-job',
       name: 'submit-job',
-      component: () => import('@/views/public/JobSubmitPage.vue')
+      component: () => import('@/views/public/JobSubmitPage.vue'),
+      meta: {
+        title: 'Post a Job | Senpai Collective',
+        description: 'Hire from the Senpai Collective. Post a job to connect with pre-vetted, values-aligned African creatives.'
+      }
     },
     {
       path: '/job-status',
       name: 'job-status',
-      component: () => import('@/views/public/JobStatusPage.vue')
+      component: () => import('@/views/public/JobStatusPage.vue'),
+      meta: {
+        title: 'Job Status | Senpai Collective',
+        description: 'Check the status of your job submission to Senpai Collective.'
+      }
     },
     {
       path: '/review/:token',
       name: 'client-review',
-      component: () => import('@/views/public/ClientReviewPage.vue')
+      component: () => import('@/views/public/ClientReviewPage.vue'),
+      meta: {
+        title: 'Leave a Review | Senpai Collective',
+        description: 'Share your experience working with a Senpai Collective member.'
+      }
     },
 
     // Protected member routes
@@ -211,6 +254,20 @@ const router = createRouter({
 // Navigation guards
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
+
+  // Update document title for SEO
+  const meta = to.meta as RouteMeta
+  if (meta.title) {
+    document.title = meta.title
+  } else {
+    document.title = 'Senpai Collective'
+  }
+
+  // Update meta description
+  const descriptionMeta = document.querySelector('meta[name="description"]')
+  if (descriptionMeta && meta.description) {
+    descriptionMeta.setAttribute('content', meta.description)
+  }
 
   // If we have a token but no member data, fetch it
   if (authStore.isAuthenticated && !authStore.member) {

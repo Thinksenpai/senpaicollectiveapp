@@ -12,7 +12,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!member.value && !!apiClient.getToken())
   const isAdmin = computed(() => member.value?.roles?.some(r => r.name === 'admin') ?? false)
-  const isScout = computed(() => member.value?.roles?.some(r => r.name === 'scout') ?? false)
+  const isScout = computed(() => {
+    // Check both roles array and scout object
+    const hasScoutRole = member.value?.roles?.some(r => r.name === 'scout') ?? false
+    const hasScoutObject = member.value?.scout != null
+    return hasScoutRole || hasScoutObject
+  })
   const isApproved = computed(() => member.value?.status === 'approved')
   const isPending = computed(() => member.value?.status === 'pending')
 

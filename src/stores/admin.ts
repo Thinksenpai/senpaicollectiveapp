@@ -133,6 +133,21 @@ export const useAdminStore = defineStore('admin', () => {
     }
   }
 
+  async function promoteToScout(id: string) {
+    error.value = null
+
+    try {
+      const response = await adminApi.promoteToScout(id)
+      if (response.status) {
+        return { success: true, data: response.data }
+      }
+      return { success: false, error: response.message }
+    } catch (e: any) {
+      error.value = e.response?.data?.message || e.message || 'Failed to promote member to scout'
+      return { success: false, error: error.value }
+    }
+  }
+
   // Stats
   async function fetchStatistics() {
     statsLoading.value = true
@@ -183,6 +198,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchMembers,
     fetchMember,
     deactivateMember,
+    promoteToScout,
 
     // Stats
     stats,

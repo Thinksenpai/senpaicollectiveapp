@@ -8,7 +8,8 @@ import type {
   AdminAnalytics,
   AdminNote,
   ApplicationFilters,
-  AdminMemberFilters
+  AdminMemberFilters,
+  Scout
 } from '@/types'
 
 export const adminApi = {
@@ -47,6 +48,19 @@ export const adminApi = {
 
   async deactivateMember(id: string, reason: string): Promise<ApiResponse> {
     return apiClient.post(`/admin/members/${id}/deactivate`, { reason })
+  },
+
+  // Scout management
+  async promoteToScout(id: string): Promise<ApiResponse<Scout>> {
+    return apiClient.post(`/admin/members/${id}/promote-scout`)
+  },
+
+  async removeScout(id: string): Promise<ApiResponse> {
+    return apiClient.post(`/admin/scouts/${id}/remove`)
+  },
+
+  async getScouts(): Promise<ApiResponse<Scout[]>> {
+    return apiClient.get('/admin/scouts')
   },
 
   // Statistics

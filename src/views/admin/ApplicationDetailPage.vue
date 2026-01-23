@@ -188,10 +188,22 @@ async function handleDecline() {
           <p class="text-gray-700 whitespace-pre-line">{{ application.profile.bio }}</p>
         </div>
 
-        <!-- Why Senpai -->
+        <!-- Recent Work -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">Recent Work</h2>
+          <p class="text-gray-700 whitespace-pre-line">{{ application.profile.recent_work || 'Not provided.' }}</p>
+        </div>
+
+        <!-- Unique View -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">Unique View on Life</h2>
+          <p class="text-gray-700 whitespace-pre-line">{{ application.profile.unique_view || 'Not provided.' }}</p>
+        </div>
+
+        <!-- Cover Letter (if provided) -->
+        <div v-if="application.profile.cover_letter" class="bg-white rounded-lg shadow-sm p-6 mb-6">
           <h2 class="text-lg font-semibold text-gray-900 mb-3">Why they want to join</h2>
-          <p class="text-gray-700 whitespace-pre-line">{{ application.profile.why_senpai }}</p>
+          <p class="text-gray-700 whitespace-pre-line">{{ application.profile.cover_letter }}</p>
         </div>
 
         <!-- Portfolio -->

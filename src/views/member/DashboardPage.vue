@@ -299,6 +299,29 @@ function handleWelcomeClose() {
             </div>
           </div>
 
+          <!-- Scout Dashboard Card -->
+          <div v-if="authStore.isScout" class="bg-gradient-to-br from-senpai-50 to-senpai-100 rounded-2xl p-6 border border-senpai-200">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 bg-senpai-500 rounded-xl flex items-center justify-center">
+                <SparklesIcon class="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900">Scout Dashboard</h3>
+                <p class="text-xs text-gray-600">Grow the community</p>
+              </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">
+              You're a Scout! Invite talented creatives and help build the next generation.
+            </p>
+            <RouterLink
+              to="/scout"
+              class="inline-flex items-center justify-center w-full py-2.5 px-4 bg-senpai-500 text-white rounded-lg text-sm font-medium hover:bg-senpai-600 transition-colors"
+            >
+              Open Scout Dashboard
+              <ArrowRightIcon class="h-4 w-4 ml-2" />
+            </RouterLink>
+          </div>
+
           <!-- The Pledge Reminder -->
           <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
             <div class="flex items-center gap-3 mb-4">
@@ -344,11 +367,6 @@ function handleWelcomeClose() {
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="membersStore.loading" class="fixed inset-0 bg-white/50 flex justify-center items-center z-50">
-        <LoadingSpinner size="lg" />
       </div>
     </div>
   </AppLayout>

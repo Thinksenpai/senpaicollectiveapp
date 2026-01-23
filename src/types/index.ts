@@ -29,6 +29,12 @@ export interface Skill {
 
 export type SkillCategory = 'design' | 'media' | 'tech' | 'content' | 'business' | 'other'
 
+// Additional link type
+export interface AdditionalLink {
+  label?: string
+  url: string
+}
+
 // Member types
 export type MemberStatus = 'pending' | 'approved' | 'declined' | 'deactivated'
 export type ExperienceLevel = 'none' | 'junior' | 'mid' | 'senior'
@@ -48,13 +54,13 @@ export interface MemberProfile {
   country: string
   photo_url?: string
   bio: string
-  why_senpai: string
-  want_to_learn?: string
-  can_teach?: string
+  cover_letter?: string
+  recent_work: string
+  unique_view: string
   primary_skill_id: number
   experience_level: ExperienceLevel
   portfolio_url: string
-  additional_links?: string[]
+  additional_links?: AdditionalLink[]
   is_og_member: boolean
   og_member_details?: string
   discovery_source: DiscoverySource
@@ -87,19 +93,23 @@ export interface PublicMemberProfile {
   primary_skill?: Skill
   skills?: Skill[]
   portfolio_url: string
-  additional_links?: string[]
+  additional_links?: AdditionalLink[]
   member_since: string
   badges?: string[]
-  want_to_learn?: string
-  can_teach?: string
+  roles?: Role[]
+  recent_work?: string
+  unique_view?: string
 }
 
 // Scout types
+export type ScoutStatus = 'active' | 'inactive' | 'removed'
+
 export interface Scout {
   member_id: string
   invite_code: string
-  status: 'active' | 'inactive' | 'removed'
+  status: ScoutStatus
   accepted_agreement_at?: string
+  accepted_pledge_version?: number
   score: number
   created_at: string
 }
@@ -112,6 +122,66 @@ export interface ScoutInvite {
   registered_at?: string
   application_status: 'pending' | 'approved' | 'declined'
   created_at: string
+}
+
+export interface ScoutPledge {
+  id: number
+  title: string
+  content: string
+  version: number
+  is_active: boolean
+}
+
+export interface ScoutRecruit {
+  invite_id: string
+  scout_note?: string
+  registered_at?: string
+  application_status: 'pending' | 'approved' | 'declined'
+  member_id?: string
+  full_name?: string
+  email?: string
+  city?: string
+  country?: string
+  primary_skill?: string
+  experience_level?: ExperienceLevel
+}
+
+export interface ScoutStats {
+  total_invited: number
+  total_registered: number
+  total_approved: number
+  total_declined: number
+  pending_applications: number
+  approval_rate: number
+  conversion_rate: number
+  scout_score: number
+}
+
+export interface ScoutDashboardData {
+  scout: Scout
+  invite_url: string
+  pledge_accepted: boolean
+  stats: ScoutStats
+  recruits: ScoutRecruit[]
+  pending_recruits: ScoutRecruit[]
+}
+
+export interface ScoutLeaderboardEntry {
+  rank: number
+  member: {
+    id: string
+    full_name: string
+    city: string
+    country: string
+    photo_url?: string
+  }
+  stats: {
+    total_invited: number
+    total_registered: number
+    total_approved: number
+    approval_rate: number
+    scout_score: number
+  }
 }
 
 // Auth types
@@ -137,11 +207,11 @@ export interface RegisterData {
   other_skill_ids?: number[]
   experience_level: ExperienceLevel
   portfolio_url: string
-  additional_links?: string[]
+  additional_links?: AdditionalLink[]
   bio: string
-  why_senpai: string
-  want_to_learn?: string
-  can_teach?: string
+  cover_letter?: string
+  recent_work: string
+  unique_view: string
   is_og_member: boolean
   og_member_details?: string
   discovery_source: DiscoverySource
@@ -406,6 +476,7 @@ export interface MemberFilters {
   cities?: string[]
   countries?: string[]
   experience_levels?: ExperienceLevel[]
+  roles?: string[]
   sort_by?: 'name' | 'newest' | 'recently_active'
   limit?: number
   offset?: number

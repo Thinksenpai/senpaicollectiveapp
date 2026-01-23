@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSkillsStore } from '@/stores/skills'
+import { scoutsApi } from '@/api'
 import type { ExperienceLevel, DiscoverySource } from '@/types'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
@@ -18,6 +19,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const skillsStore = useSkillsStore()
+const scoutCode = (route.query.ref as string) || (route.query.scout as string) || ''
 
 const currentStep = ref(0) // Start at step 0 (philosophy intro)
 const totalSteps = 6 // Now 6 steps (0-5)
@@ -38,19 +40,19 @@ const form = ref({
   other_skill_ids: [] as number[],
   experience_level: '' as ExperienceLevel | '',
   portfolio_url: '',
-  additional_links: ['', '', ''],
+  additional_links: [{ label: '', url: '' }] as { label: string; url: string }[],
 
   // Step 3: About You
   bio: '',
-  why_senpai: '',
-  want_to_learn: '',
-  can_teach: '',
+  cover_letter: '',
+  recent_work: '',
+  unique_view: '',
 
   // Step 4: Community History
   is_og_member: false,
   og_member_details: '',
-  discovery_source: '' as DiscoverySource | '',
-  scout_code: (route.query.ref as string) || '',
+  discovery_source: (scoutCode ? 'scout' : '') as DiscoverySource | '',
+  scout_code: scoutCode,
 
   // Step 5: Agreement
   agree_terms: false,
@@ -98,6 +100,13 @@ const stepTitles = [
 
 onMounted(() => {
   skillsStore.fetchSkills()
+
+  // Track scout link click if there's a scout code in the URL
+  if (scoutCode) {
+    scoutsApi.trackClick(scoutCode).catch(() => {
+      // Silently ignore tracking errors
+    })
+  }
 })
 
 function validateStep(step: number): boolean {
@@ -147,8 +156,11 @@ function validateStep(step: number): boolean {
     if (!form.value.bio || form.value.bio.length < 10) {
       errors.value.bio = 'Bio must be at least 10 characters'
     }
-    if (!form.value.why_senpai || form.value.why_senpai.length < 10) {
-      errors.value.why_senpai = 'Please tell us why you want to join (at least 10 characters)'
+    if (!form.value.recent_work || form.value.recent_work.length < 10) {
+      errors.value.recent_work = 'Please tell us about your recent work (at least 10 characters)'
+    }
+    if (!form.value.unique_view || form.value.unique_view.length < 10) {
+      errors.value.unique_view = 'Please share your unique view (at least 10 characters)'
     }
   }
 
@@ -205,8 +217,11 @@ async function handleSubmit() {
   authStore.clearError()
 
   const additionalLinks = form.value.additional_links
-    .filter(link => link.trim() !== '')
-    .map(link => ensureHttps(link))
+    .filter(link => link.url.trim() !== '')
+    .map(link => ({
+      label: link.label.trim() || undefined,
+      url: ensureHttps(link.url)
+    }))
 
   const result = await authStore.register({
     full_name: form.value.full_name,
@@ -222,9 +237,9 @@ async function handleSubmit() {
     portfolio_url: ensureHttps(form.value.portfolio_url),
     additional_links: additionalLinks.length > 0 ? additionalLinks : undefined,
     bio: form.value.bio,
-    why_senpai: form.value.why_senpai,
-    want_to_learn: form.value.want_to_learn || undefined,
-    can_teach: form.value.can_teach || undefined,
+    cover_letter: form.value.cover_letter || undefined,
+    recent_work: form.value.recent_work,
+    unique_view: form.value.unique_view,
     is_og_member: form.value.is_og_member,
     og_member_details: form.value.og_member_details || undefined,
     discovery_source: form.value.discovery_source as DiscoverySource,
@@ -238,6 +253,18 @@ async function handleSubmit() {
 
 function goToLogin() {
   router.push('/login')
+}
+
+function addLink() {
+  if (form.value.additional_links.length < 5) {
+    form.value.additional_links.push({ label: '', url: '' })
+  }
+}
+
+function removeLink(index: number) {
+  if (form.value.additional_links.length > 1) {
+    form.value.additional_links.splice(index, 1)
+  }
 }
 </script>
 
@@ -380,11 +407,11 @@ function goToLogin() {
 
             <!-- Footer -->
             <div class="text-center pt-4 border-t border-gray-200">
-              <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <a href="https://www.thinksenpai.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 text-sm text-gray-500 hover:opacity-80 transition-opacity">
                 <span>An extension of</span>
                 <img src="/senpai.svg" alt="Senpai" class="h-5 w-auto" />
                 <span class="font-medium text-gray-700">SENPAI</span>
-              </div>
+              </a>
             </div>
           </div>
 
@@ -490,20 +517,47 @@ function goToLogin() {
               required
             />
 
-            <div class="space-y-3">
+            <div class="space-y-4">
               <label class="block text-sm font-medium text-gray-700">Additional Links (Optional)</label>
-              <BaseInput
-                v-model="form.additional_links[0]"
-                placeholder="https://github.com/username"
-              />
-              <BaseInput
-                v-model="form.additional_links[1]"
-                placeholder="https://linkedin.com/in/username"
-              />
-              <BaseInput
-                v-model="form.additional_links[2]"
-                placeholder="https://twitter.com/username"
-              />
+              <div
+                v-for="(link, index) in form.additional_links"
+                :key="index"
+                class="flex items-start gap-2 p-3 bg-gray-50 rounded-lg"
+              >
+                <div class="flex-1 space-y-2">
+                  <BaseInput
+                    v-model="link.label"
+                    placeholder="Label (e.g., GitHub, LinkedIn)"
+                    class="text-sm"
+                  />
+                  <BaseInput
+                    v-model="link.url"
+                    :placeholder="index === 0 ? 'https://github.com/username' : 'https://...'"
+                  />
+                </div>
+                <button
+                  v-if="form.additional_links.length > 1"
+                  type="button"
+                  @click="removeLink(index)"
+                  class="p-2 text-gray-400 hover:text-red-500 transition-colors mt-1"
+                  title="Remove link"
+                >
+                  <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <button
+                v-if="form.additional_links.length < 5"
+                type="button"
+                @click="addLink"
+                class="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Add another link
+              </button>
             </div>
           </div>
 
@@ -520,29 +574,31 @@ function goToLogin() {
             />
 
             <BaseTextarea
-              v-model="form.why_senpai"
-              label="Why do you want to join Senpai?"
-              placeholder="What excites you about joining this community? What are you hoping to gain?"
-              :maxlength="500"
+              v-model="form.recent_work"
+              label="What have you built or created lately?"
+              placeholder="Tell us about your recent projects, work, or creative endeavors. What are you most proud of?"
+              :maxlength="1000"
               :rows="4"
-              :error="errors.why_senpai"
+              :error="errors.recent_work"
               required
             />
 
             <BaseTextarea
-              v-model="form.want_to_learn"
-              label="What do you want to learn or grow in?"
-              placeholder="Skills you want to develop, areas you want to explore..."
-              :maxlength="300"
-              :rows="3"
+              v-model="form.unique_view"
+              label="What is your unique view on life?"
+              placeholder="Share your perspective, philosophy, or approach to creativity and work. What drives you?"
+              :maxlength="1000"
+              :rows="4"
+              :error="errors.unique_view"
+              required
             />
 
             <BaseTextarea
-              v-model="form.can_teach"
-              label="What can you teach others?"
-              placeholder="Skills or knowledge you'd be happy to share with the community..."
-              :maxlength="300"
-              :rows="3"
+              v-model="form.cover_letter"
+              label="Why do you want to join Senpai? (Optional)"
+              placeholder="What excites you about joining this community? What are you hoping to gain and contribute?"
+              :maxlength="2000"
+              :rows="4"
             />
           </div>
 

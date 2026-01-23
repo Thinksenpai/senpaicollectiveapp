@@ -23,7 +23,8 @@ import {
   HomeIcon,
   DocumentTextIcon,
   ClipboardDocumentListIcon,
-  ChartBarSquareIcon
+  ChartBarSquareIcon,
+  SparklesIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -43,6 +44,10 @@ const jobNavigation = ref([
 
 const adminNavigation = ref([
   { name: 'Admin', href: '/admin', icon: ChartBarIcon }
+])
+
+const scoutNavigation = ref([
+  { name: 'Scout', href: '/scout', icon: SparklesIcon }
 ])
 
 function handleLogout() {
@@ -66,6 +71,18 @@ function handleLogout() {
               <RouterLink
                 v-if="!item.requiresAuth || authStore.isAuthenticated"
                 v-show="!item.requiresApproved || authStore.isApproved"
+                :to="item.href"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-senpai-600 rounded-md hover:bg-senpai-50"
+                active-class="text-senpai-600 bg-senpai-50"
+              >
+                <component :is="item.icon" class="h-5 w-5 mr-1.5" />
+                {{ item.name }}
+              </RouterLink>
+            </template>
+            <template v-if="authStore.isScout">
+              <RouterLink
+                v-for="item in scoutNavigation"
+                :key="item.name"
                 :to="item.href"
                 class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-senpai-600 rounded-md hover:bg-senpai-50"
                 active-class="text-senpai-600 bg-senpai-50"

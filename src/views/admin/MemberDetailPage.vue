@@ -19,7 +19,8 @@ import {
   UserCircleIcon,
   MapPinIcon,
   LinkIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  SparklesIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -32,6 +33,7 @@ const error = ref<string | null>(null)
 
 const showDeactivateModal = ref(false)
 const deactivateReason = ref('')
+const promotingToScout = ref(false)
 
 const statusBadgeClasses: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -75,6 +77,27 @@ async function handleDeactivate() {
   }
 
   actionLoading.value = false
+}
+
+async function handlePromoteToScout() {
+  promotingToScout.value = true
+  error.value = null
+
+  const result = await adminStore.promoteToScout(route.params.id as string)
+
+  if (result.success) {
+    // Refresh member data to show updated roles
+    await adminStore.fetchMember(route.params.id as string)
+  } else {
+    error.value = result.error || 'Failed to promote member to scout'
+  }
+
+  promotingToScout.value = false
+}
+
+const isScout = () => {
+  return adminStore.currentMember?.member?.roles?.some(r => r.name === 'scout') ||
+         adminStore.currentMember?.member?.scout != null
 }
 </script>
 
@@ -180,10 +203,22 @@ async function handleDeactivate() {
           <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile?.bio || 'No bio provided.' }}</p>
         </div>
 
-        <!-- Why Senpai -->
+        <!-- Recent Work -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Why they joined</h2>
-          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile?.why_senpai || 'Not provided.' }}</p>
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">Recent Work</h2>
+          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile?.recent_work || 'Not provided.' }}</p>
+        </div>
+
+        <!-- Unique View -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">Unique View on Life</h2>
+          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile?.unique_view || 'Not provided.' }}</p>
+        </div>
+
+        <!-- Cover Letter (if provided) -->
+        <div v-if="adminStore.currentMember.member.profile?.cover_letter" class="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-900 mb-3">Why they want to join</h2>
+          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile.cover_letter }}</p>
         </div>
 
         <!-- Portfolio -->
@@ -234,10 +269,24 @@ async function handleDeactivate() {
         <!-- Actions -->
         <div v-if="adminStore.currentMember.member.status === 'approved'" class="bg-white rounded-lg shadow-sm p-6">
           <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
-          <BaseButton variant="danger" @click="showDeactivateModal = true">
-            <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
-            Deactivate Member
-          </BaseButton>
+          <div class="flex flex-wrap gap-3">
+            <BaseButton
+              v-if="!isScout()"
+              @click="handlePromoteToScout"
+              :loading="promotingToScout"
+            >
+              <SparklesIcon class="h-5 w-5 mr-2" />
+              Promote to Scout
+            </BaseButton>
+            <div v-else class="flex items-center text-sm text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg">
+              <SparklesIcon class="h-5 w-5 mr-2" />
+              This member is a Scout
+            </div>
+            <BaseButton variant="danger" @click="showDeactivateModal = true">
+              <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
+              Deactivate Member
+            </BaseButton>
+          </div>
         </div>
       </template>
     </div>

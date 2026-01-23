@@ -67,8 +67,9 @@ export const useMembersStore = defineStore('members', () => {
           additional_links: rawMember.additional_links || profile?.additional_links,
           member_since: rawMember.created_at || rawMember.member_since || '',
           badges: rawMember.badges || [],
-          want_to_learn: rawMember.want_to_learn || profile?.want_to_learn,
-          can_teach: rawMember.can_teach || profile?.can_teach
+          roles: rawMember.roles || [],
+          recent_work: rawMember.recent_work || profile?.recent_work,
+          unique_view: rawMember.unique_view || profile?.unique_view
         }
 
         currentMember.value = normalizedMember

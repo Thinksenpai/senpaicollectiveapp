@@ -1,0 +1,23 @@
+# Robots.txt for Senpai Collective
+# https://senpaicollective.com
+
+User-agent: *
+Allow: /
+
+# Disallow admin and private areas
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /dashboard/*
+Disallow: /profile/edit
+
+# Allow search engines to access public content
+Allow: /manifesto
+Allow: /submit-job
+Allow: /job-status/*
+Allow: /p/*
+
+# Sitemap location
+Sitemap: https://senpaicollective.com/sitemap.xml
+
+# Crawl-delay (optional, for politeness)
+Crawl-delay: 1

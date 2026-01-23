@@ -1,21 +1,26 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { membersApi } from '@/api'
-import type { PublicMemberProfile } from '@/types'
+import type { PublicMemberProfile, Role } from '@/types'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import {
   UserCircleIcon,
   MapPinIcon,
   LinkIcon,
-  AcademicCapIcon,
-  LightBulbIcon
+  SparklesIcon,
+  RocketLaunchIcon
 } from '@heroicons/vue/24/outline'
+import {
+  ShieldCheckIcon,
+  StarIcon,
+  SparklesIcon as SparklesSolidIcon
+} from '@heroicons/vue/24/solid'
 
 const route = useRoute()
 
 const loading = ref(true)
-const member = ref<PublicMemberProfile | null>(null)
+const member = ref<(PublicMemberProfile & { roles?: Role[] }) | null>(null)
 const error = ref<string | null>(null)
 
 const experienceLevelLabels: Record<string, string> = {
@@ -24,6 +29,39 @@ const experienceLevelLabels: Record<string, string> = {
   mid: 'Mid-level (2-5 years)',
   senior: 'Senior (5+ years)'
 }
+
+// Role styling based on role name
+const getRoleStyle = (roleName: string) => {
+  switch (roleName.toLowerCase()) {
+    case 'admin':
+      return {
+        bg: 'bg-red-50',
+        text: 'text-red-700',
+        icon: ShieldCheckIcon,
+        iconColor: 'text-red-500'
+      }
+    case 'scout':
+      return {
+        bg: 'bg-amber-50',
+        text: 'text-amber-700',
+        icon: StarIcon,
+        iconColor: 'text-amber-500'
+      }
+    default:
+      return {
+        bg: 'bg-indigo-50',
+        text: 'text-indigo-700',
+        icon: SparklesSolidIcon,
+        iconColor: 'text-indigo-500'
+      }
+  }
+}
+
+// Check for OG Member badge
+const isOGMember = computed(() => {
+  const badges = member.value?.badges || []
+  return badges.some(b => b.toLowerCase() === 'og member' || b.toLowerCase() === 'og')
+})
 
 onMounted(async () => {
   loading.value = true
@@ -92,7 +130,7 @@ onMounted(async () => {
       <template v-else>
         <!-- Profile Header -->
         <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-          <div class="h-32 bg-gradient-to-r from-indigo-500 to-purple-600" />
+          <div class="h-32 bg-gradient-to-r from-indigo-500 to-indigo-600" />
           <div class="px-6 pb-6">
             <div class="flex flex-col sm:flex-row sm:items-end -mt-12 sm:-mt-16">
               <div class="flex-shrink-0">
@@ -109,14 +147,37 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Badges -->
-            <div v-if="member.badges && member.badges.length > 0" class="mt-4 flex flex-wrap gap-2">
+            <!-- Roles & Badges -->
+            <div v-if="(member.roles && member.roles.length > 0) || isOGMember" class="mt-4 flex flex-wrap gap-2">
+              <!-- OG Member Badge -->
               <span
-                v-for="badge in member.badges"
-                :key="badge"
-                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+                v-if="isOGMember"
+                class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 cursor-help"
               >
-                {{ badge }}
+                <SparklesSolidIcon class="h-3.5 w-3.5 text-indigo-500" />
+                OG Member
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                  Original community member
+                </span>
+              </span>
+              <!-- Role Badges -->
+              <span
+                v-for="role in member.roles"
+                :key="role.id"
+                :class="[
+                  'group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-help',
+                  getRoleStyle(role.name).bg,
+                  getRoleStyle(role.name).text
+                ]"
+              >
+                <component :is="getRoleStyle(role.name).icon" :class="['h-3.5 w-3.5', getRoleStyle(role.name).iconColor]" />
+                {{ role.name.charAt(0).toUpperCase() + role.name.slice(1) }}
+                <span
+                  v-if="role.description"
+                  class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 max-w-xs text-center"
+                >
+                  {{ role.description }}
+                </span>
               </span>
             </div>
 
@@ -161,23 +222,22 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Learning & Teaching -->
-        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div v-if="member.want_to_learn" class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center mb-3">
-              <AcademicCapIcon class="h-5 w-5 text-indigo-600 mr-2" />
-              <h2 class="text-lg font-semibold text-gray-900">Want to Learn</h2>
-            </div>
-            <p class="text-gray-700">{{ member.want_to_learn }}</p>
+        <!-- Recent Work -->
+        <div v-if="member.recent_work" class="mt-6 bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center mb-3">
+            <RocketLaunchIcon class="h-5 w-5 text-indigo-600 mr-2" />
+            <h2 class="text-lg font-semibold text-gray-900">Recent Work</h2>
           </div>
+          <p class="text-gray-700 whitespace-pre-line">{{ member.recent_work }}</p>
+        </div>
 
-          <div v-if="member.can_teach" class="bg-white rounded-lg shadow-sm p-6">
-            <div class="flex items-center mb-3">
-              <LightBulbIcon class="h-5 w-5 text-yellow-500 mr-2" />
-              <h2 class="text-lg font-semibold text-gray-900">Can Teach</h2>
-            </div>
-            <p class="text-gray-700">{{ member.can_teach }}</p>
+        <!-- Unique View -->
+        <div v-if="member.unique_view" class="mt-6 bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center mb-3">
+            <SparklesIcon class="h-5 w-5 text-indigo-500 mr-2" />
+            <h2 class="text-lg font-semibold text-gray-900">My Unique View</h2>
           </div>
+          <p class="text-gray-700 whitespace-pre-line">{{ member.unique_view }}</p>
         </div>
 
         <!-- Portfolio & Links -->
@@ -197,13 +257,14 @@ onMounted(async () => {
             <a
               v-for="(link, index) in member.additional_links"
               :key="index"
-              :href="link"
+              :href="link.url"
               target="_blank"
               rel="noopener noreferrer"
               class="flex items-center text-indigo-600 hover:text-indigo-800"
             >
               <LinkIcon class="h-4 w-4 mr-2" />
-              {{ link }}
+              <span v-if="link.label" class="text-gray-500 mr-1">{{ link.label }}:</span>
+              {{ link.url }}
             </a>
           </div>
         </div>
