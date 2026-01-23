@@ -83,18 +83,18 @@ const displayLocation = computed(() => {
 // Check for special roles from roles array (normalized to strings)
 const isAdmin = computed(() => {
   const roles = memberData.value.roles || []
-  return roles.some(r => r.toLowerCase() === 'admin')
+  return roles.some((r: string) => r.toLowerCase() === 'admin')
 })
 
 const isScout = computed(() => {
   const roles = memberData.value.roles || []
-  return roles.some(r => r.toLowerCase() === 'scout')
+  return roles.some((r: string) => r.toLowerCase() === 'scout')
 })
 
 // OG Member comes from badges, not roles
 const isOG = computed(() => {
   const badges = memberData.value.badges || []
-  return badges.some(b => b.toLowerCase() === 'og member' || b.toLowerCase() === 'og')
+  return badges.some((b: string) => b.toLowerCase() === 'og member' || b.toLowerCase() === 'og')
 })
 
 const experienceLevelLabels: Record<string, string> = {

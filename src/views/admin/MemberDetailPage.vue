@@ -238,13 +238,13 @@ const isScout = () => {
             <a
               v-for="(link, index) in adminStore.currentMember.member.profile?.additional_links"
               :key="index"
-              :href="link"
+              :href="link.url"
               target="_blank"
               rel="noopener noreferrer"
               class="flex items-center text-indigo-600 hover:text-indigo-800"
             >
               <LinkIcon class="h-4 w-4 mr-2" />
-              {{ link }}
+              {{ link.label || link.url }}
             </a>
           </div>
         </div>
