@@ -30,8 +30,12 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError<ApiResponse>) => {
-        if (error.response?.status === 401) {
-          // Token expired or invalid
+        // Redirect to login on 401 ONLY for protected routes (expired token).
+        // Skip auth routes so a failed login/register surfaces a graceful error
+        // instead of reloading the page.
+        const url = error.config?.url || ''
+        const isAuthRoute = url.includes('/auth/')
+        if (error.response?.status === 401 && !isAuthRoute) {
           localStorage.removeItem('token')
           window.location.href = '/login'
         }
