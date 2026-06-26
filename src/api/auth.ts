@@ -20,6 +20,16 @@ export const authApi = {
     return response
   },
 
+  // Exchange a Zitadel ID token (obtained after the hosted-login redirect) for a
+  // Senpai session token. The backend verifies the token and matches it to a member.
+  async loginWithZitadel(idToken: string): Promise<ApiResponse<LoginResponse>> {
+    const response = await apiClient.post<ApiResponse<LoginResponse>>('/auth/zitadel', { id_token: idToken })
+    if (response.status && response.data?.token) {
+      apiClient.setToken(response.data.token)
+    }
+    return response
+  },
+
   async verifyEmail(token: string): Promise<ApiResponse> {
     return apiClient.post('/auth/verify-email', { token })
   },

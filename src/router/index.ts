@@ -55,6 +55,12 @@ const router = createRouter({
       }
     },
     {
+      path: '/auth/callback',
+      name: 'auth-callback',
+      component: () => import('@/views/auth/CallbackPage.vue'),
+      meta: { title: 'Signing in… | Senpai Collective' }
+    },
+    {
       path: '/forgot-password',
       name: 'forgot-password',
       component: () => import('@/views/auth/ForgotPasswordPage.vue'),

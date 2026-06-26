@@ -41,6 +41,34 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Exchange a verified Zitadel identity for a Senpai session. On a 403 the
+  // backend tells us *why* (no membership / pending approval) via `reason` so
+  // the callback page can route the user appropriately.
+  async function loginWithZitadel(idToken: string) {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await authApi.loginWithZitadel(idToken)
+      if (response.status && response.data) {
+        member.value = response.data.member
+        return { success: true as const }
+      }
+      error.value = response.message || 'Login failed'
+      return { success: false as const, reason: (response.data as any)?.reason as string | undefined }
+    } catch (e: any) {
+      const body = e.response?.data
+      error.value = body?.message || e.message || 'Login failed'
+      return {
+        success: false as const,
+        reason: body?.data?.reason as string | undefined,
+        email: body?.data?.email as string | undefined,
+        name: body?.data?.name as string | undefined,
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
   async function register(data: RegisterData) {
     loading.value = true
     error.value = null
@@ -138,6 +166,7 @@ export const useAuthStore = defineStore('auth', () => {
     isApproved,
     isPending,
     login,
+    loginWithZitadel,
     register,
     verifyEmail,
     forgotPassword,

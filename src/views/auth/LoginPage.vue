@@ -5,10 +5,16 @@ import { useAuthStore } from '@/stores/auth'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
-import { ClockIcon } from '@heroicons/vue/24/outline'
+import { ClockIcon, KeyIcon } from '@heroicons/vue/24/outline'
+import { startZitadelLogin } from '@/lib/oidc'
 
 const router = useRouter()
 const route = useRoute()
+
+// Redirect to the Senpai ID hosted login (password / passkey / Google).
+function handleZitadelLogin() {
+  startZitadelLogin()
+}
 const authStore = useAuthStore()
 
 const form = ref({
@@ -114,6 +120,26 @@ async function handleSubmit() {
         <BaseAlert v-if="authStore.error && !isPendingError" type="error" class="mb-6" dismissible @dismiss="authStore.clearError">
           {{ authStore.error }}
         </BaseAlert>
+
+        <!-- Senpai ID (central auth: password, passkey, Google) -->
+        <button
+          type="button"
+          @click="handleZitadelLogin"
+          :disabled="authStore.loading"
+          class="w-full flex items-center justify-center gap-2 rounded-md bg-senpai-600 px-4 py-3 text-white font-medium shadow-sm hover:bg-senpai-700 disabled:opacity-60 transition-colors"
+        >
+          <KeyIcon class="h-5 w-5" />
+          Continue with Senpai ID
+        </button>
+
+        <div class="relative my-6">
+          <div class="absolute inset-0 flex items-center" aria-hidden="true">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="bg-white px-2 text-gray-400">or sign in with email</span>
+          </div>
+        </div>
 
         <form @submit.prevent="handleSubmit" class="space-y-6">
           <BaseInput
