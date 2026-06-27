@@ -38,10 +38,19 @@ function handleChange(event: Event) {
         @change="handleChange"
       />
     </div>
-    <div v-if="label || description" class="ml-3 text-sm leading-6">
-      <label :for="inputId" :class="['font-medium', disabled ? 'text-gray-400' : 'text-gray-900']">
+    <div v-if="label || description || $slots.default" class="ml-3 text-sm leading-6">
+      <label
+        v-if="label"
+        :for="inputId"
+        :class="['font-medium', disabled ? 'text-gray-400' : 'text-gray-900']"
+      >
         {{ label }}
       </label>
+      <!-- Rich label via slot (e.g. inline links). Rendered outside <label> so a
+           link click navigates instead of toggling the checkbox. -->
+      <div v-if="$slots.default" :class="['font-medium', disabled ? 'text-gray-400' : 'text-gray-900']">
+        <slot />
+      </div>
       <p v-if="description" class="text-gray-500">{{ description }}</p>
     </div>
   </div>

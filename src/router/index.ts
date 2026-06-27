@@ -45,6 +45,24 @@ const router = createRouter({
       }
     },
     {
+      path: '/terms',
+      name: 'terms',
+      component: () => import('@/views/public/TermsPage.vue'),
+      meta: {
+        title: 'Terms of Membership | Senpai Collective',
+        description: 'The terms of membership for the Senpai Collective.'
+      }
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: () => import('@/views/public/PrivacyPage.vue'),
+      meta: {
+        title: 'Privacy Policy | Senpai Collective',
+        description: 'How the Senpai Collective collects, uses, and protects your data.'
+      }
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/auth/LoginPage.vue'),

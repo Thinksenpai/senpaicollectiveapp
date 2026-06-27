@@ -296,7 +296,7 @@ function removeLink(index: number) {
           Once verified, our team will review your application.
         </p>
         <p class="text-sm text-gray-500 mb-8">
-          Expect to hear from us within 2-3 business days.
+          We review every application carefully and will email you once we've made a decision.
         </p>
         <BaseButton @click="goToLogin">Go to Login</BaseButton>
       </div>
@@ -324,6 +324,21 @@ function removeLink(index: number) {
 
         <!-- Form Steps -->
         <form v-else @submit.prevent="currentStep === 5 ? handleSubmit() : nextStep()" class="p-6">
+          <!-- Scout invite confirmation (auto-applied from a ?ref= invite link) -->
+          <div
+            v-if="scoutCode"
+            class="mb-6 flex items-start gap-2 rounded-lg bg-senpai-50 border border-senpai-200 px-4 py-3 text-sm text-senpai-800"
+          >
+            <svg class="h-5 w-5 flex-shrink-0 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+              You were invited by a scout — invite code
+              <span class="font-mono font-semibold">{{ scoutCode }}</span>
+              is applied to your application.
+            </span>
+          </div>
+
           <BaseAlert v-if="authStore.error" type="error" class="mb-6" dismissible @dismiss="authStore.clearError">
             {{ authStore.error }}
           </BaseAlert>
@@ -647,21 +662,29 @@ function removeLink(index: number) {
               </p>
 
               <div class="space-y-4">
-                <BaseCheckbox
-                  v-model="form.agree_terms"
-                  label="I agree to the Terms of Membership"
-                  :error="errors.agree_terms"
-                />
+                <BaseCheckbox v-model="form.agree_terms" :error="errors.agree_terms">
+                  I agree to the
+                  <RouterLink
+                    to="/terms"
+                    target="_blank"
+                    class="text-senpai-600 underline hover:text-senpai-700"
+                    @click.stop
+                  >Terms of Membership</RouterLink>
+                </BaseCheckbox>
 
-                <BaseCheckbox
-                  v-model="form.agree_privacy"
-                  label="I agree to the Privacy Policy"
-                  :error="errors.agree_privacy"
-                />
+                <BaseCheckbox v-model="form.agree_privacy" :error="errors.agree_privacy">
+                  I agree to the
+                  <RouterLink
+                    to="/privacy"
+                    target="_blank"
+                    class="text-senpai-600 underline hover:text-senpai-700"
+                    @click.stop
+                  >Privacy Policy</RouterLink>
+                </BaseCheckbox>
 
                 <BaseCheckbox
                   v-model="form.agree_profile_visible"
-                  label="I understand my profile will be visible to other members"
+                  label="I understand my profile will be visible to other members (if accepted)"
                   :error="errors.agree_profile_visible"
                 />
               </div>
@@ -672,7 +695,7 @@ function removeLink(index: number) {
               <ol class="text-sm text-gray-700 space-y-1 list-decimal list-inside">
                 <li>You'll receive an email to verify your account</li>
                 <li>Our team will review your application</li>
-                <li>You'll be notified of the decision within 2-3 business days</li>
+                <li>We'll email you our decision — we review every application carefully</li>
               </ol>
             </div>
           </div>
