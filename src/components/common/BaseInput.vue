@@ -23,6 +23,10 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | number]
 }>()
 
+// Let extra attributes (autocomplete, name, inputmode, ...) land on the <input>,
+// not the wrapper <div> — required for browser/password-manager autofill.
+defineOptions({ inheritAttrs: false })
+
 const inputId = computed(() => props.id || `input-${Math.random().toString(36).slice(2, 9)}`)
 
 const inputClasses = computed(() => {
@@ -54,6 +58,7 @@ function handleInput(event: Event) {
       :placeholder="placeholder"
       :disabled="disabled"
       :class="inputClasses"
+      v-bind="$attrs"
       @input="handleInput"
     />
     <p v-if="hint && !error" class="mt-1 text-sm text-gray-500">{{ hint }}</p>

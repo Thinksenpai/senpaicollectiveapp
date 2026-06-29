@@ -21,6 +21,20 @@ const authStore = useAuthStore()
 const skillsStore = useSkillsStore()
 const scoutCode = (route.query.ref as string) || (route.query.scout as string) || ''
 
+// Password complexity — must match Zitadel's policy (min 8, upper, lower, number, symbol),
+// otherwise weak passwords pass here and get rejected server-side with a confusing 400.
+const passwordChecks = computed(() => {
+  const p = form.value.password || ''
+  return [
+    { label: 'At least 8 characters', met: p.length >= 8 },
+    { label: 'An uppercase letter', met: /[A-Z]/.test(p) },
+    { label: 'A lowercase letter', met: /[a-z]/.test(p) },
+    { label: 'A number', met: /[0-9]/.test(p) },
+    { label: 'A symbol', met: /[^A-Za-z0-9]/.test(p) }
+  ]
+})
+const passwordValid = computed(() => passwordChecks.value.every((c) => c.met))
+
 const currentStep = ref(0) // Start at step 0 (philosophy intro)
 const totalSteps = 6 // Now 6 steps (0-5)
 const registrationComplete = ref(false)
@@ -124,8 +138,10 @@ function validateStep(step: number): boolean {
     if (!form.value.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
       errors.value.email = 'Please enter a valid email'
     }
-    if (!form.value.password || form.value.password.length < 8) {
-      errors.value.password = 'Password must be at least 8 characters'
+    if (!form.value.password) {
+      errors.value.password = 'Password is required'
+    } else if (!passwordValid.value) {
+      errors.value.password = 'Password must meet all the requirements below'
     }
     if (form.value.password !== form.value.password_confirm) {
       errors.value.password_confirm = 'Passwords do not match'
@@ -437,6 +453,8 @@ function removeLink(index: number) {
               label="Full Name"
               placeholder="John Doe"
               :error="errors.full_name"
+              name="name"
+              autocomplete="name"
               required
             />
 
@@ -446,6 +464,8 @@ function removeLink(index: number) {
               label="Email Address"
               placeholder="you@example.com"
               :error="errors.email"
+              name="email"
+              autocomplete="email"
               required
             />
 
@@ -454,8 +474,10 @@ function removeLink(index: number) {
                 v-model="form.password"
                 type="password"
                 label="Password"
-                placeholder="Min 8 characters"
+                placeholder="Create a strong password"
                 :error="errors.password"
+                name="new-password"
+                autocomplete="new-password"
                 required
               />
 
@@ -465,9 +487,27 @@ function removeLink(index: number) {
                 label="Confirm Password"
                 placeholder="Confirm your password"
                 :error="errors.password_confirm"
+                name="confirm-password"
+                autocomplete="new-password"
                 required
               />
             </div>
+
+            <!-- Live password requirements -->
+            <ul v-if="form.password.length > 0" class="-mt-3 space-y-1">
+              <li
+                v-for="check in passwordChecks"
+                :key="check.label"
+                class="flex items-center gap-2 text-sm"
+                :class="check.met ? 'text-green-600' : 'text-gray-400'"
+              >
+                <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path v-if="check.met" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  <circle v-else cx="12" cy="12" r="9" stroke-width="1.5" />
+                </svg>
+                {{ check.label }}
+              </li>
+            </ul>
 
             <BaseInput
               v-model="form.phone"
