@@ -55,7 +55,9 @@ const memberData = computed(() => {
     primary_skill_name: primarySkillName,
     skills: m.skills || [],
     badges: m.badges || [],
-    roles: roleNames
+    roles: roleNames,
+    cohort_name: m.cohort_name || null,
+    pod_name: m.pod_name || null
   }
 })
 
@@ -103,13 +105,6 @@ const experienceLevelLabels: Record<string, string> = {
   mid: 'Mid',
   senior: 'Senior'
 }
-
-const experienceLevelColors: Record<string, string> = {
-  none: 'bg-gray-100 text-gray-600',
-  junior: 'bg-emerald-50 text-emerald-700',
-  mid: 'bg-blue-50 text-blue-700',
-  senior: 'bg-purple-50 text-purple-700'
-}
 </script>
 
 <template>
@@ -126,7 +121,7 @@ const experienceLevelColors: Record<string, string> = {
           <div
             :class="[
               'h-16 w-16 rounded-full overflow-hidden ring-2 ring-offset-2',
-              isAdmin ? 'ring-red-400' : isScout ? 'ring-amber-400' : 'ring-gray-100'
+              isAdmin ? 'ring-red-400' : isScout ? 'ring-amber-400' : isOG ? 'ring-senpai-300' : 'ring-gray-100'
             ]"
           >
             <img
@@ -156,7 +151,7 @@ const experienceLevelColors: Record<string, string> = {
           </div>
           <div
             v-else-if="isOG"
-            class="absolute -bottom-1 -right-1 h-6 w-6 bg-indigo-500 rounded-full flex items-center justify-center ring-2 ring-white"
+            class="absolute -bottom-1 -right-1 h-6 w-6 bg-senpai-500 rounded-full flex items-center justify-center ring-2 ring-white"
             title="OG Member"
           >
             <SparklesIcon class="h-3.5 w-3.5 text-white" />
@@ -165,7 +160,7 @@ const experienceLevelColors: Record<string, string> = {
 
         <!-- Name & Primary Info -->
         <div class="flex-1 min-w-0">
-          <h3 class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 truncate transition-colors">
+          <h3 class="text-base font-semibold text-gray-900 group-hover:text-senpai-600 truncate transition-colors">
             {{ displayName }}
           </h3>
           <p v-if="memberData.primary_skill_name" class="text-sm text-gray-600 truncate">
@@ -175,6 +170,9 @@ const experienceLevelColors: Record<string, string> = {
             <MapPinIcon class="h-3.5 w-3.5 mr-1 flex-shrink-0" />
             <span class="truncate">{{ displayLocation }}</span>
           </div>
+          <p v-if="memberData.cohort_name" class="text-xs text-senpai-600 mt-0.5 truncate">
+            {{ memberData.cohort_name }}<span v-if="memberData.pod_name"> · {{ memberData.pod_name }}</span>
+          </p>
         </div>
       </div>
 
@@ -191,10 +189,7 @@ const experienceLevelColors: Record<string, string> = {
         <!-- Experience Level -->
         <span
           v-if="memberData.hasProfile"
-          :class="[
-            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-            experienceLevelColors[memberData.experience_level] || experienceLevelColors.none
-          ]"
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border border-gray-300 text-gray-600"
         >
           {{ experienceLevelLabels[memberData.experience_level] || 'New' }}
         </span>
@@ -216,7 +211,7 @@ const experienceLevelColors: Record<string, string> = {
         </span>
         <span
           v-if="isOG"
-          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700"
+          class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-senpai-50 text-senpai-700"
         >
           <SparklesIcon class="h-3 w-3" />
           OG

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
-import AppLayout from '@/components/layout/AppLayout.vue'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import { ArrowLeftIcon, ChartBarIcon } from '@heroicons/vue/24/outline'
+import { ChartBarIcon } from '@heroicons/vue/24/outline'
 
 const adminStore = useAdminStore()
 
@@ -15,17 +14,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <AppLayout>
+  <AdminLayout>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
-        <RouterLink
-          to="/admin"
-          class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-4"
-        >
-          <ArrowLeftIcon class="h-4 w-4 mr-1" />
-          Back to Dashboard
-        </RouterLink>
         <h1 class="text-2xl font-bold text-gray-900">Analytics</h1>
         <p class="mt-1 text-gray-600">
           Platform insights and member distribution.
@@ -46,7 +38,7 @@ onMounted(() => {
           </div>
           <div class="bg-white rounded-lg shadow-sm p-6">
             <p class="text-sm text-gray-500">Approval Rate</p>
-            <p class="text-3xl font-bold text-gray-900">{{ adminStore.stats?.approval_rate || 0 }}%</p>
+            <p class="text-3xl font-bold text-gray-900">{{ (adminStore.stats?.approval_rate || 0).toFixed(0) }}%</p>
           </div>
           <div class="bg-white rounded-lg shadow-sm p-6">
             <p class="text-sm text-gray-500">Active Scouts</p>
@@ -122,5 +114,5 @@ onMounted(() => {
         </div>
       </template>
     </div>
-  </AppLayout>
+  </AdminLayout>
 </template>

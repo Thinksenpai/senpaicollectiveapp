@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
 import { jobsApi } from '@/api'
 import type { Job } from '@/types'
-import AppLayout from '@/components/layout/AppLayout.vue'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import {
   UsersIcon,
@@ -81,15 +81,15 @@ onMounted(() => {
 })
 
 const statCards = [
-  { name: 'Total Members', key: 'total_members', icon: UsersIcon, color: 'bg-blue-500' },
-  { name: 'Approved', key: 'approved_members', icon: UserGroupIcon, color: 'bg-green-500' },
-  { name: 'Pending Applications', key: 'pending_applications', icon: ClipboardDocumentCheckIcon, color: 'bg-yellow-500' },
-  { name: 'Pending Jobs', key: 'pending_jobs', icon: BriefcaseIcon, color: 'bg-orange-500', usePendingJobsCount: true }
+  { name: 'Total Members', key: 'total_members', icon: UsersIcon, color: 'bg-blue-500', href: '/admin/members' },
+  { name: 'Approved', key: 'approved_members', icon: UserGroupIcon, color: 'bg-green-500', href: '/admin/members' },
+  { name: 'Pending Applications', key: 'pending_applications', icon: ClipboardDocumentCheckIcon, color: 'bg-yellow-500', href: '/admin/applications' },
+  { name: 'Pending Jobs', key: 'pending_jobs', icon: BriefcaseIcon, color: 'bg-orange-500', usePendingJobsCount: true, href: '/admin/jobs' }
 ]
 </script>
 
 <template>
-  <AppLayout>
+  <AdminLayout>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
@@ -105,10 +105,11 @@ const statCards = [
       <template v-else>
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div
+          <RouterLink
             v-for="stat in statCards"
             :key="stat.key"
-            class="bg-white rounded-lg shadow-sm p-6"
+            :to="stat.href"
+            class="bg-white rounded-lg shadow-sm p-6 hover:shadow-md hover:ring-1 hover:ring-senpai-200 transition-all"
           >
             <div class="flex items-center">
               <div :class="[stat.color, 'p-3 rounded-lg']">
@@ -124,7 +125,7 @@ const statCards = [
                 </p>
               </div>
             </div>
-          </div>
+          </RouterLink>
         </div>
 
         <!-- Quick Actions -->
@@ -283,7 +284,7 @@ const statCards = [
               <ArrowTrendingUpIcon class="h-5 w-5 text-green-500" />
             </div>
             <p class="text-3xl font-bold text-gray-900">
-              {{ adminStore.stats?.approval_rate || 0 }}%
+              {{ (adminStore.stats?.approval_rate || 0).toFixed(0) }}%
             </p>
             <p class="text-sm text-gray-500 mt-1">
               of applications are approved
@@ -305,5 +306,5 @@ const statCards = [
         </div>
       </template>
     </div>
-  </AppLayout>
+  </AdminLayout>
 </template>

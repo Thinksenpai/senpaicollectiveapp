@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -7,6 +8,13 @@ import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const authStore = useAuthStore()
+
+const initials = computed(() => {
+  const name = authStore.member?.profile?.full_name?.trim()
+  if (!name) return '?'
+  const parts = name.split(/\s+/)
+  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase()
+})
 
 function handleLogout() {
   authStore.logout()
@@ -17,9 +25,15 @@ function handleLogout() {
 <template>
   <AppLayout>
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
-        <p class="mt-1 text-gray-600">Manage your account settings.</p>
+      <div class="mb-8 flex items-center gap-4">
+        <span class="h-14 w-14 rounded-full overflow-hidden shrink-0 bg-gray-100 ring-2 ring-gray-100">
+          <img v-if="authStore.member?.profile?.photo_url" :src="authStore.member.profile.photo_url" :alt="authStore.member.profile.full_name" class="h-full w-full object-cover" />
+          <span v-else class="h-full w-full flex items-center justify-center text-sm font-medium text-gray-500">{{ initials }}</span>
+        </span>
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+          <p class="mt-1 text-gray-600">Manage your account settings.</p>
+        </div>
       </div>
 
       <!-- Account Info -->

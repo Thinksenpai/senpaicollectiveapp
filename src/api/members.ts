@@ -28,6 +28,14 @@ export const membersApi = {
     return apiClient.put('/members/me', data)
   },
 
+  async uploadPhoto(file: File): Promise<ApiResponse<{ url: string; filename: string; size: number }>> {
+    const form = new FormData()
+    form.append('photo', file)
+    return apiClient.post('/uploads/profile-photo', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
   async getMembers(filters: MemberFilters = {}): Promise<PaginatedResponse<PublicMemberProfile>> {
     const params = new URLSearchParams()
 

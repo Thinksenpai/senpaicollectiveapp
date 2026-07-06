@@ -1,0 +1,686 @@
+<script setup lang="ts">
+import { ref, reactive, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { adminEngineApi, engineApi } from '@/api'
+import type {
+  Cohort, Pod, CohortMembership, Task, TaskAssignment,
+  CreateTaskPayload, TaskTrack, TaskKind, HandinType,
+  TaskComment, AssignmentComment, AssignmentStatus
+} from '@/types'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import BaseInput from '@/components/common/BaseInput.vue'
+import BaseTextarea from '@/components/common/BaseTextarea.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
+import BaseButton from '@/components/common/BaseButton.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
+import BaseAlert from '@/components/common/BaseAlert.vue'
+import {
+  PlusIcon, CheckCircleIcon, XMarkIcon, ChatBubbleLeftIcon,
+  CalendarIcon, ArrowUturnLeftIcon, PencilIcon, TrashIcon, XCircleIcon
+} from '@heroicons/vue/24/outline'
+
+const route = useRoute()
+
+const loading = ref(true)
+const cohorts = ref<Cohort[]>([])
+const selectedCohortId = ref('')
+const tasks = ref<Task[]>([])
+const pods = ref<Pod[]>([])
+const members = ref<CohortMembership[]>([])
+const toast = ref('')
+
+function flash(msg: string) {
+  toast.value = msg
+  setTimeout(() => (toast.value = ''), 2500)
+}
+function memberName(m: CohortMembership) {
+  return m.member?.profile?.full_name || m.member?.email || m.member_id.slice(0, 8)
+}
+function assigneeName(m?: { profile?: { full_name?: string }; email?: string } | null, fallbackId?: string) {
+  return m?.profile?.full_name || m?.email || fallbackId?.slice(0, 8) || 'Unknown'
+}
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/)
+  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
+}
+function formatDate(d?: string | null) {
+  if (!d) return null
+  return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+function isOverdue(t: Task) {
+  return !!t.due_at && new Date(t.due_at) < new Date() && (t.completed_count ?? 0) < (t.assignment_count ?? 0)
+}
+function timeAgo(d: string) {
+  const diff = Date.now() - new Date(d).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
+
+async function loadCohorts() {
+  const res = await adminEngineApi.listCohorts()
+  cohorts.value = res.data ?? []
+  const fromQuery = route.query.cohort as string | undefined
+  if (fromQuery && cohorts.value.some((c) => c.id === fromQuery)) selectedCohortId.value = fromQuery
+  else if (!selectedCohortId.value && cohorts.value.length) {
+    selectedCohortId.value = (cohorts.value.find((c) => c.status === 'forming') ?? cohorts.value[0]).id
+  }
+}
+async function loadTasks() {
+  if (!selectedCohortId.value) return
+  const [t, p, m] = await Promise.all([
+    adminEngineApi.listTasks(selectedCohortId.value),
+    adminEngineApi.listPods(selectedCohortId.value),
+    adminEngineApi.listCohortMembers(selectedCohortId.value)
+  ])
+  tasks.value = t.data ?? []
+  pods.value = p.data ?? []
+  members.value = m.data ?? []
+}
+
+onMounted(async () => {
+  try {
+    await loadCohorts()
+    await loadTasks()
+  } finally {
+    loading.value = false
+  }
+})
+watch(selectedCohortId, async (id, old) => {
+  if (id && id !== old) {
+    loading.value = true
+    try {
+      await loadTasks()
+    } finally {
+      loading.value = false
+    }
+  }
+})
+
+// ---- create task ----
+const taskModal = ref(false)
+const savingTask = ref(false)
+const taskFormError = ref('')
+const taskFormErrors = reactive<{ title?: string; description?: string }>({})
+const editingTaskId = ref<string | null>(null)
+const editingTaskSlug = ref('')
+const taskForm = reactive({
+  title: '', description: '',
+  track: 'induction' as TaskTrack, kind: 'custom' as TaskKind,
+  handin_type: 'link' as HandinType, external_url: '',
+  is_required: false, status: 'published' as 'draft' | 'published',
+  due_at: '', available_at: ''
+})
+// Assign-on-create — only shown when creating a new task, not editing.
+const assignOnCreate = reactive({ type: 'none' as 'none' | 'cohort' | 'pod' | 'individual' | 'global', id: '' })
+const trackOptions = [
+  { value: 'induction', label: 'Induction' },
+  { value: 'personal_dev', label: 'Personal development' },
+  { value: 'building', label: 'Building' }
+]
+const kindOptions = ['reflection', 'portfolio', 'build', 'publish', 'research', 'custom'].map((k) => ({ value: k, label: k[0].toUpperCase() + k.slice(1) }))
+const handinOptions = [
+  { value: 'none', label: 'Mark as done (no hand-in)' },
+  { value: 'link', label: 'A link' },
+  { value: 'text', label: 'Written text' },
+  { value: 'file', label: 'A file' },
+  { value: 'external_form', label: 'External form' }
+]
+function slugify(s: string) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
+}
+function openTaskModal() {
+  editingTaskId.value = null
+  taskForm.title = ''
+  taskForm.description = ''
+  taskForm.track = 'induction'
+  taskForm.kind = 'custom'
+  taskForm.handin_type = 'link'
+  taskForm.external_url = ''
+  taskForm.is_required = false
+  taskForm.status = 'published'
+  taskForm.due_at = ''
+  taskForm.available_at = ''
+  assignOnCreate.type = 'none'
+  assignOnCreate.id = ''
+  taskFormError.value = ''
+  taskFormErrors.title = undefined
+  taskFormErrors.description = undefined
+  taskModal.value = true
+}
+function openEditTaskModal(t: Task) {
+  editingTaskId.value = t.id
+  editingTaskSlug.value = t.slug
+  taskForm.title = t.title
+  taskForm.description = t.description
+  taskForm.track = t.track
+  taskForm.kind = t.kind
+  taskForm.handin_type = t.handin_type
+  taskForm.external_url = t.external_url || ''
+  taskForm.is_required = t.is_required
+  taskForm.status = t.status === 'archived' ? 'draft' : t.status
+  taskForm.due_at = t.due_at ? t.due_at.slice(0, 10) : ''
+  taskForm.available_at = t.available_at ? t.available_at.slice(0, 10) : ''
+  taskFormError.value = ''
+  taskFormErrors.title = undefined
+  taskFormErrors.description = undefined
+  taskModal.value = true
+}
+function validateTaskForm(): boolean {
+  taskFormErrors.title = taskForm.title.trim() ? undefined : 'Title is required'
+  taskFormErrors.description = taskForm.description.trim() ? undefined : 'Description is required'
+  return !taskFormErrors.title && !taskFormErrors.description
+}
+async function saveTask() {
+  taskFormError.value = ''
+  if (!validateTaskForm()) return
+  savingTask.value = true
+  try {
+    const payload: CreateTaskPayload = {
+      title: taskForm.title,
+      slug: editingTaskId.value ? editingTaskSlug.value : `${slugify(taskForm.title)}-${Math.random().toString(36).slice(2, 6)}`,
+      description: taskForm.description,
+      kind: taskForm.kind,
+      track: taskForm.track,
+      handin_type: taskForm.handin_type,
+      external_url: taskForm.handin_type === 'external_form' ? taskForm.external_url || undefined : undefined,
+      cohort_id: selectedCohortId.value,
+      is_required: taskForm.is_required,
+      show_submissions: true,
+      status: taskForm.status,
+      due_at: taskForm.due_at ? new Date(taskForm.due_at).toISOString() : undefined,
+      available_at: taskForm.available_at ? new Date(taskForm.available_at).toISOString() : undefined
+    }
+    if (editingTaskId.value) {
+      const res = await adminEngineApi.updateTask(editingTaskId.value, payload)
+      if (detailTask.value && res.data) detailTask.value = res.data
+      flash('Task updated')
+    } else {
+      const created = await adminEngineApi.createTask(payload)
+      let assignedNote = ''
+      if (assignOnCreate.type !== 'none' && created.data) {
+        const assignPayload =
+          assignOnCreate.type === 'cohort'
+            ? { target_type: 'cohort' as const, target_id: selectedCohortId.value }
+            : assignOnCreate.type === 'global'
+              ? { target_type: 'global' as const }
+              : { target_type: assignOnCreate.type, target_id: assignOnCreate.id }
+        if (assignOnCreate.type === 'cohort' || assignOnCreate.type === 'global' || assignOnCreate.id) {
+          const res = await adminEngineApi.assignTask(created.data.id, assignPayload)
+          assignedNote = ` and assigned to ${res.data?.assigned ?? 0} member(s)`
+        }
+      }
+      flash(`Task created${assignedNote}`)
+    }
+    taskModal.value = false
+    await loadTasks()
+  } catch (e: unknown) {
+    taskFormError.value = (e as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to save task'
+  } finally {
+    savingTask.value = false
+  }
+}
+
+// ---- assign ----
+const assignTask = ref<Task | null>(null)
+const assigning = ref(false)
+const assignForm = reactive({ type: 'cohort', id: '' })
+function openAssign(t: Task) {
+  assignForm.type = 'cohort'
+  assignForm.id = ''
+  assignTask.value = t
+}
+async function doAssign() {
+  if (!assignTask.value) return
+  const payload =
+    assignForm.type === 'cohort'
+      ? { target_type: 'cohort' as const, target_id: selectedCohortId.value }
+      : assignForm.type === 'global'
+        ? { target_type: 'global' as const }
+        : { target_type: assignForm.type as 'pod' | 'individual', target_id: assignForm.id }
+  if ((assignForm.type === 'pod' || assignForm.type === 'individual') && !assignForm.id) {
+    flash('Pick a target')
+    return
+  }
+  assigning.value = true
+  try {
+    const res = await adminEngineApi.assignTask(assignTask.value.id, payload)
+    const wasDetail = detailTask.value?.id === assignTask.value.id
+    assignTask.value = null
+    flash(`Assigned to ${res.data?.assigned ?? 0} member(s)`)
+    await loadTasks()
+    if (wasDetail) await loadRoster()
+  } finally {
+    assigning.value = false
+  }
+}
+
+// ---- task detail (clickable row -> full view) ----
+const detailTask = ref<Task | null>(null)
+const detailLoading = ref(false)
+const rosterRows = ref<TaskAssignment[]>([])
+const taskComments = ref<TaskComment[]>([])
+const newTaskComment = ref('')
+const postingTaskComment = ref(false)
+
+const assignmentStyles: Record<string, string> = {
+  assigned: 'bg-gray-100 text-gray-600',
+  in_progress: 'bg-amber-100 text-amber-800',
+  submitted: 'bg-blue-100 text-blue-800',
+  completed: 'bg-green-100 text-green-800',
+  returned: 'bg-red-100 text-red-800'
+}
+
+async function loadRoster() {
+  if (!detailTask.value) return
+  const res = await adminEngineApi.getRoster(detailTask.value.id)
+  rosterRows.value = res.data ?? []
+}
+async function openDetail(t: Task) {
+  detailTask.value = t
+  detailLoading.value = true
+  rosterRows.value = []
+  taskComments.value = []
+  expandedAssignmentId.value = null
+  try {
+    const [roster, comments] = await Promise.all([
+      adminEngineApi.getRoster(t.id),
+      engineApi.getTaskComments(t.id)
+    ])
+    rosterRows.value = roster.data ?? []
+    taskComments.value = comments.data ?? []
+  } finally {
+    detailLoading.value = false
+  }
+}
+function closeDetail() {
+  detailTask.value = null
+}
+async function postTaskComment() {
+  if (!detailTask.value || !newTaskComment.value.trim()) return
+  postingTaskComment.value = true
+  try {
+    await engineApi.postTaskComment(detailTask.value.id, newTaskComment.value.trim())
+    taskComments.value = (await engineApi.getTaskComments(detailTask.value.id)).data ?? []
+    newTaskComment.value = ''
+  } finally {
+    postingTaskComment.value = false
+  }
+}
+
+// ---- per-assignment review + private comments ----
+const expandedAssignmentId = ref<string | null>(null)
+const assignmentComments = reactive<Record<string, AssignmentComment[]>>({})
+const newAssignmentComment = reactive<Record<string, string>>({})
+const reviewingId = ref<string | null>(null)
+
+async function toggleAssignment(a: TaskAssignment) {
+  if (expandedAssignmentId.value === a.id) {
+    expandedAssignmentId.value = null
+    return
+  }
+  expandedAssignmentId.value = a.id
+  if (!assignmentComments[a.id]) {
+    const res = await engineApi.getAssignmentComments(a.id)
+    assignmentComments[a.id] = res.data ?? []
+  }
+}
+async function postAssignmentComment(a: TaskAssignment) {
+  const body = (newAssignmentComment[a.id] || '').trim()
+  if (!body) return
+  await engineApi.postAssignmentComment(a.id, body)
+  assignmentComments[a.id] = (await engineApi.getAssignmentComments(a.id)).data ?? []
+  newAssignmentComment[a.id] = ''
+}
+async function review(a: TaskAssignment, status: AssignmentStatus) {
+  reviewingId.value = a.id
+  try {
+    await adminEngineApi.reviewAssignment(a.id, status)
+    await loadRoster()
+    await loadTasks()
+    if (detailTask.value) {
+      const fresh = tasks.value.find((t) => t.id === detailTask.value!.id)
+      if (fresh) detailTask.value = fresh
+    }
+    flash(status === 'completed' ? 'Marked complete' : 'Returned for changes')
+  } finally {
+    reviewingId.value = null
+  }
+}
+
+const deletingTask = ref(false)
+async function deleteTask(t: Task) {
+  if (!confirm(`Delete "${t.title}"? This removes it and every member's submission on it — this can't be undone.`)) return
+  deletingTask.value = true
+  try {
+    await adminEngineApi.deleteTask(t.id)
+    closeDetail()
+    await loadTasks()
+    flash('Task deleted')
+  } finally {
+    deletingTask.value = false
+  }
+}
+
+const unassigningId = ref<string | null>(null)
+async function unassign(a: TaskAssignment) {
+  if (!confirm(`Remove ${assigneeName(a.member, a.member_id)} from this task?`)) return
+  unassigningId.value = a.id
+  try {
+    await adminEngineApi.unassignTask(a.id)
+    if (expandedAssignmentId.value === a.id) expandedAssignmentId.value = null
+    await loadRoster()
+    await loadTasks()
+    if (detailTask.value) {
+      const fresh = tasks.value.find((t) => t.id === detailTask.value!.id)
+      if (fresh) detailTask.value = fresh
+    }
+    flash('Removed from task')
+  } finally {
+    unassigningId.value = null
+  }
+}
+</script>
+
+<template>
+  <AdminLayout>
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Tasks</h1>
+          <p class="text-sm text-gray-500 mt-0.5">Build the work members do — pre-induction and beyond.</p>
+        </div>
+        <BaseButton @click="openTaskModal"><PlusIcon class="h-4 w-4 mr-1" /> New task</BaseButton>
+      </div>
+
+      <div v-if="loading" class="flex justify-center py-24"><LoadingSpinner size="lg" /></div>
+
+      <template v-else>
+        <!-- cohort selector -->
+        <div class="mb-6 flex items-center gap-3">
+          <span class="text-sm text-gray-500">Cohort</span>
+          <div class="min-w-[200px]">
+            <BaseSelect v-model="selectedCohortId" :options="cohorts.map((c) => ({ value: c.id, label: c.name }))" />
+          </div>
+        </div>
+
+        <div v-if="tasks.length" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide text-left">
+              <tr>
+                <th class="px-5 py-2.5 font-medium">Task</th>
+                <th class="px-5 py-2.5 font-medium">Assigned to</th>
+                <th class="px-5 py-2.5 font-medium">Due</th>
+                <th class="px-5 py-2.5 font-medium">Progress</th>
+                <th class="px-5 py-2.5 font-medium">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr v-for="t in tasks" :key="t.id" class="hover:bg-gray-50 cursor-pointer" @click="openDetail(t)">
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium text-gray-900">{{ t.title }}</span>
+                    <span v-if="t.is_required" class="text-[11px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 shrink-0">Required</span>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-0.5 capitalize">{{ t.track.replace('_', ' ') }} · {{ t.kind }} · {{ t.handin_type.replace('_', ' ') }}</p>
+                </td>
+                <td class="px-5 py-3" @click.stop>
+                  <div v-if="t.assigned_to?.length" class="flex flex-wrap gap-1 max-w-[220px]">
+                    <span v-for="label in t.assigned_to" :key="label" class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{{ label }}</span>
+                  </div>
+                  <button v-else class="text-xs text-senpai-600 font-medium hover:text-senpai-700" @click="openAssign(t)">Assign…</button>
+                </td>
+                <td class="px-5 py-3">
+                  <span
+                    v-if="t.due_at"
+                    class="inline-flex items-center gap-1 text-xs"
+                    :class="isOverdue(t) ? 'text-red-600 font-medium' : 'text-gray-500'"
+                  >
+                    <CalendarIcon class="h-3.5 w-3.5" /> {{ formatDate(t.due_at) }}
+                  </span>
+                  <span v-else class="text-xs text-gray-300">—</span>
+                </td>
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-2 w-28">
+                    <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        class="h-full bg-senpai-500 rounded-full"
+                        :style="{ width: (t.assignment_count ? ((t.completed_count ?? 0) / t.assignment_count) * 100 : 0) + '%' }"
+                      />
+                    </div>
+                    <span class="text-xs text-gray-500 shrink-0">{{ t.completed_count ?? 0 }}/{{ t.assignment_count ?? 0 }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-3">
+                  <span
+                    class="text-xs px-2 py-0.5 rounded-full capitalize"
+                    :class="t.status === 'published' ? 'bg-green-50 text-green-700' : t.status === 'draft' ? 'bg-gray-100 text-gray-500' : 'bg-gray-50 text-gray-400'"
+                  >{{ t.status }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div v-else class="bg-white rounded-2xl border border-gray-200 p-10 text-center">
+          <p class="text-gray-500 text-sm">No tasks for this cohort yet.</p>
+          <BaseButton class="mt-4" @click="openTaskModal">Create the first task</BaseButton>
+        </div>
+      </template>
+    </div>
+
+    <!-- Create / edit task modal -->
+    <BaseModal
+      :show="taskModal"
+      :title="editingTaskId ? 'Edit task' : 'New task'"
+      :subtitle="editingTaskId ? 'Update what this task asks for.' : 'Something for members to do.'"
+      @close="taskModal = false"
+    >
+      <div class="space-y-4">
+        <BaseAlert v-if="taskFormError" type="error">{{ taskFormError }}</BaseAlert>
+        <BaseInput v-model="taskForm.title" label="Title" placeholder="Upgrade your portfolio" :error="taskFormErrors.title" required />
+        <BaseTextarea v-model="taskForm.description" label="Description" :rows="3" placeholder="What should they do, and what does done look like?" :error="taskFormErrors.description" required />
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <BaseSelect v-model="taskForm.track" :options="trackOptions" label="Track" />
+          <BaseSelect v-model="taskForm.kind" :options="kindOptions" label="Kind" />
+          <BaseSelect v-model="taskForm.handin_type" :options="handinOptions" label="Hand-in" />
+        </div>
+        <BaseInput v-if="taskForm.handin_type === 'external_form'" v-model="taskForm.external_url" label="External form URL" placeholder="https://forms.gle/…" />
+        <div class="grid grid-cols-2 gap-4">
+          <BaseInput v-model="taskForm.available_at" type="date" label="Available from (optional)" />
+          <BaseInput v-model="taskForm.due_at" type="date" label="Due date (optional)" />
+        </div>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" v-model="taskForm.is_required" class="rounded border-gray-300 text-senpai-600 focus:ring-senpai-500" />
+          Required to complete induction
+        </label>
+
+        <div v-if="!editingTaskId" class="pt-4 border-t border-gray-100 space-y-3">
+          <BaseSelect
+            v-model="assignOnCreate.type"
+            label="Assign to (optional)"
+            :options="[
+              { value: 'none', label: `Don't assign yet` },
+              { value: 'cohort', label: 'The whole cohort' },
+              { value: 'pod', label: 'A specific pod' },
+              { value: 'individual', label: 'One member' },
+              { value: 'global', label: 'Everyone in the collective' }
+            ]"
+          />
+          <BaseSelect v-if="assignOnCreate.type === 'pod'" v-model="assignOnCreate.id" :options="pods.map((p) => ({ value: p.id, label: p.name }))" label="Pod" placeholder="Select a pod" />
+          <BaseSelect v-if="assignOnCreate.type === 'individual'" v-model="assignOnCreate.id" :options="members.map((m) => ({ value: m.member_id, label: memberName(m) }))" label="Member" placeholder="Select a member" />
+        </div>
+      </div>
+      <template #footer>
+        <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="taskModal = false">Cancel</button>
+        <BaseButton :loading="savingTask" @click="saveTask">{{ editingTaskId ? 'Save changes' : 'Create task' }}</BaseButton>
+      </template>
+    </BaseModal>
+
+    <!-- Assign modal -->
+    <BaseModal :show="!!assignTask" :title="`Assign · ${assignTask?.title ?? ''}`" subtitle="Who should get this task?" @close="assignTask = null">
+      <div class="space-y-4">
+        <BaseSelect
+          v-model="assignForm.type"
+          :options="[
+            { value: 'cohort', label: 'The whole cohort' },
+            { value: 'pod', label: 'A specific pod' },
+            { value: 'individual', label: 'One member' },
+            { value: 'global', label: 'Everyone in the collective' }
+          ]"
+          label="Target"
+        />
+        <BaseSelect v-if="assignForm.type === 'pod'" v-model="assignForm.id" :options="pods.map((p) => ({ value: p.id, label: p.name }))" label="Pod" placeholder="Select a pod" />
+        <BaseSelect v-if="assignForm.type === 'individual'" v-model="assignForm.id" :options="members.map((m) => ({ value: m.member_id, label: memberName(m) }))" label="Member" placeholder="Select a member" />
+      </div>
+      <template #footer>
+        <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="assignTask = null">Cancel</button>
+        <BaseButton :loading="assigning" @click="doAssign">Assign</BaseButton>
+      </template>
+    </BaseModal>
+
+    <!-- Task detail slide-over (Jira/Linear-style: description, roster, review, comments) -->
+    <transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="translate-x-full"
+      enter-to-class="translate-x-0"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="translate-x-0"
+      leave-to-class="translate-x-full"
+    >
+      <div v-if="detailTask" class="fixed inset-0 z-50 flex justify-end">
+        <div class="absolute inset-0 bg-gray-900/40" @click="closeDetail" />
+        <div class="relative w-full max-w-2xl bg-white h-full overflow-y-auto shadow-2xl">
+          <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between z-10">
+            <div>
+              <p class="text-xs text-gray-400 uppercase tracking-wide capitalize">{{ detailTask.track.replace('_', ' ') }} · {{ detailTask.kind }}</p>
+              <h2 class="text-lg font-semibold text-gray-900 mt-0.5">{{ detailTask.title }}</h2>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button class="p-1.5 text-gray-400 hover:text-senpai-600 rounded-lg hover:bg-gray-100" title="Edit task" @click="openEditTaskModal(detailTask)">
+                <PencilIcon class="h-4 w-4" />
+              </button>
+              <button class="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50" title="Delete task" :disabled="deletingTask" @click="deleteTask(detailTask)">
+                <TrashIcon class="h-4 w-4" />
+              </button>
+              <button class="text-gray-400 hover:text-gray-600 p-1" @click="closeDetail"><XMarkIcon class="h-5 w-5" /></button>
+            </div>
+          </div>
+
+          <div v-if="detailLoading" class="flex justify-center py-16"><LoadingSpinner /></div>
+          <div v-else class="px-6 py-5 space-y-8">
+            <!-- description + meta -->
+            <section>
+              <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ detailTask.description }}</p>
+              <div class="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                <span v-if="detailTask.is_required" class="px-2 py-0.5 rounded-full bg-red-50 text-red-600">Required</span>
+                <span v-if="detailTask.due_at" class="inline-flex items-center gap-1 text-gray-500"><CalendarIcon class="h-3.5 w-3.5" /> Due {{ formatDate(detailTask.due_at) }}</span>
+                <span class="text-gray-400">{{ detailTask.completed_count ?? 0 }}/{{ detailTask.assignment_count ?? 0 }} completed</span>
+                <button class="ml-auto px-3 py-1.5 rounded-lg bg-senpai-600 text-white font-medium hover:bg-senpai-700" @click="openAssign(detailTask)">Assign more</button>
+              </div>
+            </section>
+
+            <!-- roster -->
+            <section>
+              <h3 class="text-sm font-semibold text-gray-900 mb-3">Roster</h3>
+              <p v-if="!rosterRows.length" class="text-sm text-gray-500 py-2">No one assigned yet.</p>
+              <div v-else class="border border-gray-200 rounded-xl divide-y divide-gray-100">
+                <div v-for="a in rosterRows" :key="a.id">
+                  <div class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50" @click="toggleAssignment(a)">
+                    <span class="text-sm text-gray-800 flex items-center gap-2 min-w-0">
+                      <span
+                        class="h-7 w-7 rounded-full overflow-hidden shrink-0 ring-2"
+                        :class="a.member?.profile?.is_og_member ? 'ring-senpai-300' : 'ring-gray-100'"
+                      >
+                        <img v-if="a.member?.profile?.photo_url" :src="a.member.profile.photo_url" :alt="assigneeName(a.member, a.member_id)" class="h-full w-full object-cover" />
+                        <span v-else class="h-full w-full bg-gray-100 flex items-center justify-center text-[10px] font-medium text-gray-500">{{ initials(assigneeName(a.member, a.member_id)) }}</span>
+                      </span>
+                      <CheckCircleIcon v-if="a.status === 'completed'" class="h-4 w-4 text-green-500 shrink-0" />
+                      <span class="truncate">{{ assigneeName(a.member, a.member_id) }}</span>
+                    </span>
+                    <div class="flex items-center gap-2 shrink-0">
+                      <span class="text-xs px-2 py-0.5 rounded-full capitalize" :class="assignmentStyles[a.status]">{{ a.status.replace('_', ' ') }}</span>
+                      <ChatBubbleLeftIcon class="h-3.5 w-3.5 text-gray-300" />
+                      <button class="text-gray-300 hover:text-red-500 p-0.5" title="Unassign" :disabled="unassigningId === a.id" @click.stop="unassign(a)">
+                        <XCircleIcon class="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- expanded: submission + review + private comments -->
+                  <div v-if="expandedAssignmentId === a.id" class="px-4 pb-4 bg-gray-50 space-y-3">
+                    <div v-if="a.link_url || a.body || a.file_url" class="text-sm bg-white border border-gray-200 rounded-lg p-3">
+                      <a v-if="a.link_url" :href="a.link_url" target="_blank" class="text-senpai-600 hover:underline break-all">{{ a.link_url }}</a>
+                      <a v-if="a.file_url" :href="a.file_url" target="_blank" class="text-senpai-600 hover:underline break-all block">{{ a.file_url }}</a>
+                      <p v-if="a.body" class="text-gray-700 whitespace-pre-wrap">{{ a.body }}</p>
+                    </div>
+                    <p v-else class="text-xs text-gray-400 italic">No submission yet.</p>
+
+                    <div v-if="a.status === 'submitted'" class="flex items-center gap-2">
+                      <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 disabled:opacity-50" :disabled="reviewingId === a.id" @click="review(a, 'completed')">
+                        <CheckCircleIcon class="h-3.5 w-3.5" /> Approve
+                      </button>
+                      <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 disabled:opacity-50" :disabled="reviewingId === a.id" @click="review(a, 'returned')">
+                        <ArrowUturnLeftIcon class="h-3.5 w-3.5" /> Return for changes
+                      </button>
+                    </div>
+
+                    <div class="pt-1">
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Private thread with {{ assigneeName(a.member, a.member_id) }}</p>
+                      <div v-if="assignmentComments[a.id]?.length" class="space-y-2 mb-2">
+                        <div v-for="c in assignmentComments[a.id]" :key="c.id" class="text-sm bg-white border border-gray-200 rounded-lg px-3 py-2">
+                          <p class="text-xs text-gray-400 mb-0.5">{{ assigneeName(c.member, c.member_id) }} · {{ timeAgo(c.created_at) }}</p>
+                          <p class="text-gray-700">{{ c.body }}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <input
+                          v-model="newAssignmentComment[a.id]"
+                          type="text"
+                          placeholder="Reply…"
+                          class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-senpai-400"
+                          @keyup.enter="postAssignmentComment(a)"
+                        />
+                        <button class="text-sm text-senpai-600 font-medium hover:text-senpai-700" @click="postAssignmentComment(a)">Send</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- shared Q&A thread -->
+            <section>
+              <h3 class="text-sm font-semibold text-gray-900 mb-1">Discussion</h3>
+              <p class="text-xs text-gray-400 mb-3">A shared thread — anyone assigned can ask questions or help each other here.</p>
+              <div v-if="taskComments.length" class="space-y-2 mb-3">
+                <div v-for="c in taskComments" :key="c.id" class="text-sm bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                  <p class="text-xs text-gray-400 mb-0.5">{{ assigneeName(c.member, c.member_id) }} · {{ timeAgo(c.created_at) }}</p>
+                  <p class="text-gray-700 whitespace-pre-wrap">{{ c.body }}</p>
+                </div>
+              </div>
+              <p v-else class="text-sm text-gray-400 italic mb-3">No questions yet.</p>
+              <div class="flex items-center gap-2">
+                <input
+                  v-model="newTaskComment"
+                  type="text"
+                  placeholder="Ask or answer a question…"
+                  class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-senpai-400"
+                  @keyup.enter="postTaskComment"
+                />
+                <BaseButton :loading="postingTaskComment" @click="postTaskComment">Post</BaseButton>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <transition enter-from-class="opacity-0 translate-y-2" enter-active-class="transition duration-200" leave-active-class="transition duration-200" leave-to-class="opacity-0 translate-y-2">
+      <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-4 py-2 rounded-full shadow-lg z-50">{{ toast }}</div>
+    </transition>
+  </AdminLayout>
+</template>

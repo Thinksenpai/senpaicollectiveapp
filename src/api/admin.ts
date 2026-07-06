@@ -16,6 +16,7 @@ export const adminApi = {
   // Applications
   async getApplications(filters: ApplicationFilters = {}): Promise<PaginatedResponse<Application>> {
     const params = new URLSearchParams()
+    if (filters.status) params.append('status', filters.status)
     if (filters.limit) params.append('limit', filters.limit.toString())
     if (filters.offset) params.append('offset', filters.offset.toString())
     return apiClient.get(`/admin/applications?${params.toString()}`)
@@ -48,6 +49,10 @@ export const adminApi = {
 
   async deactivateMember(id: string, reason: string): Promise<ApiResponse> {
     return apiClient.post(`/admin/members/${id}/deactivate`, { reason })
+  },
+
+  async reactivateMember(id: string): Promise<ApiResponse> {
+    return apiClient.post(`/admin/members/${id}/reactivate`)
   },
 
   // Scout management

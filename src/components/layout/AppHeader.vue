@@ -32,6 +32,7 @@ const authStore = useAuthStore()
 
 const navigation = ref([
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, requiresAuth: true },
+  { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Directory', href: '/members', icon: UsersIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Jobs', href: '/jobs', icon: BriefcaseIcon, requiresAuth: true, requiresApproved: true }
 ])
@@ -42,6 +43,8 @@ const jobNavigation = ref([
   { name: 'Performance', href: '/performance', icon: ChartBarSquareIcon }
 ])
 
+// Cohorts, Tasks, Members, etc. all live inside /admin now, under AdminLayout's
+// own sub-nav — the top-level bar only needs the one entry point.
 const adminNavigation = ref([
   { name: 'Admin', href: '/admin', icon: ChartBarIcon }
 ])
@@ -112,7 +115,10 @@ function handleLogout() {
               <MenuButton class="flex items-center rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-senpai-500 focus:ring-offset-2">
                 <span class="sr-only">Open user menu</span>
                 <div class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50">
-                  <UserCircleIcon class="h-8 w-8 text-gray-400" />
+                  <span class="h-8 w-8 rounded-full overflow-hidden shrink-0 bg-gray-100 ring-1 ring-gray-200">
+                    <img v-if="authStore.member?.profile?.photo_url" :src="authStore.member.profile.photo_url" :alt="authStore.member.profile.full_name" class="h-full w-full object-cover" />
+                    <UserCircleIcon v-else class="h-8 w-8 text-gray-400" />
+                  </span>
                   <span class="text-sm font-medium text-gray-700">
                     {{ authStore.member?.profile?.full_name || 'Member' }}
                   </span>
@@ -133,7 +139,10 @@ function handleLogout() {
                       to="/profile"
                       :class="[active ? 'bg-gray-100' : '', 'flex items-center px-4 py-2 text-sm text-gray-700']"
                     >
-                      <UserCircleIcon class="h-5 w-5 mr-2 text-gray-400" />
+                      <span class="h-5 w-5 rounded-full overflow-hidden shrink-0 bg-gray-100 mr-2">
+                        <img v-if="authStore.member?.profile?.photo_url" :src="authStore.member.profile.photo_url" :alt="authStore.member.profile.full_name" class="h-full w-full object-cover" />
+                        <UserCircleIcon v-else class="h-5 w-5 text-gray-400" />
+                      </span>
                       Your Profile
                     </RouterLink>
                   </MenuItem>

@@ -3,7 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { jobsApi } from '@/api'
 import type { Job, JobStatus, Pagination } from '@/types'
-import AppLayout from '@/components/layout/AppLayout.vue'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -164,7 +164,7 @@ const displayedJobs = computed(() => {
 </script>
 
 <template>
-  <AppLayout>
+  <AdminLayout>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8">
@@ -380,5 +380,5 @@ const displayedJobs = computed(() => {
         </BaseButton>
       </div>
     </div>
-  </AppLayout>
+  </AdminLayout>
 </template>

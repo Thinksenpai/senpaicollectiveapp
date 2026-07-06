@@ -1,26 +1,20 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
-import AppLayout from '@/components/layout/AppLayout.vue'
+import { adminEngineApi, engineApi } from '@/api'
+import type { MemberEngineStatus, MemberEnrichment } from '@/types'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
+import ProfileDisplay from '@/components/member/ProfileDisplay.vue'
+import BaseModal from '@/components/common/BaseModal.vue'
 import {
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  TransitionChild,
-  TransitionRoot
-} from '@headlessui/vue'
-import {
-  ArrowLeftIcon,
-  UserCircleIcon,
-  MapPinIcon,
-  LinkIcon,
   ExclamationTriangleIcon,
-  SparklesIcon
+  SparklesIcon,
+  StarIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -35,11 +29,35 @@ const showDeactivateModal = ref(false)
 const deactivateReason = ref('')
 const promotingToScout = ref(false)
 
-const statusBadgeClasses: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-green-100 text-green-800',
-  declined: 'bg-red-100 text-red-800',
-  deactivated: 'bg-gray-100 text-gray-800'
+const statusCodeClasses: Record<string, string> = {
+  pending: 'text-amber-600',
+  approved: 'text-senpai-700',
+  declined: 'text-red-500',
+  deactivated: 'text-gray-400'
+}
+const statusCodeLabel: Record<string, string> = {
+  pending: 'PENDING',
+  approved: 'APPROVED',
+  declined: 'DECLINED',
+  deactivated: 'OFF'
+}
+const roleBadge: Record<string, string> = {
+  admin: 'bg-red-50 text-red-700',
+  scout: 'bg-amber-50 text-amber-700'
+}
+const specialRoles = computed(() =>
+  (adminStore.currentMember?.member.roles || []).filter((r) => r.name === 'admin' || r.name === 'scout')
+)
+
+// Cohort/pod placement — same roster endpoint the Members list uses.
+const rosterEntry = ref<MemberEngineStatus | null>(null)
+async function loadRoster() {
+  try {
+    const res = await adminEngineApi.memberRoster()
+    rosterEntry.value = (res.data ?? []).find((r) => r.member_id === route.params.id) ?? null
+  } catch {
+    rosterEntry.value = null
+  }
 }
 
 const experienceLevelLabels: Record<string, string> = {
@@ -49,10 +67,79 @@ const experienceLevelLabels: Record<string, string> = {
   senior: 'Senior (5+ years)'
 }
 
+// Profiles are fully visible across the collective — admins see the exact
+// same enrichment data (MBTI, goal, school/work status, logistics) a peer
+// sees in the directory, not a trimmed-down summary.
+const enrichment = ref<MemberEnrichment | null>(null)
+async function loadEnrichment() {
+  try {
+    const res = await engineApi.getMemberEnrichment(route.params.id as string)
+    enrichment.value = res.data ?? null
+  } catch {
+    enrichment.value = null
+  }
+}
+
 onMounted(async () => {
   loading.value = true
-  await adminStore.fetchMember(route.params.id as string)
+  await Promise.all([adminStore.fetchMember(route.params.id as string), loadRoster(), loadEnrichment()])
   loading.value = false
+})
+
+const workLabels: Record<string, string> = {
+  student: 'Student', employed: 'Employed', freelance: 'Freelance',
+  founder: 'Founder, building', between_roles: 'Between roles', other: 'Other'
+}
+const schoolLabels: Record<string, string> = {
+  not_student: 'Not a student', undergrad: 'Undergrad', postgrad: 'Postgrad',
+  bootcamp: 'Bootcamp', graduated: 'Graduated'
+}
+const schoolLine = computed(() => {
+  const e = enrichment.value
+  if (!e?.school_status || e.school_status === 'not_student') return ''
+  const label = schoolLabels[e.school_status] || e.school_status
+  return e.school_name ? `${label}, ${e.school_name}` : label
+})
+const workLine = computed(() => {
+  const e = enrichment.value
+  if (!e?.work_status) return ''
+  const base = workLabels[e.work_status] || e.work_status
+  return e.weekly_commitment_hours ? `${base} · ${e.weekly_commitment_hours} hrs/week` : base
+})
+const birthdayLine = computed(() => {
+  const dob = enrichment.value?.date_of_birth
+  if (!dob) return ''
+  return `Born ${new Date(dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
+})
+const logisticsLine = computed(() => {
+  const e = enrichment.value
+  return [e?.timezone, e?.languages, birthdayLine.value].filter(Boolean).join(' · ')
+})
+
+// Real profile view — the same ProfileDisplay component used everywhere else
+// in the app (directory, own profile), so admins see the actual profile
+// instead of a bespoke, less complete summary.
+const profileSubtitle = computed(() => {
+  const p = adminStore.currentMember?.member.profile
+  const role = p?.primary_skill?.name
+  const location = [p?.city, p?.country].filter(Boolean).join(', ')
+  return [role, location].filter(Boolean).join(' · ')
+})
+const profileMemberSince = computed(() => {
+  const created = adminStore.currentMember?.member.created_at
+  if (!created) return ''
+  return `Member since ${new Date(created).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+})
+const profileLinks = computed(() => {
+  const p = adminStore.currentMember?.member.profile
+  const links: { label: string; url: string }[] = []
+  if (p?.portfolio_url) links.push({ label: 'Portfolio', url: p.portfolio_url })
+  for (const l of p?.additional_links || []) {
+    const url = typeof l === 'string' ? l : l.url
+    const label = typeof l === 'string' ? 'Link' : l.label || 'Link'
+    if (url) links.push({ label, url })
+  }
+  return links
 })
 
 async function handleDeactivate() {
@@ -95,24 +182,71 @@ async function handlePromoteToScout() {
   promotingToScout.value = false
 }
 
+const reactivating = ref(false)
+async function handleReactivate() {
+  reactivating.value = true
+  error.value = null
+  const result = await adminStore.reactivateMember(route.params.id as string)
+  if (result.success) {
+    await adminStore.fetchMember(route.params.id as string)
+  } else {
+    error.value = result.error || 'Failed to reactivate member'
+  }
+  reactivating.value = false
+}
+
+const approving = ref(false)
+async function handleApprove() {
+  approving.value = true
+  error.value = null
+  const result = await adminStore.approveApplication(route.params.id as string)
+  if (result.success) {
+    await adminStore.fetchMember(route.params.id as string)
+  } else {
+    error.value = result.error || 'Failed to approve application'
+  }
+  approving.value = false
+}
+
+const declining = ref(false)
+async function handleDecline() {
+  const reason = prompt('Decline reason (sent in their email, optional):')
+  if (reason === null) return
+  declining.value = true
+  error.value = null
+  const result = await adminStore.declineApplication(route.params.id as string, reason || 'Not specified')
+  if (result.success) {
+    await adminStore.fetchMember(route.params.id as string)
+  } else {
+    error.value = result.error || 'Failed to decline application'
+  }
+  declining.value = false
+}
+
 const isScout = () => {
   return adminStore.currentMember?.member?.roles?.some(r => r.name === 'scout') ||
          adminStore.currentMember?.member?.scout != null
 }
+
+const stateBadge: Record<string, string> = {
+  accepted: 'bg-gray-100 text-gray-700',
+  inducted: 'bg-blue-100 text-blue-700',
+  active: 'bg-green-100 text-green-700',
+  withdrawn: 'bg-red-100 text-red-700'
+}
+function lastActive(iso?: string | null) {
+  if (!iso) return 'Never'
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+  if (days <= 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 30) return `${days}d ago`
+  return `${Math.floor(days / 30)}mo ago`
+}
 </script>
 
 <template>
-  <AppLayout>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Back Link -->
-      <RouterLink
-        to="/admin/members"
-        class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeftIcon class="h-4 w-4 mr-1" />
-        Back to Members
-      </RouterLink>
-
+  <AdminLayout back-to="/admin/members" back-label="Back to Members">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-12">
         <LoadingSpinner size="lg" />
@@ -135,220 +269,179 @@ const isScout = () => {
           {{ error }}
         </BaseAlert>
 
-        <!-- Header -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center">
-              <div v-if="adminStore.currentMember.member.profile?.photo_url" class="h-16 w-16 rounded-full overflow-hidden">
-                <img :src="adminStore.currentMember.member.profile.photo_url" :alt="adminStore.currentMember.member.profile?.full_name" class="h-full w-full object-cover" />
+        <div class="flex flex-col lg:flex-row gap-6 items-start">
+          <!-- Main column -->
+          <div class="flex-1 min-w-0 w-full space-y-6">
+            <!-- The real profile — same component used in the directory and own-profile view -->
+            <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8">
+              <ProfileDisplay
+                :full-name="adminStore.currentMember.member.profile?.full_name"
+                :photo-url="adminStore.currentMember.member.profile?.photo_url"
+                :is-o-g-member="adminStore.currentMember.member.profile?.is_og_member"
+                :roles="adminStore.currentMember.member.roles"
+                :mbti="enrichment?.mbti || undefined"
+                :subtitle="profileSubtitle"
+                :experience-label="experienceLevelLabels[adminStore.currentMember.member.profile?.experience_level || 'none']"
+                :member-since="profileMemberSince"
+                :goal="enrichment?.goal || undefined"
+                :bio="adminStore.currentMember.member.profile?.bio"
+                :school-line="schoolLine"
+                :skills="adminStore.currentMember.member.skills"
+                :primary-skill-id="adminStore.currentMember.member.profile?.primary_skill_id"
+                :recent-work="adminStore.currentMember.member.profile?.recent_work"
+                :work-line="workLine"
+                :unique-view="adminStore.currentMember.member.profile?.unique_view"
+                :links="profileLinks"
+                :logistics-line="logisticsLine"
+              />
+            </div>
+
+            <!-- Cover Letter (if provided) — application-review context, not part of the profile itself -->
+            <div v-if="adminStore.currentMember.member.profile?.cover_letter" class="bg-white rounded-2xl border border-gray-200 p-6">
+              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Why they want to join</p>
+              <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile.cover_letter }}</p>
+            </div>
+
+            <!-- Admin Notes -->
+            <div v-if="adminStore.currentMember.admin_notes && adminStore.currentMember.admin_notes.length > 0" class="bg-white rounded-2xl border border-gray-200 p-6">
+              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Admin notes</p>
+              <div class="space-y-4">
+                <div
+                  v-for="note in adminStore.currentMember.admin_notes"
+                  :key="note.id"
+                  class="border-l-2 border-senpai-200 pl-4"
+                >
+                  <p class="text-gray-700">{{ note.note_text }}</p>
+                  <p class="text-xs font-mono text-gray-400 mt-1">
+                    {{ note.admin.full_name }} · {{ new Date(note.created_at).toLocaleDateString() }}
+                  </p>
+                </div>
               </div>
-              <div v-else class="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center">
-                <UserCircleIcon class="h-12 w-12 text-gray-400" />
+            </div>
+          </div>
+
+          <!-- Sidebar — status, quick facts, actions. Sticky so actions never require scrolling to find. -->
+          <div class="w-full lg:w-72 shrink-0 lg:sticky lg:top-6 space-y-4">
+            <div class="bg-white rounded-2xl border border-gray-200 p-5">
+              <div class="flex items-center justify-between mb-3">
+                <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400">// Status</p>
+                <span class="text-xs font-mono font-medium tracking-wide" :class="statusCodeClasses[adminStore.currentMember.member.status]">
+                  {{ statusCodeLabel[adminStore.currentMember.member.status] }}
+                </span>
               </div>
-              <div class="ml-4">
-                <h1 class="text-xl font-bold text-gray-900">{{ adminStore.currentMember.member.profile?.full_name }}</h1>
-                <p class="text-gray-600">{{ adminStore.currentMember.member.email }}</p>
+
+              <div v-if="specialRoles.length" class="flex flex-wrap gap-1.5 mb-3">
+                <span v-for="r in specialRoles" :key="r.name" class="text-[11px] font-medium capitalize px-2 py-0.5 rounded-full" :class="roleBadge[r.name]">{{ r.name }}</span>
               </div>
-            </div>
-            <div class="mt-4 sm:mt-0">
-              <span
-                :class="[
-                  'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize',
-                  statusBadgeClasses[adminStore.currentMember.member.status]
-                ]"
-              >
-                {{ adminStore.currentMember.member.status }}
-              </span>
-            </div>
-          </div>
 
-          <!-- Quick Info -->
-          <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p class="text-gray-500">Primary Skill</p>
-              <p class="font-medium">{{ adminStore.currentMember.member.profile?.primary_skill?.name || 'N/A' }}</p>
+              <dl class="space-y-2.5 text-sm">
+                <div>
+                  <dt class="text-xs text-gray-400">Skill</dt>
+                  <dd class="text-gray-900">{{ adminStore.currentMember.member.profile?.primary_skill?.name || '—' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-gray-400">Location</dt>
+                  <dd class="text-gray-900">{{ adminStore.currentMember.member.profile?.city ? `${adminStore.currentMember.member.profile.city}, ${adminStore.currentMember.member.profile.country}` : '—' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-gray-400">Cohort / Pod</dt>
+                  <dd v-if="rosterEntry" class="text-gray-900">
+                    {{ rosterEntry.cohort_name }}<span v-if="rosterEntry.pod_name"> · {{ rosterEntry.pod_name }}</span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 ml-1 rounded text-xs font-medium capitalize" :class="stateBadge[rosterEntry.state]">{{ rosterEntry.state }}</span>
+                  </dd>
+                  <dd v-else class="text-gray-400">Not in a cohort</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-gray-400">Last active</dt>
+                  <dd class="font-mono text-xs text-gray-500">{{ rosterEntry ? lastActive(rosterEntry.last_active_at) : '—' }}</dd>
+                </div>
+                <div>
+                  <dt class="text-xs text-gray-400">Joined</dt>
+                  <dd class="font-mono text-xs text-gray-500">{{ new Date(adminStore.currentMember.member.created_at).toLocaleDateString() }}</dd>
+                </div>
+                <div v-if="adminStore.currentMember.member.referred_by_scout_name">
+                  <dt class="text-xs text-gray-400">Referred by</dt>
+                  <dd class="text-gray-900 inline-flex items-center gap-1.5">
+                    <span class="h-5 w-5 rounded-full overflow-hidden shrink-0 bg-amber-100">
+                      <img v-if="adminStore.currentMember.member.referred_by_scout_photo_url" :src="adminStore.currentMember.member.referred_by_scout_photo_url" :alt="adminStore.currentMember.member.referred_by_scout_name" class="h-full w-full object-cover" />
+                      <span v-else class="h-full w-full flex items-center justify-center">
+                        <StarIcon class="h-3 w-3 text-amber-500" />
+                      </span>
+                    </span>
+                    {{ adminStore.currentMember.member.referred_by_scout_name }}
+                  </dd>
+                </div>
+                <div v-if="adminStore.currentMember.member.scout_note">
+                  <dt class="text-xs text-gray-400">Scout's note</dt>
+                  <dd class="text-gray-900 italic">"{{ adminStore.currentMember.member.scout_note }}"</dd>
+                </div>
+              </dl>
             </div>
-            <div>
-              <p class="text-gray-500">Experience</p>
-              <p class="font-medium">{{ experienceLevelLabels[adminStore.currentMember.member.profile?.experience_level || 'none'] }}</p>
+
+            <div class="bg-white rounded-2xl border border-gray-200 p-5">
+              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Actions</p>
+
+              <div v-if="adminStore.currentMember.member.status === 'pending'" class="flex flex-col gap-2">
+                <BaseButton class="w-full" :loading="approving" @click="handleApprove">Approve application</BaseButton>
+                <BaseButton class="w-full" variant="danger" :loading="declining" @click="handleDecline">
+                  <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
+                  Decline application
+                </BaseButton>
+              </div>
+
+              <div v-else-if="adminStore.currentMember.member.status === 'approved'" class="flex flex-col gap-2">
+                <BaseButton
+                  v-if="!isScout()"
+                  class="w-full"
+                  @click="handlePromoteToScout"
+                  :loading="promotingToScout"
+                >
+                  <SparklesIcon class="h-5 w-5 mr-2" />
+                  Promote to Scout
+                </BaseButton>
+                <div v-else class="flex items-center text-sm text-senpai-700 bg-senpai-50 px-3 py-2 rounded-lg">
+                  <SparklesIcon class="h-5 w-5 mr-2" />
+                  This member is a Scout
+                </div>
+                <BaseButton class="w-full" variant="danger" @click="showDeactivateModal = true">
+                  <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
+                  Deactivate Member
+                </BaseButton>
+              </div>
+
+              <div v-else-if="adminStore.currentMember.member.status === 'deactivated'" class="flex flex-col gap-2">
+                <BaseButton class="w-full" :loading="reactivating" @click="handleReactivate">Reactivate member</BaseButton>
+              </div>
+
+              <p v-else class="text-sm text-gray-500">No actions available for a declined application.</p>
             </div>
-            <div>
-              <p class="text-gray-500">Location</p>
-              <p class="font-medium">{{ adminStore.currentMember.member.profile?.city }}, {{ adminStore.currentMember.member.profile?.country }}</p>
-            </div>
-            <div>
-              <p class="text-gray-500">Joined</p>
-              <p class="font-medium">{{ new Date(adminStore.currentMember.member.created_at).toLocaleDateString() }}</p>
-            </div>
-          </div>
-
-          <!-- Roles -->
-          <div v-if="adminStore.currentMember.member.roles && adminStore.currentMember.member.roles.length > 0" class="mt-4">
-            <p class="text-sm text-gray-500 mb-2">Roles</p>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="role in adminStore.currentMember.member.roles"
-                :key="role.id"
-                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800 capitalize"
-              >
-                {{ role.name }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bio -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Bio</h2>
-          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile?.bio || 'No bio provided.' }}</p>
-        </div>
-
-        <!-- Recent Work -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Recent Work</h2>
-          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile?.recent_work || 'Not provided.' }}</p>
-        </div>
-
-        <!-- Unique View -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Unique View on Life</h2>
-          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile?.unique_view || 'Not provided.' }}</p>
-        </div>
-
-        <!-- Cover Letter (if provided) -->
-        <div v-if="adminStore.currentMember.member.profile?.cover_letter" class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Why they want to join</h2>
-          <p class="text-gray-700 whitespace-pre-line">{{ adminStore.currentMember.member.profile.cover_letter }}</p>
-        </div>
-
-        <!-- Portfolio -->
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Portfolio & Links</h2>
-          <div class="space-y-2">
-            <a
-              v-if="adminStore.currentMember.member.profile?.portfolio_url"
-              :href="adminStore.currentMember.member.profile.portfolio_url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center text-indigo-600 hover:text-indigo-800"
-            >
-              <LinkIcon class="h-4 w-4 mr-2" />
-              {{ adminStore.currentMember.member.profile.portfolio_url }}
-            </a>
-            <a
-              v-for="(link, index) in adminStore.currentMember.member.profile?.additional_links"
-              :key="index"
-              :href="link.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center text-indigo-600 hover:text-indigo-800"
-            >
-              <LinkIcon class="h-4 w-4 mr-2" />
-              {{ link.label || link.url }}
-            </a>
-          </div>
-        </div>
-
-        <!-- Admin Notes -->
-        <div v-if="adminStore.currentMember.admin_notes && adminStore.currentMember.admin_notes.length > 0" class="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Admin Notes</h2>
-          <div class="space-y-4">
-            <div
-              v-for="note in adminStore.currentMember.admin_notes"
-              :key="note.id"
-              class="border-l-4 border-gray-300 pl-4"
-            >
-              <p class="text-gray-700">{{ note.note_text }}</p>
-              <p class="text-sm text-gray-500 mt-1">
-                {{ note.admin.full_name }} · {{ new Date(note.created_at).toLocaleDateString() }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div v-if="adminStore.currentMember.member.status === 'approved'" class="bg-white rounded-lg shadow-sm p-6">
-          <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions</h2>
-          <div class="flex flex-wrap gap-3">
-            <BaseButton
-              v-if="!isScout()"
-              @click="handlePromoteToScout"
-              :loading="promotingToScout"
-            >
-              <SparklesIcon class="h-5 w-5 mr-2" />
-              Promote to Scout
-            </BaseButton>
-            <div v-else class="flex items-center text-sm text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg">
-              <SparklesIcon class="h-5 w-5 mr-2" />
-              This member is a Scout
-            </div>
-            <BaseButton variant="danger" @click="showDeactivateModal = true">
-              <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
-              Deactivate Member
-            </BaseButton>
           </div>
         </div>
       </template>
     </div>
 
     <!-- Deactivate Modal -->
-    <TransitionRoot :show="showDeactivateModal" as="template">
-      <Dialog class="relative z-50" @close="showDeactivateModal = false">
-        <TransitionChild
-          enter="ease-out duration-300"
-          enter-from="opacity-0"
-          enter-to="opacity-100"
-          leave="ease-in duration-200"
-          leave-from="opacity-100"
-          leave-to="opacity-0"
-        >
-          <div class="fixed inset-0 bg-gray-500 bg-opacity-75" />
-        </TransitionChild>
-
-        <div class="fixed inset-0 z-10 overflow-y-auto">
-          <div class="flex min-h-full items-center justify-center p-4">
-            <TransitionChild
-              enter="ease-out duration-300"
-              enter-from="opacity-0 scale-95"
-              enter-to="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leave-from="opacity-100 scale-100"
-              leave-to="opacity-0 scale-95"
-            >
-              <DialogPanel class="w-full max-w-md transform rounded-lg bg-white p-6 shadow-xl transition-all">
-                <DialogTitle class="text-lg font-semibold text-gray-900 mb-4">
-                  Deactivate Member
-                </DialogTitle>
-
-                <BaseAlert v-if="error" type="error" class="mb-4">
-                  {{ error }}
-                </BaseAlert>
-
-                <p class="text-sm text-gray-600 mb-4">
-                  Are you sure you want to deactivate this member? They will no longer be able to access the platform.
-                </p>
-
-                <BaseTextarea
-                  v-model="deactivateReason"
-                  label="Reason for Deactivation"
-                  placeholder="Explain why this member is being deactivated..."
-                  :rows="3"
-                  required
-                />
-
-                <div class="mt-6 flex gap-3 justify-end">
-                  <BaseButton variant="outline" @click="showDeactivateModal = false">
-                    Cancel
-                  </BaseButton>
-                  <BaseButton variant="danger" :loading="actionLoading" @click="handleDeactivate">
-                    Deactivate
-                  </BaseButton>
-                </div>
-              </DialogPanel>
-            </TransitionChild>
-          </div>
+    <BaseModal :show="showDeactivateModal" title="Deactivate member" @close="showDeactivateModal = false">
+      <div class="space-y-4">
+        <div class="flex items-start gap-3 bg-red-50 rounded-xl p-4">
+          <ExclamationTriangleIcon class="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+          <p class="text-sm text-red-800">
+            {{ adminStore.currentMember?.member.profile?.full_name }} will lose access to the platform immediately. You can reactivate them later.
+          </p>
         </div>
-      </Dialog>
-    </TransitionRoot>
-  </AppLayout>
+        <BaseAlert v-if="error" type="error">{{ error }}</BaseAlert>
+        <BaseTextarea
+          v-model="deactivateReason"
+          label="Reason (internal only)"
+          placeholder="Explain why this member is being deactivated..."
+          :rows="3"
+          required
+        />
+      </div>
+      <template #footer>
+        <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="showDeactivateModal = false">Cancel</button>
+        <BaseButton variant="danger" :loading="actionLoading" @click="handleDeactivate">Deactivate</BaseButton>
+      </template>
+    </BaseModal>
+  </AdminLayout>
 </template>

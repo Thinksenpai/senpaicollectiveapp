@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { apiClient } from '@/api'
 
 // SEO metadata for pages
 interface RouteMeta {
@@ -140,6 +141,28 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      // The cohort hub now lives on the dashboard.
+      path: '/cohort',
+      redirect: '/dashboard'
+    },
+    {
+      path: '/tasks',
+      name: 'my-tasks',
+      component: () => import('@/views/member/MemberTasksPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/tasks/:id',
+      name: 'my-task-detail',
+      component: () => import('@/views/member/MemberTaskDetailPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      // The enhanced profile is now consolidated into the single profile edit page.
+      path: '/enrichment',
+      redirect: '/profile/edit'
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('@/views/member/ProfilePage.vue'),
@@ -240,6 +263,18 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
+      path: '/admin/cohorts',
+      name: 'admin-cohorts',
+      component: () => import('@/views/admin/AdminCohortsPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Cohorts | Admin' }
+    },
+    {
+      path: '/admin/tasks',
+      name: 'admin-tasks',
+      component: () => import('@/views/admin/AdminTasksPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Tasks | Admin' }
+    },
+    {
       path: '/admin/analytics',
       name: 'admin-analytics',
       component: () => import('@/views/admin/AnalyticsPage.vue'),
@@ -293,8 +328,13 @@ router.beforeEach(async (to, _from, next) => {
     descriptionMeta.setAttribute('content', meta.description)
   }
 
-  // If we have a token but no member data, fetch it
-  if (authStore.isAuthenticated && !authStore.member) {
+  // If we have a token but haven't loaded the member yet (e.g. a fresh page
+  // load/reload, where Pinia state resets but localStorage persists), fetch
+  // it now. NOTE: this must check the raw token, not authStore.isAuthenticated —
+  // that computed already requires `member` to be set, so checking it here
+  // would always be false on a cold load and this fetch would never run,
+  // silently bouncing a validly-logged-in user to /login.
+  if (apiClient.getToken() && !authStore.member) {
     await authStore.fetchCurrentMember()
   }
 

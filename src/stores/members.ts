@@ -69,7 +69,10 @@ export const useMembersStore = defineStore('members', () => {
           badges: rawMember.badges || [],
           roles: rawMember.roles || [],
           recent_work: rawMember.recent_work || profile?.recent_work,
-          unique_view: rawMember.unique_view || profile?.unique_view
+          unique_view: rawMember.unique_view || profile?.unique_view,
+          cohort_name: rawMember.cohort_name ?? null,
+          cohort_status: rawMember.cohort_status ?? null,
+          pod_name: rawMember.pod_name ?? null
         }
 
         currentMember.value = normalizedMember

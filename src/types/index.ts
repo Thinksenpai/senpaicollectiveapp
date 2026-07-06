@@ -76,10 +76,15 @@ export interface Member {
   created_at: string
   updated_at: string
   approved_at?: string
+  decline_reason?: string
   profile?: MemberProfile
   skills?: Skill[]
   roles?: Role[]
   scout?: Scout | null
+  referred_by_scout_id?: string
+  referred_by_scout_name?: string
+  referred_by_scout_photo_url?: string
+  scout_note?: string
 }
 
 export interface PublicMemberProfile {
@@ -97,6 +102,9 @@ export interface PublicMemberProfile {
   member_since: string
   badges?: string[]
   roles?: Role[]
+  cohort_name?: string | null
+  cohort_status?: string | null
+  pod_name?: string | null
   recent_work?: string
   unique_view?: string
 }
@@ -137,6 +145,7 @@ export interface ScoutRecruit {
   scout_note?: string
   registered_at?: string
   application_status: 'pending' | 'approved' | 'declined'
+  decline_reason?: string
   member_id?: string
   full_name?: string
   email?: string
@@ -144,6 +153,7 @@ export interface ScoutRecruit {
   country?: string
   primary_skill?: string
   experience_level?: ExperienceLevel
+  photo_url?: string
 }
 
 export interface ScoutStats {
@@ -444,6 +454,10 @@ export interface Application {
   status: MemberStatus
   created_at: string
   updated_at: string
+  decline_reason?: string
+  referred_by_scout_name?: string
+  referred_by_scout_photo_url?: string
+  scout_note?: string
   profile: MemberProfile
 }
 
@@ -483,6 +497,7 @@ export interface MemberFilters {
 }
 
 export interface ApplicationFilters {
+  status?: 'pending' | 'declined'
   limit?: number
   offset?: number
 }
@@ -493,3 +508,4 @@ export interface AdminMemberFilters {
   limit?: number
   offset?: number
 }
+export * from './engine'

@@ -2,20 +2,18 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { membersApi } from '@/api'
+import { membersApi, engineApi } from '@/api'
+import type { WorkStatus, SchoolStatus, EnrichmentPayload } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
+import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
 import {
   UserCircleIcon,
-  MapPinIcon,
-  LinkIcon,
-  PencilIcon,
-  CheckIcon,
-  XMarkIcon,
-  PlusIcon
+  PlusIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -24,27 +22,9 @@ const authStore = useAuthStore()
 const loading = ref(false)
 const error = ref<string | null>(null)
 const success = ref(false)
-
-// Track which section is being edited
-const editingSection = ref<string | null>(null)
-
-const form = ref({
-  full_name: '',
-  phone: '',
-  city: '',
-  country: '',
-  bio: '',
-  recent_work: '',
-  unique_view: '',
-  portfolio_url: '',
-  additional_links: [{ label: '', url: '' }] as { label: string; url: string }[],
-  photo_url: ''
-})
-
-// Store original values for cancel functionality
-const originalForm = ref({ ...form.value })
-
 const errors = ref<Record<string, string>>({})
+const photoUploading = ref(false)
+const photoInput = ref<HTMLInputElement | null>(null)
 
 const profile = computed(() => authStore.member?.profile)
 const member = computed(() => authStore.member)
@@ -56,120 +36,147 @@ const experienceLevelLabels: Record<string, string> = {
   senior: 'Senior (5+ years)'
 }
 
-const badges = computed(() => {
-  const result: string[] = []
-  if (profile.value?.is_og_member) result.push('OG Member')
-  if (authStore.isScout) result.push('Scout')
-  if (authStore.isAdmin) result.push('Admin')
-  return result
+const form = ref({
+  full_name: '',
+  phone: '',
+  city: '',
+  country: '',
+  photo_url: '',
+  bio: '',
+  goal: '',
+  work_status: '' as WorkStatus | '',
+  school_status: '' as SchoolStatus | '',
+  school_name: '',
+  timezone: '',
+  date_of_birth: '',
+  mbti: '',
+  job_title: '',
+  organization: '',
+  weekly_commitment_hours: '' as number | '',
+  languages: '',
+  gender: '',
+  recent_work: '',
+  unique_view: '',
+  portfolio_url: '',
+  additional_links: [{ label: '', url: '' }] as { label: string; url: string }[]
 })
 
-onMounted(() => {
-  if (authStore.member?.profile) {
-    const p = authStore.member.profile
-    const formData = {
-      full_name: p.full_name || '',
-      phone: p.phone || '',
-      city: p.city || '',
-      country: p.country || '',
-      bio: p.bio || '',
-      recent_work: p.recent_work || '',
-      unique_view: p.unique_view || '',
-      portfolio_url: p.portfolio_url || '',
-      additional_links: p.additional_links && p.additional_links.length > 0
-        ? p.additional_links.map(link => ({
-            label: typeof link === 'string' ? '' : (link.label || ''),
-            url: typeof link === 'string' ? link : link.url
-          }))
-        : [{ label: '', url: '' }],
-      photo_url: p.photo_url || ''
+const timezoneOptions = [
+  'Africa/Lagos', 'Africa/Accra', 'Africa/Abidjan', 'Africa/Nairobi', 'Africa/Cairo',
+  'Africa/Johannesburg', 'Africa/Kigali', 'Africa/Casablanca', 'Europe/London',
+  'Europe/Berlin', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'Asia/Dubai'
+].map((t) => ({ value: t, label: t }))
+const workStatusOptions = [
+  { value: 'student', label: 'Student' },
+  { value: 'employed', label: 'Employed' },
+  { value: 'freelance', label: 'Freelance' },
+  { value: 'founder', label: 'Founder, building' },
+  { value: 'between_roles', label: 'Between roles' },
+  { value: 'other', label: 'Other' }
+]
+const schoolStatusOptions = [
+  { value: 'not_student', label: 'Not a student' },
+  { value: 'undergrad', label: 'Undergrad' },
+  { value: 'postgrad', label: 'Postgrad' },
+  { value: 'bootcamp', label: 'Bootcamp / self-taught' },
+  { value: 'graduated', label: 'Graduated' }
+]
+const mbtiOptions = [
+  'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
+  'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP'
+].map((t) => ({ value: t, label: t }))
+
+const showSchoolName = computed(() => !!form.value.school_status && form.value.school_status !== 'not_student')
+
+onMounted(async () => {
+  if (profile.value) {
+    const p = profile.value
+    form.value.full_name = p.full_name || ''
+    form.value.phone = p.phone || ''
+    form.value.city = p.city || ''
+    form.value.country = p.country || ''
+    form.value.photo_url = p.photo_url || ''
+    form.value.bio = p.bio || ''
+    form.value.recent_work = p.recent_work || ''
+    form.value.unique_view = p.unique_view || ''
+    form.value.portfolio_url = p.portfolio_url || ''
+    form.value.additional_links = p.additional_links && p.additional_links.length > 0
+      ? p.additional_links.map((link) => ({
+          label: typeof link === 'string' ? '' : (link.label || ''),
+          url: typeof link === 'string' ? link : link.url
+        }))
+      : [{ label: '', url: '' }]
+  }
+
+  try {
+    const res = await engineApi.getEnrichment()
+    const e = res.data
+    if (e) {
+      form.value.goal = e.goal || ''
+      form.value.timezone = e.timezone || ''
+      form.value.date_of_birth = e.date_of_birth ? e.date_of_birth.slice(0, 10) : ''
+      form.value.work_status = (e.work_status as WorkStatus) || ''
+      form.value.school_status = (e.school_status as SchoolStatus) || ''
+      form.value.school_name = e.school_name || ''
+      form.value.mbti = e.mbti || ''
+      form.value.job_title = e.job_title || ''
+      form.value.organization = e.organization || ''
+      form.value.weekly_commitment_hours = e.weekly_commitment_hours ?? ''
+      form.value.languages = e.languages || ''
+      form.value.gender = e.gender || ''
     }
-    form.value = { ...formData }
-    originalForm.value = JSON.parse(JSON.stringify(formData))
+  } catch {
+    // no enrichment yet — the form just starts empty
   }
 })
 
-function startEditing(section: string) {
-  editingSection.value = section
-  // Store current values for potential cancel
-  originalForm.value = JSON.parse(JSON.stringify(form.value))
-}
-
-function cancelEditing() {
-  // Restore original values
-  form.value = JSON.parse(JSON.stringify(originalForm.value))
-  editingSection.value = null
+function validate(): boolean {
   errors.value = {}
-}
-
-function validateSection(section: string): boolean {
-  errors.value = {}
-
-  if (section === 'header') {
-    if (!form.value.full_name || form.value.full_name.length < 2) {
-      errors.value.full_name = 'Full name must be at least 2 characters'
-    }
+  if (!form.value.full_name || form.value.full_name.length < 2) {
+    errors.value.full_name = 'Full name must be at least 2 characters'
   }
-
-  if (section === 'location') {
-    if (!form.value.city || form.value.city.length < 2) {
-      errors.value.city = 'City is required'
-    }
-    if (!form.value.country || form.value.country.length < 2) {
-      errors.value.country = 'Country is required'
-    }
+  if (!form.value.city || form.value.city.length < 2) {
+    errors.value.city = 'City is required'
   }
-
-  if (section === 'bio') {
-    if (!form.value.bio || form.value.bio.length < 10) {
-      errors.value.bio = 'Bio must be at least 10 characters'
-    }
+  if (!form.value.country || form.value.country.length < 2) {
+    errors.value.country = 'Country is required'
   }
-
-  if (section === 'recent_work') {
-    if (!form.value.recent_work || form.value.recent_work.length < 10) {
-      errors.value.recent_work = 'Please tell us about your recent work'
-    }
+  if (!form.value.bio || form.value.bio.length < 10) {
+    errors.value.bio = 'Bio must be at least 10 characters'
   }
-
-  if (section === 'unique_view') {
-    if (!form.value.unique_view || form.value.unique_view.length < 10) {
-      errors.value.unique_view = 'Please share your unique view'
-    }
+  if (form.value.portfolio_url && !/^https?:\/\/.+/.test(ensureHttps(form.value.portfolio_url))) {
+    errors.value.portfolio_url = 'Please enter a valid URL'
   }
-
-  if (section === 'links') {
-    if (!form.value.portfolio_url) {
-      errors.value.portfolio_url = 'Portfolio URL is required'
-    } else if (!/^https?:\/\/.+/.test(form.value.portfolio_url)) {
-      errors.value.portfolio_url = 'Please enter a valid URL'
-    }
-  }
-
   return Object.keys(errors.value).length === 0
 }
 
 function ensureHttps(url: string): string {
   if (!url) return url
-  if (!/^https?:\/\//i.test(url)) {
-    return `https://${url}`
-  }
-  return url
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
 }
 
-async function saveSection(section: string) {
-  if (!validateSection(section)) return
+function addLink() {
+  if (form.value.additional_links.length < 5) {
+    form.value.additional_links.push({ label: '', url: '' })
+  }
+}
+function removeLink(index: number) {
+  if (form.value.additional_links.length > 1) {
+    form.value.additional_links.splice(index, 1)
+  }
+}
 
+async function save() {
+  if (!validate()) {
+    error.value = 'Please fix the highlighted fields'
+    return
+  }
   loading.value = true
   error.value = null
-
   try {
     const additionalLinks = form.value.additional_links
-      .filter(link => link.url.trim() !== '')
-      .map(link => ({
-        label: link.label.trim() || undefined,
-        url: ensureHttps(link.url)
-      }))
+      .filter((l) => l.url.trim() !== '')
+      .map((l) => ({ label: l.label.trim() || undefined, url: ensureHttps(l.url) }))
 
     await membersApi.updateMe({
       full_name: form.value.full_name,
@@ -179,414 +186,212 @@ async function saveSection(section: string) {
       bio: form.value.bio,
       recent_work: form.value.recent_work || undefined,
       unique_view: form.value.unique_view || undefined,
-      portfolio_url: ensureHttps(form.value.portfolio_url),
+      portfolio_url: form.value.portfolio_url ? ensureHttps(form.value.portfolio_url) : undefined,
       additional_links: additionalLinks.length > 0 ? additionalLinks : undefined,
       photo_url: form.value.photo_url || undefined
     })
 
+    const enrichmentPayload: EnrichmentPayload = {
+      goal: form.value.goal || undefined,
+      timezone: form.value.timezone || undefined,
+      date_of_birth: form.value.date_of_birth ? new Date(form.value.date_of_birth).toISOString() : undefined,
+      work_status: (form.value.work_status || undefined) as WorkStatus | undefined,
+      school_status: (form.value.school_status || undefined) as SchoolStatus | undefined,
+      school_name: showSchoolName.value && form.value.school_name ? form.value.school_name : undefined,
+      mbti: form.value.mbti || undefined,
+      job_title: form.value.job_title || undefined,
+      organization: form.value.organization || undefined,
+      weekly_commitment_hours: form.value.weekly_commitment_hours === '' ? undefined : Number(form.value.weekly_commitment_hours),
+      languages: form.value.languages || undefined,
+      gender: form.value.gender || undefined
+    }
+    await engineApi.saveEnrichment(enrichmentPayload)
+
     await authStore.fetchCurrentMember()
-    editingSection.value = null
     success.value = true
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     setTimeout(() => {
       success.value = false
     }, 3000)
   } catch (e: any) {
-    error.value = e.response?.data?.message || e.message || 'Failed to update profile'
+    error.value = e.response?.data?.message || e.message || 'Failed to update your profile'
   } finally {
     loading.value = false
-  }
-}
-
-function addLink() {
-  if (form.value.additional_links.length < 5) {
-    form.value.additional_links.push({ label: '', url: '' })
-  }
-}
-
-function removeLink(index: number) {
-  if (form.value.additional_links.length > 1) {
-    form.value.additional_links.splice(index, 1)
   }
 }
 
 function goBack() {
   router.push('/profile')
 }
+
+function pickPhoto() {
+  photoInput.value?.click()
+}
+
+async function onPhotoSelected(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  photoUploading.value = true
+  error.value = null
+  try {
+    const res = await membersApi.uploadPhoto(file)
+    form.value.photo_url = res.data!.url
+    await authStore.fetchCurrentMember()
+  } catch (e: any) {
+    error.value = e.response?.data?.message || e.message || 'Failed to upload photo'
+  } finally {
+    photoUploading.value = false
+    if (photoInput.value) photoInput.value.value = ''
+  }
+}
 </script>
 
 <template>
   <AppLayout>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Success Alert -->
-      <BaseAlert v-if="success" type="success" class="mb-6" dismissible @dismiss="success = false">
-        Profile updated successfully!
-      </BaseAlert>
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Edit your profile</h1>
+        <button class="text-sm text-gray-500 hover:text-gray-700" @click="goBack">Done</button>
+      </div>
 
-      <!-- Error Alert -->
+      <BaseAlert v-if="success" type="success" class="mb-6" dismissible @dismiss="success = false">
+        Profile updated.
+      </BaseAlert>
       <BaseAlert v-if="error" type="error" class="mb-6" dismissible @dismiss="error = null">
         {{ error }}
       </BaseAlert>
 
-      <!-- Profile Header -->
-      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="h-32 bg-gradient-to-r from-indigo-500 to-purple-600" />
-        <div class="px-6 pb-6">
-          <div class="flex flex-col sm:flex-row sm:items-end -mt-12 sm:-mt-16">
-            <!-- Photo -->
-            <div class="flex-shrink-0 relative group">
-              <div v-if="form.photo_url" class="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white overflow-hidden bg-white">
-                <img :src="form.photo_url" :alt="form.full_name" class="h-full w-full object-cover" />
-              </div>
-              <div v-else class="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center">
-                <UserCircleIcon class="h-16 w-16 sm:h-20 sm:w-20 text-gray-400" />
-              </div>
-              <button
-                v-if="editingSection !== 'photo'"
-                @click="startEditing('photo')"
-                class="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 transition-colors"
-              >
-                <PencilIcon class="h-4 w-4 text-gray-600" />
-              </button>
+      <form class="space-y-10" @submit.prevent="save">
+        <!-- Identity -->
+        <section class="space-y-5">
+          <div class="flex items-center gap-4">
+            <div v-if="form.photo_url" class="h-20 w-20 rounded-full overflow-hidden bg-gray-100 shrink-0">
+              <img :src="form.photo_url" :alt="form.full_name" class="h-full w-full object-cover" />
             </div>
-
-            <!-- Name & Title -->
-            <div class="mt-4 sm:mt-0 sm:ml-6 sm:pb-1 flex-1">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div v-if="editingSection !== 'header'" class="group">
-                  <div class="flex items-center gap-2">
-                    <h1 class="text-2xl font-bold text-gray-900">{{ form.full_name }}</h1>
-                    <button
-                      @click="startEditing('header')"
-                      class="p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <PencilIcon class="h-4 w-4" />
-                    </button>
-                  </div>
-                  <p class="text-gray-600">{{ profile?.primary_skill?.name }}</p>
-                </div>
-                <div v-else class="space-y-3 flex-1 max-w-md">
-                  <BaseInput
-                    v-model="form.full_name"
-                    placeholder="Full Name"
-                    :error="errors.full_name"
-                  />
-                  <div class="flex gap-2">
-                    <BaseButton size="sm" @click="saveSection('header')" :loading="loading">
-                      <CheckIcon class="h-4 w-4 mr-1" />
-                      Save
-                    </BaseButton>
-                    <BaseButton size="sm" variant="outline" @click="cancelEditing">
-                      <XMarkIcon class="h-4 w-4 mr-1" />
-                      Cancel
-                    </BaseButton>
-                  </div>
-                </div>
-                <button
-                  @click="goBack"
-                  class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Done Editing
-                </button>
-              </div>
+            <div v-else class="h-20 w-20 rounded-full bg-senpai-100 flex items-center justify-center shrink-0">
+              <UserCircleIcon class="h-12 w-12 text-senpai-400" />
+            </div>
+            <div class="flex-1">
+              <input
+                ref="photoInput"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                class="hidden"
+                @change="onPhotoSelected"
+              />
+              <BaseButton type="button" variant="secondary" :loading="photoUploading" @click="pickPhoto">
+                {{ form.photo_url ? 'Change photo' : 'Upload photo' }}
+              </BaseButton>
+              <p class="text-xs text-gray-500 mt-1.5">JPEG, PNG, GIF or WebP. Max 5MB.</p>
             </div>
           </div>
 
-          <!-- Photo URL Edit -->
-          <div v-if="editingSection === 'photo'" class="mt-4 p-4 bg-gray-50 rounded-lg">
-            <BaseInput
-              v-model="form.photo_url"
-              label="Photo URL"
-              placeholder="https://example.com/your-photo.jpg"
-              hint="Enter a URL to your profile photo"
-            />
-            <div class="flex gap-2 mt-3">
-              <BaseButton size="sm" @click="saveSection('photo')" :loading="loading">
-                <CheckIcon class="h-4 w-4 mr-1" />
-                Save
-              </BaseButton>
-              <BaseButton size="sm" variant="outline" @click="cancelEditing">
-                <XMarkIcon class="h-4 w-4 mr-1" />
-                Cancel
-              </BaseButton>
-            </div>
-          </div>
+          <BaseInput v-model="form.full_name" label="Full name" :error="errors.full_name" required />
 
-          <!-- Badges -->
-          <div v-if="badges.length > 0" class="mt-4 flex flex-wrap gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseInput v-model="form.city" label="City" :error="errors.city" required />
+            <BaseInput v-model="form.country" label="Country" :error="errors.country" required />
+          </div>
+          <BaseInput v-model="form.phone" label="Phone / WhatsApp" placeholder="+234123456789" />
+
+          <p class="text-sm text-gray-500">
+            Experience level: <span class="text-gray-700">{{ profile?.experience_level ? experienceLevelLabels[profile.experience_level] : 'Not set' }}</span>
+            — set when you applied, not editable here.
+          </p>
+        </section>
+
+        <!-- Goal -->
+        <section>
+          <BaseTextarea
+            v-model="form.goal"
+            label="What does success look like for you in the next 1–3 years?"
+            placeholder="Better clients, remote work, starting a company… whatever sovereignty means to you."
+            :rows="3"
+          />
+        </section>
+
+        <!-- About -->
+        <section class="space-y-5">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">About</h2>
+          <BaseTextarea v-model="form.bio" label="Bio" placeholder="Tell us about yourself, your background, and what you're passionate about." :maxlength="500" :rows="4" :error="errors.bio" required />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseSelect v-model="form.school_status" :options="schoolStatusOptions" label="School status" placeholder="Select" />
+            <BaseInput v-if="showSchoolName" v-model="form.school_name" label="Which school?" placeholder="University of Lagos" />
+          </div>
+        </section>
+
+        <!-- You -->
+        <section class="space-y-5">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">You</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseSelect v-model="form.mbti" :options="mbtiOptions" label="Personality type (MBTI)" placeholder="Select if you know it" />
+            <BaseInput v-model="form.date_of_birth" type="date" label="Date of birth" name="bday" autocomplete="bday" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseInput v-model="form.job_title" label="Current role" placeholder="Product Designer" />
+            <BaseInput v-model="form.organization" label="Organization" placeholder="Where you work" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseSelect v-model="form.work_status" :options="workStatusOptions" label="Work status" placeholder="Select" />
+            <BaseInput v-model="form.weekly_commitment_hours" type="number" label="Hours/week you can commit" placeholder="5" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseSelect v-model="form.timezone" :options="timezoneOptions" label="Timezone" placeholder="Select your timezone" />
+            <BaseInput v-model="form.languages" label="Languages" placeholder="English, Igbo, French" />
+          </div>
+          <BaseInput v-model="form.gender" label="Gender (optional)" placeholder="Self-describe" />
+        </section>
+
+        <!-- Skills (read-only, set at application) -->
+        <section v-if="member?.skills && member.skills.length > 0">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Skills</h2>
+          <div class="flex flex-wrap gap-2">
             <span
-              v-for="badge in badges"
-              :key="badge"
-              class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800"
+              v-for="skill in member.skills"
+              :key="skill.id"
+              :class="[
+                'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
+                skill.id === profile?.primary_skill_id ? 'bg-senpai-100 text-senpai-700' : 'bg-gray-100 text-gray-700'
+              ]"
             >
-              {{ badge }}
+              {{ skill.name }}
             </span>
           </div>
+          <p class="text-sm text-gray-400 mt-2">Skills are set at application and aren't editable here.</p>
+        </section>
 
-          <!-- Location & Member Info -->
-          <div class="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-            <div v-if="editingSection !== 'location'" class="flex items-center group">
-              <MapPinIcon class="h-4 w-4 mr-1" />
-              {{ form.city }}, {{ form.country }}
-              <button
-                @click="startEditing('location')"
-                class="ml-2 p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <PencilIcon class="h-3 w-3" />
-              </button>
-            </div>
-            <div v-else class="flex items-center gap-2 flex-wrap">
-              <BaseInput
-                v-model="form.city"
-                placeholder="City"
-                :error="errors.city"
-                class="w-32"
-              />
-              <BaseInput
-                v-model="form.country"
-                placeholder="Country"
-                :error="errors.country"
-                class="w-32"
-              />
-              <BaseButton size="sm" @click="saveSection('location')" :loading="loading">
-                <CheckIcon class="h-4 w-4" />
-              </BaseButton>
-              <BaseButton size="sm" variant="outline" @click="cancelEditing">
-                <XMarkIcon class="h-4 w-4" />
-              </BaseButton>
-            </div>
-            <div class="flex items-center">
-              <span class="capitalize">{{ experienceLevelLabels[profile?.experience_level || 'none'] }}</span>
-            </div>
-            <div>
-              Member since {{ new Date(member?.created_at || '').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
-            </div>
-          </div>
+        <!-- Building -->
+        <section>
+          <BaseTextarea v-model="form.recent_work" label="Building" placeholder="Tell us about your recent projects, work, or creative endeavors. What are you most proud of?" :maxlength="1000" :rows="4" />
+        </section>
 
-          <!-- Phone (optional display) -->
-          <div v-if="editingSection !== 'phone'" class="mt-3 group">
-            <button
-              @click="startEditing('phone')"
-              class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
-            >
-              {{ form.phone || 'Add phone/WhatsApp' }}
-              <PencilIcon class="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
-          </div>
-          <div v-else class="mt-3 flex items-center gap-2">
-            <BaseInput
-              v-model="form.phone"
-              placeholder="+234123456789"
-              class="w-48"
-            />
-            <BaseButton size="sm" @click="saveSection('phone')" :loading="loading">
-              <CheckIcon class="h-4 w-4" />
-            </BaseButton>
-            <BaseButton size="sm" variant="outline" @click="cancelEditing">
-              <XMarkIcon class="h-4 w-4" />
-            </BaseButton>
-          </div>
-        </div>
-      </div>
+        <!-- Unique view -->
+        <section>
+          <BaseTextarea v-model="form.unique_view" label="Unique view" placeholder="Share your perspective, philosophy, or approach to creativity and work. What drives you?" :maxlength="1000" :rows="4" />
+        </section>
 
-      <!-- Bio Section -->
-      <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-gray-900">About</h2>
-          <button
-            v-if="editingSection !== 'bio'"
-            @click="startEditing('bio')"
-            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <PencilIcon class="h-4 w-4" />
-          </button>
-        </div>
-        <div v-if="editingSection !== 'bio'">
-          <p class="text-gray-700 whitespace-pre-line">{{ form.bio || 'Tell us about yourself...' }}</p>
-        </div>
-        <div v-else class="space-y-3">
-          <BaseTextarea
-            v-model="form.bio"
-            placeholder="Tell us about yourself, your background, and what you're passionate about..."
-            :maxlength="500"
-            :rows="4"
-            :error="errors.bio"
-          />
-          <div class="flex gap-2">
-            <BaseButton size="sm" @click="saveSection('bio')" :loading="loading">
-              <CheckIcon class="h-4 w-4 mr-1" />
-              Save
-            </BaseButton>
-            <BaseButton size="sm" variant="outline" @click="cancelEditing">
-              <XMarkIcon class="h-4 w-4 mr-1" />
-              Cancel
-            </BaseButton>
-          </div>
-        </div>
-      </div>
-
-      <!-- Skills Section (Read-only - skills are set during registration) -->
-      <div v-if="member?.skills && member.skills.length > 0" class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">Skills</h2>
-        <div class="flex flex-wrap gap-2">
-          <span
-            v-for="skill in member.skills"
-            :key="skill.id"
-            :class="[
-              'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
-              skill.id === profile?.primary_skill_id
-                ? 'bg-indigo-100 text-indigo-800'
-                : 'bg-gray-100 text-gray-800'
-            ]"
-          >
-            {{ skill.name }}
-            <span v-if="skill.id === profile?.primary_skill_id" class="ml-1 text-xs">(Primary)</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- Recent Work Section -->
-      <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-gray-900">Recent Work</h2>
-          <button
-            v-if="editingSection !== 'recent_work'"
-            @click="startEditing('recent_work')"
-            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <PencilIcon class="h-4 w-4" />
-          </button>
-        </div>
-        <div v-if="editingSection !== 'recent_work'">
-          <p class="text-gray-700 whitespace-pre-line">{{ form.recent_work || 'Share what you\'ve been building or creating...' }}</p>
-        </div>
-        <div v-else class="space-y-3">
-          <BaseTextarea
-            v-model="form.recent_work"
-            placeholder="Tell us about your recent projects, work, or creative endeavors. What are you most proud of?"
-            :maxlength="1000"
-            :rows="4"
-            :error="errors.recent_work"
-          />
-          <div class="flex gap-2">
-            <BaseButton size="sm" @click="saveSection('recent_work')" :loading="loading">
-              <CheckIcon class="h-4 w-4 mr-1" />
-              Save
-            </BaseButton>
-            <BaseButton size="sm" variant="outline" @click="cancelEditing">
-              <XMarkIcon class="h-4 w-4 mr-1" />
-              Cancel
-            </BaseButton>
-          </div>
-        </div>
-      </div>
-
-      <!-- Unique View Section -->
-      <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-gray-900">My Unique View</h2>
-          <button
-            v-if="editingSection !== 'unique_view'"
-            @click="startEditing('unique_view')"
-            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <PencilIcon class="h-4 w-4" />
-          </button>
-        </div>
-        <div v-if="editingSection !== 'unique_view'">
-          <p class="text-gray-700 whitespace-pre-line">{{ form.unique_view || 'Share your perspective on creativity and work...' }}</p>
-        </div>
-        <div v-else class="space-y-3">
-          <BaseTextarea
-            v-model="form.unique_view"
-            placeholder="Share your perspective, philosophy, or approach to creativity and work. What drives you?"
-            :maxlength="1000"
-            :rows="4"
-            :error="errors.unique_view"
-          />
-          <div class="flex gap-2">
-            <BaseButton size="sm" @click="saveSection('unique_view')" :loading="loading">
-              <CheckIcon class="h-4 w-4 mr-1" />
-              Save
-            </BaseButton>
-            <BaseButton size="sm" variant="outline" @click="cancelEditing">
-              <XMarkIcon class="h-4 w-4 mr-1" />
-              Cancel
-            </BaseButton>
-          </div>
-        </div>
-      </div>
-
-      <!-- Links Section -->
-      <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-semibold text-gray-900">Links</h2>
-          <button
-            v-if="editingSection !== 'links'"
-            @click="startEditing('links')"
-            class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <PencilIcon class="h-4 w-4" />
-          </button>
-        </div>
-        <div v-if="editingSection !== 'links'" class="space-y-2">
-          <a
-            v-if="form.portfolio_url"
-            :href="form.portfolio_url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center text-indigo-600 hover:text-indigo-800"
-          >
-            <LinkIcon class="h-4 w-4 mr-2" />
-            {{ form.portfolio_url }}
-          </a>
-          <template v-for="(link, index) in form.additional_links" :key="index">
-            <a
-              v-if="link.url"
-              :href="ensureHttps(link.url)"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex items-center text-indigo-600 hover:text-indigo-800"
-            >
-              <LinkIcon class="h-4 w-4 mr-2" />
-              <span v-if="link.label" class="text-gray-500 mr-1">{{ link.label }}:</span>
-              {{ link.url }}
-            </a>
-          </template>
-          <p v-if="!form.portfolio_url && form.additional_links.every(l => !l.url)" class="text-gray-500">
-            Add your portfolio and social links...
-          </p>
-        </div>
-        <div v-else class="space-y-4">
-          <BaseInput
-            v-model="form.portfolio_url"
-            label="Portfolio URL"
-            placeholder="https://yourportfolio.com"
-            :error="errors.portfolio_url"
-          />
+        <!-- Links -->
+        <section class="space-y-4">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Links</h2>
+          <BaseInput v-model="form.portfolio_url" label="Portfolio URL" placeholder="https://yourportfolio.com" :error="errors.portfolio_url" />
           <div class="space-y-3">
-            <label class="block text-sm font-medium text-gray-700">Additional Links</label>
+            <label class="block text-sm font-medium text-gray-700">Additional links</label>
+            <p class="text-xs text-gray-500 -mt-1">GitHub, LinkedIn, X — add them here, each with a label.</p>
             <div
               v-for="(link, index) in form.additional_links"
               :key="index"
               class="flex items-start gap-2 p-3 bg-gray-50 rounded-lg"
             >
               <div class="flex-1 space-y-2">
-                <BaseInput
-                  v-model="link.label"
-                  placeholder="Label (e.g., GitHub, LinkedIn)"
-                  class="text-sm"
-                />
-                <BaseInput
-                  v-model="link.url"
-                  :placeholder="index === 0 ? 'https://github.com/username' : 'https://...'"
-                />
+                <BaseInput v-model="link.label" placeholder="Label (e.g. GitHub, LinkedIn)" class="text-sm" />
+                <BaseInput v-model="link.url" :placeholder="index === 0 ? 'https://github.com/username' : 'https://...'" />
               </div>
               <button
                 v-if="form.additional_links.length > 1"
                 type="button"
-                @click="removeLink(index)"
                 class="p-2 text-gray-400 hover:text-red-500 transition-colors mt-1"
                 title="Remove link"
+                @click="removeLink(index)"
               >
                 <XMarkIcon class="h-5 w-5" />
               </button>
@@ -594,25 +399,21 @@ function goBack() {
             <button
               v-if="form.additional_links.length < 5"
               type="button"
-              @click="addLink"
               class="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              @click="addLink"
             >
               <PlusIcon class="h-5 w-5" />
               Add another link
             </button>
           </div>
-          <div class="flex gap-2 pt-2">
-            <BaseButton size="sm" @click="saveSection('links')" :loading="loading">
-              <CheckIcon class="h-4 w-4 mr-1" />
-              Save
-            </BaseButton>
-            <BaseButton size="sm" variant="outline" @click="cancelEditing">
-              <XMarkIcon class="h-4 w-4 mr-1" />
-              Cancel
-            </BaseButton>
-          </div>
+        </section>
+
+        <!-- Save -->
+        <div class="flex items-center gap-4 pt-2 border-t border-gray-200">
+          <BaseButton type="submit" :loading="loading" class="mt-6">Save changes</BaseButton>
+          <button type="button" class="mt-6 text-sm text-gray-500 hover:text-gray-700" @click="goBack">Cancel</button>
         </div>
-      </div>
+      </form>
     </div>
   </AppLayout>
 </template>

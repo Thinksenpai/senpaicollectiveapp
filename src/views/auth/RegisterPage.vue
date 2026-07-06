@@ -20,6 +20,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const skillsStore = useSkillsStore()
 const scoutCode = (route.query.ref as string) || (route.query.scout as string) || ''
+const referringScout = ref<{ full_name: string; photo_url?: string } | null>(null)
 
 // Password complexity — must match Zitadel's policy (min 8, upper, lower, number, symbol),
 // otherwise weak passwords pass here and get rejected server-side with a confusing 400.
@@ -115,10 +116,17 @@ const stepTitles = [
 onMounted(() => {
   skillsStore.fetchSkills()
 
-  // Track scout link click if there's a scout code in the URL
+  // Track scout link click if there's a scout code in the URL, and look up
+  // who it belongs to so the banner can say who invited you, not just show
+  // a code.
   if (scoutCode) {
     scoutsApi.trackClick(scoutCode).catch(() => {
       // Silently ignore tracking errors
+    })
+    scoutsApi.getByCode(scoutCode).then((res) => {
+      if (res.status && res.data) referringScout.value = res.data
+    }).catch(() => {
+      referringScout.value = null
     })
   }
 })
@@ -343,15 +351,26 @@ function removeLink(index: number) {
           <!-- Scout invite confirmation (auto-applied from a ?ref= invite link) -->
           <div
             v-if="scoutCode"
-            class="mb-6 flex items-start gap-2 rounded-lg bg-senpai-50 border border-senpai-200 px-4 py-3 text-sm text-senpai-800"
+            class="mb-6 flex items-center gap-3 rounded-lg bg-senpai-50 border border-senpai-200 px-4 py-3 text-sm text-senpai-800"
           >
-            <svg class="h-5 w-5 flex-shrink-0 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <span v-if="referringScout" class="h-9 w-9 rounded-full overflow-hidden shrink-0 bg-white ring-2 ring-senpai-200">
+              <img v-if="referringScout.photo_url" :src="referringScout.photo_url" :alt="referringScout.full_name" class="h-full w-full object-cover" />
+              <span v-else class="h-full w-full flex items-center justify-center text-xs font-medium text-senpai-600">
+                {{ referringScout.full_name.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() }}
+              </span>
+            </span>
+            <svg v-else class="h-5 w-5 flex-shrink-0 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>
-              You were invited by a scout — invite code
-              <span class="font-mono font-semibold">{{ scoutCode }}</span>
-              is applied to your application.
+              <template v-if="referringScout">
+                You were invited by <span class="font-semibold">{{ referringScout.full_name }}</span> — this application is linked to their invite.
+              </template>
+              <template v-else>
+                You were invited by a scout — invite code
+                <span class="font-mono font-semibold">{{ scoutCode }}</span>
+                is applied to your application.
+              </template>
             </span>
           </div>
 

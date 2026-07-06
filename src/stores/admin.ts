@@ -133,6 +133,21 @@ export const useAdminStore = defineStore('admin', () => {
     }
   }
 
+  async function reactivateMember(id: string) {
+    error.value = null
+
+    try {
+      const response = await adminApi.reactivateMember(id)
+      if (response.status) {
+        return { success: true }
+      }
+      return { success: false, error: response.message }
+    } catch (e: any) {
+      error.value = e.response?.data?.message || e.message || 'Failed to reactivate member'
+      return { success: false, error: error.value }
+    }
+  }
+
   async function promoteToScout(id: string) {
     error.value = null
 
@@ -172,7 +187,19 @@ export const useAdminStore = defineStore('admin', () => {
     try {
       const response = await adminApi.getAnalytics()
       if (response.status && response.data) {
-        analytics.value = response.data
+        // Backend returns skill_distribution as { skill: { name }, count }.
+        // Normalize to the flat { skill_name, count } the UI expects.
+        const raw = response.data as unknown as {
+          skill_distribution?: Array<{ skill?: { name?: string }; skill_name?: string; count: number }>
+          location_distribution?: AdminAnalytics['location_distribution']
+        }
+        analytics.value = {
+          skill_distribution: (raw.skill_distribution ?? []).map((s) => ({
+            skill_name: s.skill?.name ?? s.skill_name ?? 'Unknown',
+            count: s.count
+          })),
+          location_distribution: raw.location_distribution ?? []
+        }
       }
     } catch (e: any) {
       error.value = e.response?.data?.message || e.message || 'Failed to fetch analytics'
@@ -198,6 +225,7 @@ export const useAdminStore = defineStore('admin', () => {
     fetchMembers,
     fetchMember,
     deactivateMember,
+    reactivateMember,
     promoteToScout,
 
     // Stats

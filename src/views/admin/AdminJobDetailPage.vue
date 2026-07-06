@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute, RouterLink, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { jobsApi } from '@/api'
 import { useSkillsStore } from '@/stores/skills'
 import type { Job, JobApplication, ApplicationStatus } from '@/types'
-import AppLayout from '@/components/layout/AppLayout.vue'
+import AdminLayout from '@/components/layout/AdminLayout.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import {
-  ArrowLeftIcon,
   BuildingOfficeIcon,
   EnvelopeIcon,
   ClockIcon,
@@ -258,17 +257,8 @@ async function deleteJob() {
 </script>
 
 <template>
-  <AppLayout>
+  <AdminLayout back-to="/admin/jobs" back-label="Back to Jobs">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Back Link -->
-      <RouterLink
-        to="/admin/jobs"
-        class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeftIcon class="h-4 w-4 mr-1" />
-        Back to Jobs
-      </RouterLink>
-
       <!-- Loading -->
       <div v-if="loading" class="flex justify-center py-12">
         <LoadingSpinner size="lg" />
@@ -477,5 +467,5 @@ async function deleteJob() {
         </div>
       </div>
     </div>
-  </AppLayout>
+  </AdminLayout>
 </template>

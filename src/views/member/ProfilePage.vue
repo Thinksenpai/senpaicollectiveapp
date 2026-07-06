@@ -1,22 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { engineApi } from '@/api'
 import AppLayout from '@/components/layout/AppLayout.vue'
-import type { Role } from '@/types'
-import {
-  UserCircleIcon,
-  MapPinIcon,
-  LinkIcon,
-  PencilIcon,
-  SparklesIcon,
-  RocketLaunchIcon
-} from '@heroicons/vue/24/outline'
-import {
-  ShieldCheckIcon,
-  StarIcon,
-  SparklesIcon as SparklesSolidIcon
-} from '@heroicons/vue/24/solid'
+import ProfileDisplay from '@/components/member/ProfileDisplay.vue'
+import type { MemberEnrichment, Activity } from '@/types'
 
 const authStore = useAuthStore()
 
@@ -31,193 +20,195 @@ const experienceLevelLabels: Record<string, string> = {
   senior: 'Senior (5+ years)'
 }
 
-// Role styling based on role name
-const getRoleStyle = (roleName: string) => {
-  switch (roleName.toLowerCase()) {
-    case 'admin':
-      return {
-        bg: 'bg-red-50',
-        text: 'text-red-700',
-        icon: ShieldCheckIcon,
-        iconColor: 'text-red-500'
-      }
-    case 'scout':
-      return {
-        bg: 'bg-amber-50',
-        text: 'text-amber-700',
-        icon: StarIcon,
-        iconColor: 'text-amber-500'
-      }
-    default:
-      return {
-        bg: 'bg-indigo-50',
-        text: 'text-indigo-700',
-        icon: SparklesSolidIcon,
-        iconColor: 'text-indigo-500'
-      }
+const isOGMember = computed(() => profile.value?.is_og_member)
+
+// Enhanced profile (enrichment) — woven into the page contextually, not a separate card.
+const enrichment = ref<MemberEnrichment | null>(null)
+const cohortName = ref<string | null>(null)
+const podName = ref<string | null>(null)
+onMounted(async () => {
+  try {
+    const res = await engineApi.getEnrichment()
+    enrichment.value = res.data ?? null
+  } catch {
+    enrichment.value = null
+  }
+  try {
+    const dash = await engineApi.getDashboard()
+    cohortName.value = dash.data?.cohort?.name ?? null
+    podName.value = dash.data?.pod?.name ?? null
+  } catch {
+    cohortName.value = null
+    podName.value = null
+  }
+  try {
+    const act = await engineApi.getMyActivity()
+    activity.value = act.data ?? []
+  } catch {
+    activity.value = []
+  }
+})
+
+// Recent activity — a short verb phrase plus a separately-styled chip linking
+// to the task/pod/cohort involved. No comment text is shown inline here (that
+// lives on the task page itself, in context) — the feed just says what kind
+// of thing happened and gives you a clickable way to go see it.
+const activity = ref<Activity[]>([])
+function meta(a: Activity, key: string): string {
+  const v = a.metadata?.[key]
+  return typeof v === 'string' ? v : ''
+}
+function activityVerbPhrase(a: Activity): string {
+  switch (a.verb) {
+    case 'task_submitted': return 'Submitted'
+    case 'task_completed': return 'Completed'
+    case 'task_assigned': return 'Assigned'
+    case 'task_unassigned': return 'Removed from'
+    case 'commented': return 'Commented on'
+    case 'pod_joined': return 'Joined'
+    case 'accepted': return 'Accepted into'
+    case 'approved': {
+      const by = meta(a, 'approved_by')
+      return by ? `Approved by ${by}` : 'Approved'
+    }
+    case 'enrichment_completed': return 'Completed profile enrichment'
+    case 'guidelines_accepted': return 'Accepted community guidelines'
+    case 'pledge_accepted': return 'Accepted the scout pledge'
+    case 'became_scout': return 'Became a scout'
+    case 'induction_attended': return 'Attended induction'
+    case 'active': return 'Was active'
+    default: return a.verb.replace(/_/g, ' ')
   }
 }
+// The clickable chip text — the task/pod/cohort name, not any comment content.
+function activityChip(a: Activity): string {
+  return meta(a, 'task') || meta(a, 'pod') || meta(a, 'cohort')
+}
+// Where the chip links to. Tasks (and comments on them) go to the task's own
+// page; pod/cohort activities go to the dashboard, since there's no separate
+// pod/cohort detail route yet.
+function activityLink(a: Activity): string | null {
+  if (a.target_type === 'task' && a.target_id) return `/tasks/${a.target_id}`
+  if (a.target_type === 'assignment') {
+    const taskId = meta(a, 'task_id')
+    return taskId ? `/tasks/${taskId}` : null
+  }
+  if (a.target_type === 'pod' || a.target_type === 'cohort') return '/dashboard'
+  return null
+}
+function activityTimeAgo(d: string) {
+  const diff = Date.now() - new Date(d).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
 
-// Check for OG Member badge (comes from profile, not roles)
-const isOGMember = computed(() => profile.value?.is_og_member)
+const workLabels: Record<string, string> = {
+  student: 'Student', employed: 'Employed', freelance: 'Freelance',
+  founder: 'Founder, building', between_roles: 'Between roles', other: 'Other'
+}
+const schoolLabels: Record<string, string> = {
+  not_student: 'Not a student', undergrad: 'Undergrad', postgrad: 'Postgrad',
+  bootcamp: 'Bootcamp', graduated: 'Graduated'
+}
+
+// Each enrichment fact gets its own contextual home instead of one undifferentiated
+// grid — experience reads as identity (header), school belongs with About, work
+// status belongs with Building, and timezone/languages are logistics that sit
+// quietly at the very bottom, after Links.
+const experienceLabel = computed(() =>
+  profile.value?.experience_level ? experienceLevelLabels[profile.value.experience_level] || profile.value.experience_level : ''
+)
+const schoolLine = computed(() => {
+  const e = enrichment.value
+  if (!e?.school_status || e.school_status === 'not_student') return ''
+  const label = schoolLabels[e.school_status] || e.school_status
+  return e.school_name ? `${label}, ${e.school_name}` : label
+})
+const workLine = computed(() => {
+  const e = enrichment.value
+  if (!e?.work_status) return ''
+  const base = workLabels[e.work_status] || e.work_status
+  return e.weekly_commitment_hours ? `${base} · ${e.weekly_commitment_hours} hrs/week` : base
+})
+const birthdayLine = computed(() => {
+  const dob = enrichment.value?.date_of_birth
+  if (!dob) return ''
+  return `Born ${new Date(dob).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
+})
+const logisticsLine = computed(() => {
+  const e = enrichment.value
+  return [e?.timezone, e?.languages, birthdayLine.value].filter(Boolean).join(' · ')
+})
+
+const subtitle = computed(() => {
+  const role = enrichment.value?.job_title || profile.value?.primary_skill?.name
+  const location = [profile.value?.city, profile.value?.country].filter(Boolean).join(', ')
+  return [role, location].filter(Boolean).join(' · ')
+})
+
+const memberSince = computed(() => {
+  if (!member.value?.created_at) return ''
+  const date = new Date(member.value.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const cohortPod = [cohortName.value, podName.value].filter(Boolean).join(' · ')
+  return cohortPod ? `Member since ${date} · ${cohortPod}` : `Member since ${date}`
+})
+
+// All links (portfolio first, then additional) shown as one row of buttons.
+const allLinks = computed(() => {
+  const links: { label: string; url: string }[] = []
+  if (profile.value?.portfolio_url) links.push({ label: 'Portfolio', url: profile.value.portfolio_url })
+  for (const l of profile.value?.additional_links || []) {
+    if (l.url) links.push({ label: l.label || 'Link', url: l.url })
+  }
+  return links
+})
 </script>
 
 <template>
   <AppLayout>
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Profile Header -->
-      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="h-32 bg-gradient-to-r from-indigo-500 to-indigo-600" />
-        <div class="px-6 pb-6">
-          <div class="flex flex-col sm:flex-row sm:items-end -mt-12 sm:-mt-16">
-            <div class="flex-shrink-0">
-              <div v-if="profile?.photo_url" class="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white overflow-hidden bg-white">
-                <img :src="profile.photo_url" :alt="profile.full_name" class="h-full w-full object-cover" />
-              </div>
-              <div v-else class="h-24 w-24 sm:h-32 sm:w-32 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center">
-                <UserCircleIcon class="h-16 w-16 sm:h-20 sm:w-20 text-gray-400" />
-              </div>
-            </div>
-            <div class="mt-4 sm:mt-0 sm:ml-6 sm:pb-1 flex-1">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h1 class="text-2xl font-bold text-gray-900">{{ profile?.full_name }}</h1>
-                  <p class="text-gray-600">{{ profile?.primary_skill?.name }}</p>
-                </div>
-                <RouterLink
-                  to="/profile/edit"
-                  class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <PencilIcon class="h-4 w-4 mr-2" />
-                  Edit Profile
-                </RouterLink>
-              </div>
-            </div>
-          </div>
+    <div class="px-4 sm:px-6 lg:px-8 py-10">
+      <ProfileDisplay
+        :full-name="profile?.full_name"
+        :photo-url="profile?.photo_url"
+        :is-o-g-member="isOGMember"
+        :roles="roles"
+        :mbti="enrichment?.mbti || undefined"
+        :subtitle="subtitle"
+        :experience-label="experienceLabel"
+        :member-since="memberSince"
+        edit-href="/profile/edit"
+        :goal="enrichment?.goal || undefined"
+        :bio="profile?.bio"
+        :school-line="schoolLine"
+        :skills="member?.skills"
+        :primary-skill-id="profile?.primary_skill_id"
+        :recent-work="profile?.recent_work"
+        :work-line="workLine"
+        :unique-view="profile?.unique_view"
+        :links="allLinks"
+        :logistics-line="logisticsLine"
+      />
 
-          <!-- Roles & Badges -->
-          <div v-if="roles.length > 0 || isOGMember" class="mt-4 flex flex-wrap gap-2">
-            <!-- OG Member Badge -->
-            <span
-              v-if="isOGMember"
-              class="group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 cursor-help"
-            >
-              <SparklesSolidIcon class="h-3.5 w-3.5 text-indigo-500" />
-              OG Member
-              <!-- Tooltip -->
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                Original community member
-              </span>
+      <div v-if="activity.length" class="max-w-2xl mx-auto mt-8">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Recent activity</h2>
+        <ul class="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
+          <li v-for="a in activity" :key="a.id" class="px-4 py-3 flex items-center justify-between text-sm gap-3">
+            <span class="text-gray-700 min-w-0 flex items-center gap-1.5 flex-wrap">
+              {{ activityVerbPhrase(a) }}
+              <RouterLink
+                v-if="activityChip(a) && activityLink(a)"
+                :to="activityLink(a)!"
+                class="inline-block px-2 py-0.5 rounded-full bg-senpai-50 text-senpai-700 font-medium text-xs hover:bg-senpai-100 truncate max-w-[16rem] align-middle"
+              >{{ activityChip(a) }}</RouterLink>
+              <span v-else-if="activityChip(a)" class="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium text-xs truncate max-w-[16rem] align-middle">{{ activityChip(a) }}</span>
             </span>
-            <!-- Role Badges -->
-            <span
-              v-for="role in roles"
-              :key="role.id"
-              :class="[
-                'group relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-help',
-                getRoleStyle(role.name).bg,
-                getRoleStyle(role.name).text
-              ]"
-            >
-              <component :is="getRoleStyle(role.name).icon" :class="['h-3.5 w-3.5', getRoleStyle(role.name).iconColor]" />
-              {{ role.name.charAt(0).toUpperCase() + role.name.slice(1) }}
-              <!-- Tooltip with description -->
-              <span
-                v-if="role.description"
-                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10 max-w-xs text-center"
-              >
-                {{ role.description }}
-              </span>
-            </span>
-          </div>
-
-          <!-- Location & Member Since -->
-          <div class="mt-4 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-            <div class="flex items-center">
-              <MapPinIcon class="h-4 w-4 mr-1" />
-              {{ profile?.city }}, {{ profile?.country }}
-            </div>
-            <div class="flex items-center">
-              <span class="capitalize">{{ experienceLevelLabels[profile?.experience_level || 'none'] }}</span>
-            </div>
-            <div>
-              Member since {{ new Date(member?.created_at || '').toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bio -->
-      <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">About</h2>
-        <p class="text-gray-700 whitespace-pre-line">{{ profile?.bio || 'No bio added yet.' }}</p>
-      </div>
-
-      <!-- Skills -->
-      <div v-if="member?.skills && member.skills.length > 0" class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">Skills</h2>
-        <div class="flex flex-wrap gap-2">
-          <span
-            v-for="skill in member.skills"
-            :key="skill.id"
-            :class="[
-              'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
-              skill.id === profile?.primary_skill_id
-                ? 'bg-indigo-100 text-indigo-800'
-                : 'bg-gray-100 text-gray-800'
-            ]"
-          >
-            {{ skill.name }}
-            <span v-if="skill.id === profile?.primary_skill_id" class="ml-1 text-xs">(Primary)</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- Recent Work -->
-      <div v-if="profile?.recent_work" class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <div class="flex items-center mb-3">
-          <RocketLaunchIcon class="h-5 w-5 text-indigo-600 mr-2" />
-          <h2 class="text-lg font-semibold text-gray-900">Recent Work</h2>
-        </div>
-        <p class="text-gray-700 whitespace-pre-line">{{ profile.recent_work }}</p>
-      </div>
-
-      <!-- Unique View -->
-      <div v-if="profile?.unique_view" class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <div class="flex items-center mb-3">
-          <SparklesIcon class="h-5 w-5 text-indigo-500 mr-2" />
-          <h2 class="text-lg font-semibold text-gray-900">My Unique View</h2>
-        </div>
-        <p class="text-gray-700 whitespace-pre-line">{{ profile.unique_view }}</p>
-      </div>
-
-      <!-- Portfolio & Links -->
-      <div class="mt-6 bg-white rounded-lg shadow-sm p-6">
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">Links</h2>
-        <div class="space-y-2">
-          <a
-            v-if="profile?.portfolio_url"
-            :href="profile.portfolio_url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center text-indigo-600 hover:text-indigo-800"
-          >
-            <LinkIcon class="h-4 w-4 mr-2" />
-            {{ profile.portfolio_url }}
-          </a>
-          <a
-            v-for="(link, index) in profile?.additional_links"
-            :key="index"
-            :href="link.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center text-indigo-600 hover:text-indigo-800"
-          >
-            <LinkIcon class="h-4 w-4 mr-2" />
-            <span v-if="link.label" class="text-gray-500 mr-1">{{ link.label }}:</span>
-            {{ link.url }}
-          </a>
-        </div>
+            <span class="text-gray-400 text-xs shrink-0">{{ activityTimeAgo(a.created_at) }}</span>
+          </li>
+        </ul>
       </div>
     </div>
   </AppLayout>

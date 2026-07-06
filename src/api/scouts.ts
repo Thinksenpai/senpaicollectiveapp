@@ -30,5 +30,11 @@ export const scoutsApi = {
   // Track scout link click (public endpoint)
   async trackClick(scoutCode: string): Promise<ApiResponse<void>> {
     return apiClient.post('/scout/track-click', { scout_code: scoutCode })
+  },
+
+  // Look up who a scout invite code belongs to (public endpoint) — powers
+  // the "invited by" banner on the registration page.
+  async getByCode(scoutCode: string): Promise<ApiResponse<{ full_name: string; photo_url?: string }>> {
+    return apiClient.get(`/scout/by-code/${encodeURIComponent(scoutCode)}`)
   }
 }
