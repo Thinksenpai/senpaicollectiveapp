@@ -84,6 +84,10 @@ export const engineApi = {
     return apiClient.post('/me/accept-guidelines')
   },
 
+  async acceptPledge(): Promise<ApiResponse<void>> {
+    return apiClient.post('/me/accept-pledge')
+  },
+
   // Task comments (shared Q&A thread on the task)
   async getTaskComments(taskId: string): Promise<ApiResponse<TaskComment[]>> {
     return apiClient.get(`/tasks/${taskId}/comments`)

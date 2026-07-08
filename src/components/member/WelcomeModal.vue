@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { SENPAI_MANIFESTO } from '@/content/manifesto'
+import { engineApi } from '@/api'
 import BaseButton from '@/components/common/BaseButton.vue'
 
 defineProps<{
@@ -13,6 +14,7 @@ const emit = defineEmits<{
 
 const currentSlide = ref(0)
 const totalSlides = 3
+const acceptingPledge = ref(false)
 
 // Pledge checkboxes (7 items from creed, excluding first and last "I am Senpai")
 const pledgeChecks = ref<boolean[]>(new Array(7).fill(false))
@@ -31,6 +33,19 @@ function prevSlide() {
   if (currentSlide.value > 0) {
     currentSlide.value--
   }
+}
+
+// The actual moment of acceptance — recorded server-side so it's a real,
+// permanent record (like Community Guidelines), not just a browser flag
+// that forgets you on a new device.
+async function acceptPledge() {
+  acceptingPledge.value = true
+  try {
+    await engineApi.acceptPledge()
+  } finally {
+    acceptingPledge.value = false
+  }
+  nextSlide()
 }
 
 function handleComplete() {
@@ -128,8 +143,9 @@ function handleComplete() {
               Back
             </BaseButton>
             <BaseButton
-              @click="nextSlide"
+              @click="acceptPledge"
               :disabled="!allPledgesChecked"
+              :loading="acceptingPledge"
               :class="allPledgesChecked ? 'bg-gray-900 hover:bg-gray-800' : 'bg-gray-300 cursor-not-allowed'"
             >
               I Accept This Pledge

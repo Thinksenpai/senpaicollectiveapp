@@ -163,6 +163,7 @@ export interface EnrichmentPayload {
 
 export interface MemberDashboard {
   guidelines_accepted: boolean
+  pledge_accepted: boolean
   membership?: CohortMembership | null
   cohort?: Cohort | null
   pod?: Pod | null

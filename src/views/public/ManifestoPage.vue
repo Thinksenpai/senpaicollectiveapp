@@ -114,7 +114,7 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
     </section>
 
     <!-- The Creed Section -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
+    <section id="creed" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
       <div class="max-w-3xl mx-auto text-center">
         <h2 class="text-2xl font-bold text-white mb-2">The Senpai Creed</h2>
         <p class="text-gray-400 mb-12">This is who we are. This is how we operate.</p>

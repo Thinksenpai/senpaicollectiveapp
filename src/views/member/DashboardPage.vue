@@ -32,10 +32,6 @@ const authStore = useAuthStore()
 const membersStore = useMembersStore()
 const jobsStore = useJobsStore()
 
-// Check if user has seen the welcome modal
-const WELCOME_MODAL_KEY = 'senpai_welcome_seen'
-const showWelcomeModal = ref(false)
-
 const memberFirstName = computed(() => {
   return authStore.member?.profile?.full_name?.split(' ')[0] || 'Member'
 })
@@ -137,17 +133,13 @@ onMounted(() => {
   jobsStore.fetchJobs({ limit: 1 })
   loadEngine()
   loadEnrichment()
-
-  // Show welcome modal if user hasn't seen it
-  const hasSeenWelcome = localStorage.getItem(WELCOME_MODAL_KEY)
-  if (!hasSeenWelcome) {
-    showWelcomeModal.value = true
-  }
 })
 
 function handleWelcomeClose() {
-  showWelcomeModal.value = false
-  localStorage.setItem(WELCOME_MODAL_KEY, 'true')
+  // The pledge was already recorded server-side inside WelcomeModal before it
+  // could reach this point — reflect that locally so the modal doesn't need
+  // a full reload to disappear for good.
+  if (engine.value) engine.value.pledge_accepted = true
 }
 
 async function acceptTerms() {
@@ -230,9 +222,12 @@ function commentTimeAgo(d: string) {
 
 <template>
   <AppLayout>
-    <!-- Welcome Modal for first-time users -->
+    <!-- Welcome tour + Senpai Pledge — waits for engine to load and Guidelines
+         to be accepted first, so the sequence is structurally guaranteed
+         (no race with the async engine fetch), and only shows once, ever,
+         per account (server-tracked, not a per-device localStorage flag). -->
     <WelcomeModal
-      v-if="showWelcomeModal && !needsTerms"
+      v-if="engine && !needsTerms && !engine.pledge_accepted"
       :member-name="memberFirstName"
       @close="handleWelcomeClose"
     />

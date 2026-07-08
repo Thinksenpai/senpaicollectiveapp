@@ -61,6 +61,7 @@ function handleLogout() {
         <p class="text-sm text-gray-600 mb-4">What you agreed to when you joined — revisit any of it any time.</p>
         <ul class="text-sm space-y-2">
           <li><RouterLink to="/guidelines" target="_blank" class="text-senpai-600 hover:text-senpai-700 font-medium">Community Guidelines</RouterLink></li>
+          <li><RouterLink to="/manifesto#creed" target="_blank" class="text-senpai-600 hover:text-senpai-700 font-medium">The Senpai Pledge</RouterLink></li>
           <li><RouterLink to="/terms" target="_blank" class="text-senpai-600 hover:text-senpai-700 font-medium">Terms of Membership</RouterLink></li>
           <li><RouterLink to="/privacy" target="_blank" class="text-senpai-600 hover:text-senpai-700 font-medium">Privacy Policy</RouterLink></li>
         </ul>
