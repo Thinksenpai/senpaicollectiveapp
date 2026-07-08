@@ -65,6 +65,15 @@ const router = createRouter({
       }
     },
     {
+      path: '/guidelines',
+      name: 'guidelines',
+      component: () => import('@/views/public/GuidelinesPage.vue'),
+      meta: {
+        title: 'Community Guidelines | Senpai Collective',
+        description: 'What every Senpai Collective member agrees to on day one.'
+      }
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/auth/LoginPage.vue'),

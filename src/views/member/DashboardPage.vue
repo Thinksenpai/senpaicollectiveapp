@@ -247,8 +247,8 @@ function commentTimeAgo(d: string) {
           <li class="flex gap-2"><CheckCircleIcon class="h-5 w-5 text-senpai-500 shrink-0" /> Keep what's shared here in confidence. Trust is the whole asset.</li>
           <li class="flex gap-2"><CheckCircleIcon class="h-5 w-5 text-senpai-500 shrink-0" /> Do the work honestly. Your reputation here is real.</li>
         </ul>
-        <RouterLink to="/manifesto" class="inline-flex items-center text-senpai-600 hover:text-senpai-700 font-medium">
-          Read the full manifesto <ArrowRightIcon class="h-4 w-4 ml-1" />
+        <RouterLink to="/guidelines" target="_blank" class="inline-flex items-center text-senpai-600 hover:text-senpai-700 font-medium">
+          Read the full Community Guidelines <ArrowRightIcon class="h-4 w-4 ml-1" />
         </RouterLink>
       </div>
       <template #footer>

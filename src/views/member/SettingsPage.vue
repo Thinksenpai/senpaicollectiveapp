@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -55,6 +55,17 @@ function handleLogout() {
         </div>
       </div>
 
+      <!-- Legal & Community -->
+      <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Legal &amp; Community</h2>
+        <p class="text-sm text-gray-600 mb-4">What you agreed to when you joined — revisit any of it any time.</p>
+        <ul class="text-sm space-y-2">
+          <li><RouterLink to="/guidelines" target="_blank" class="text-senpai-600 hover:text-senpai-700 font-medium">Community Guidelines</RouterLink></li>
+          <li><RouterLink to="/terms" target="_blank" class="text-senpai-600 hover:text-senpai-700 font-medium">Terms of Membership</RouterLink></li>
+          <li><RouterLink to="/privacy" target="_blank" class="text-senpai-600 hover:text-senpai-700 font-medium">Privacy Policy</RouterLink></li>
+        </ul>
+      </div>
+
       <!-- Coming Soon -->
       <div class="bg-gray-50 rounded-lg p-6 mb-6 border border-gray-200">
         <div class="flex items-center mb-3">
@@ -64,7 +75,6 @@ function handleLogout() {
         <ul class="text-sm text-gray-600 space-y-1">
           <li>- Password change</li>
           <li>- Email preferences</li>
-          <li>- Privacy settings</li>
           <li>- Notification preferences</li>
         </ul>
       </div>
