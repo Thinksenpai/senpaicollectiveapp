@@ -405,6 +405,7 @@ async function savePod() {
                     <button class="text-gray-500 hover:text-gray-700 ml-auto" @click="clearSelection(c.id)">Clear</button>
                   </div>
 
+                  <div class="overflow-x-auto">
                   <table class="w-full text-sm">
                     <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide text-left">
                       <tr>
@@ -429,6 +430,7 @@ async function savePod() {
                       </tr>
                     </tbody>
                   </table>
+                  </div>
                 </div>
                 <p v-else class="text-sm text-gray-500">No members in this cohort yet.</p>
 

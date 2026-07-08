@@ -317,6 +317,32 @@ function commentTimeAgo(d: string) {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Left Column - 2/3 width -->
         <div class="lg:col-span-2 space-y-8">
+          <!-- Mobile quick-glance strip: condensed version of the desktop sidebar
+               (profile strength, scout status, collective stats) — on mobile the
+               full sidebar cards would otherwise sit below the entire task list. -->
+          <div v-if="authStore.member?.profile" class="lg:hidden flex items-center gap-4 overflow-x-auto bg-white rounded-2xl border border-gray-200 p-4">
+            <RouterLink to="/profile/edit" class="flex items-center gap-2.5 shrink-0">
+              <span class="w-9 h-9 rounded-full bg-senpai-100 flex items-center justify-center text-sm font-bold text-senpai-600 shrink-0">
+                {{ memberFirstName.charAt(0) }}
+              </span>
+              <span class="text-sm leading-tight">
+                <span class="block font-medium text-gray-900">{{ memberFirstName }}</span>
+                <span class="block text-xs text-gray-500">Profile {{ profileCompleteness }}%</span>
+              </span>
+            </RouterLink>
+            <div class="h-8 w-px bg-gray-100 shrink-0" />
+            <RouterLink v-if="authStore.isScout" to="/scout" class="flex items-center gap-1.5 shrink-0 text-sm font-medium text-senpai-600">
+              <SparklesIcon class="h-4 w-4" />
+              Scout
+            </RouterLink>
+            <RouterLink to="/members" class="shrink-0 text-sm text-gray-600">
+              <span class="font-semibold text-gray-900">{{ totalMembers ?? '—' }}</span> Members
+            </RouterLink>
+            <RouterLink to="/jobs" class="shrink-0 text-sm text-gray-600">
+              <span class="font-semibold text-gray-900">{{ openJobs ?? '—' }}</span> Jobs
+            </RouterLink>
+          </div>
+
           <!-- Your Cohort — celebratory -->
           <div v-if="engine?.membership" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div class="relative px-6 pt-8 pb-6 text-center overflow-hidden">
@@ -393,51 +419,51 @@ function commentTimeAgo(d: string) {
           <!-- Take Action -->
           <div>
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Take Action</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <RouterLink to="/members" class="bg-white rounded-xl border border-gray-200 p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                    <UsersIcon class="h-6 w-6 text-blue-600" />
+            <div class="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4">
+              <RouterLink to="/members" class="bg-white rounded-xl border border-gray-200 p-3 sm:p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                  <div class="w-9 h-9 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-200 transition-colors">
+                    <UsersIcon class="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                   </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900 group-hover:text-senpai-600">Find Collaborators</h3>
-                    <p class="text-sm text-gray-500">Connect with other builders</p>
-                  </div>
-                </div>
-              </RouterLink>
-
-              <RouterLink to="/jobs" class="bg-white rounded-xl border border-gray-200 p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                    <BriefcaseIcon class="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900 group-hover:text-senpai-600">Find Opportunities</h3>
-                    <p class="text-sm text-gray-500">Jobs from the collective</p>
+                  <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-900 group-hover:text-senpai-600">Find Collaborators</h3>
+                    <p class="hidden sm:block text-sm text-gray-500">Connect with other builders</p>
                   </div>
                 </div>
               </RouterLink>
 
-              <RouterLink to="/profile/edit" class="bg-white rounded-xl border border-gray-200 p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                    <UserCircleIcon class="h-6 w-6 text-purple-600" />
+              <RouterLink to="/jobs" class="bg-white rounded-xl border border-gray-200 p-3 sm:p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                  <div class="w-9 h-9 sm:w-12 sm:h-12 bg-green-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-green-200 transition-colors">
+                    <BriefcaseIcon class="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                   </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900 group-hover:text-senpai-600">Update Profile</h3>
-                    <p class="text-sm text-gray-500">Show what you're building</p>
+                  <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-900 group-hover:text-senpai-600">Find Opportunities</h3>
+                    <p class="hidden sm:block text-sm text-gray-500">Jobs from the collective</p>
                   </div>
                 </div>
               </RouterLink>
 
-              <RouterLink to="/profile" class="bg-white rounded-xl border border-gray-200 p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center group-hover:bg-amber-200 transition-colors">
-                    <RocketLaunchIcon class="h-6 w-6 text-amber-600" />
+              <RouterLink to="/profile/edit" class="bg-white rounded-xl border border-gray-200 p-3 sm:p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                  <div class="w-9 h-9 sm:w-12 sm:h-12 bg-purple-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-purple-200 transition-colors">
+                    <UserCircleIcon class="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                   </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900 group-hover:text-senpai-600">View Profile</h3>
-                    <p class="text-sm text-gray-500">See how others see you</p>
+                  <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-900 group-hover:text-senpai-600">Update Profile</h3>
+                    <p class="hidden sm:block text-sm text-gray-500">Show what you're building</p>
+                  </div>
+                </div>
+              </RouterLink>
+
+              <RouterLink to="/profile" class="bg-white rounded-xl border border-gray-200 p-3 sm:p-5 hover:border-senpai-300 hover:shadow-md transition-all group">
+                <div class="flex items-center gap-3 sm:gap-4">
+                  <div class="w-9 h-9 sm:w-12 sm:h-12 bg-amber-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-amber-200 transition-colors">
+                    <RocketLaunchIcon class="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
+                  </div>
+                  <div class="min-w-0">
+                    <h3 class="text-sm sm:text-base font-semibold text-gray-900 group-hover:text-senpai-600">View Profile</h3>
+                    <p class="hidden sm:block text-sm text-gray-500">See how others see you</p>
                   </div>
                 </div>
               </RouterLink>
@@ -458,8 +484,8 @@ function commentTimeAgo(d: string) {
                     <span v-if="a.status === 'submitted'" class="h-2 w-2 rounded-full bg-blue-500" />
                   </button>
                   <div class="min-w-0 flex-1">
-                    <div class="flex items-center justify-between gap-2">
-                      <button class="text-left font-medium text-gray-900 hover:text-senpai-700 truncate" @click="toggle(a)">{{ a.task?.title }}</button>
+                    <div class="flex items-start justify-between gap-2 flex-wrap">
+                      <button class="text-left font-medium text-gray-900 hover:text-senpai-700" @click="toggle(a)">{{ a.task?.title }}</button>
                       <div class="flex items-center gap-2 shrink-0">
         <span v-if="a.task?.is_required" class="text-[11px] px-1.5 py-0.5 rounded bg-red-50 text-red-600">Required</span>
                         <span v-if="a.status === 'submitted'" class="text-[11px] text-blue-600">In review</span>
@@ -515,47 +541,48 @@ function commentTimeAgo(d: string) {
                 </div>
               </div>
               <!-- Completed tasks — clearly done -->
-              <div v-for="a in doneTasks" :key="a.id" class="px-5 py-4 flex items-center gap-3 bg-green-50/40">
-                <CheckCircleIcon class="h-5 w-5 text-green-500 shrink-0" />
-                <span class="text-sm text-gray-500 line-through truncate flex-1">{{ a.task?.title }}</span>
-                <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Done</span>
+              <div v-for="a in doneTasks" :key="a.id" class="px-5 py-4 flex items-start gap-3 bg-green-50/40">
+                <CheckCircleIcon class="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                <span class="text-sm text-gray-500 line-through flex-1">{{ a.task?.title }}</span>
+                <span class="text-[11px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 font-medium shrink-0">Done</span>
               </div>
             </div>
           </div>
 
           <!-- What You're Here For -->
-          <div class="bg-gray-50 rounded-2xl p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Remember Why You're Here</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div class="text-center p-4">
-                <div class="w-12 h-12 bg-senpai-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <AcademicCapIcon class="h-6 w-6 text-senpai-600" />
+          <div class="bg-gray-50 rounded-2xl p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Remember Why You're Here</h2>
+            <div class="grid grid-cols-3 gap-2 sm:gap-4">
+              <div class="text-center p-1.5 sm:p-4">
+                <div class="w-9 h-9 sm:w-12 sm:h-12 bg-senpai-100 rounded-xl flex items-center justify-center mx-auto mb-1.5 sm:mb-3">
+                  <AcademicCapIcon class="h-5 w-5 sm:h-6 sm:w-6 text-senpai-600" />
                 </div>
-                <h3 class="font-medium text-gray-900 mb-1">Information</h3>
-                <p class="text-sm text-gray-500">Access knowledge that's usually gatekept</p>
+                <h3 class="text-sm sm:text-base font-medium text-gray-900 mb-0 sm:mb-1">Information</h3>
+                <p class="hidden sm:block text-sm text-gray-500">Access knowledge that's usually gatekept</p>
               </div>
-              <div class="text-center p-4">
-                <div class="w-12 h-12 bg-senpai-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <svg class="h-6 w-6 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+              <div class="text-center p-1.5 sm:p-4">
+                <div class="w-9 h-9 sm:w-12 sm:h-12 bg-senpai-100 rounded-xl flex items-center justify-center mx-auto mb-1.5 sm:mb-3">
+                  <svg class="h-5 w-5 sm:h-6 sm:w-6 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
                   </svg>
                 </div>
-                <h3 class="font-medium text-gray-900 mb-1">Structure</h3>
-                <p class="text-sm text-gray-500">Frameworks to turn ambition into action</p>
+                <h3 class="text-sm sm:text-base font-medium text-gray-900 mb-0 sm:mb-1">Structure</h3>
+                <p class="hidden sm:block text-sm text-gray-500">Frameworks to turn ambition into action</p>
               </div>
-              <div class="text-center p-4">
-                <div class="w-12 h-12 bg-senpai-100 rounded-xl flex items-center justify-center mx-auto mb-3">
-                  <UsersIcon class="h-6 w-6 text-senpai-600" />
+              <div class="text-center p-1.5 sm:p-4">
+                <div class="w-9 h-9 sm:w-12 sm:h-12 bg-senpai-100 rounded-xl flex items-center justify-center mx-auto mb-1.5 sm:mb-3">
+                  <UsersIcon class="h-5 w-5 sm:h-6 sm:w-6 text-senpai-600" />
                 </div>
-                <h3 class="font-medium text-gray-900 mb-1">People</h3>
-                <p class="text-sm text-gray-500">Builders who get it and push you forward</p>
+                <h3 class="text-sm sm:text-base font-medium text-gray-900 mb-0 sm:mb-1">People</h3>
+                <p class="hidden sm:block text-sm text-gray-500">Builders who get it and push you forward</p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Right Column - 1/3 width -->
-        <div class="space-y-6">
+        <!-- Right Column - 1/3 width. Hidden on mobile — the quick-glance strip
+             above the fold covers it there; the full cards are desktop-only. -->
+        <div class="hidden lg:block space-y-6">
           <!-- Profile Card -->
           <div v-if="authStore.member?.profile" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
             <div class="bg-gray-900 px-6 py-4">

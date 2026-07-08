@@ -477,6 +477,7 @@ async function unassign(a: TaskAssignment) {
         </div>
 
         <div v-if="tasks.length" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide text-left">
               <tr>
@@ -532,6 +533,7 @@ async function unassign(a: TaskAssignment) {
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
         <div v-else class="bg-white rounded-2xl border border-gray-200 p-10 text-center">
           <p class="text-gray-500 text-sm">No tasks for this cohort yet.</p>

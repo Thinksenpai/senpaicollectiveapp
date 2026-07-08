@@ -75,13 +75,13 @@ const statusDot: Record<AssignmentStatus, string> = {
               v-for="a in needsAttention"
               :key="a.id"
               :to="`/tasks/${a.task_id}`"
-              class="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
+              class="flex items-start gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
             >
-              <span class="h-2 w-2 rounded-full shrink-0" :class="a.status === 'returned' ? 'bg-red-400' : statusDot[a.status]" />
+              <span class="h-2 w-2 rounded-full shrink-0 mt-2" :class="a.status === 'returned' ? 'bg-red-400' : statusDot[a.status]" />
               <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-500 shrink-0" title="Project task" />
-                  <p class="font-medium text-gray-900 truncate">{{ a.task?.title }}</p>
+                <div class="flex items-start gap-2 flex-wrap">
+                  <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-500 shrink-0 mt-0.5" title="Project task" />
+                  <p class="font-medium text-gray-900">{{ a.task?.title }}</p>
                   <span v-if="a.task?.is_required" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-600 shrink-0">REQUIRED</span>
                 </div>
                 <p class="text-[11px] font-mono text-gray-400 mt-0.5 uppercase tracking-wide">
@@ -103,12 +103,12 @@ const statusDot: Record<AssignmentStatus, string> = {
               v-for="a in inReview"
               :key="a.id"
               :to="`/tasks/${a.task_id}`"
-              class="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
+              class="flex items-start gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
             >
-              <span class="h-2 w-2 rounded-full shrink-0 bg-blue-400" />
-              <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-500 shrink-0" title="Project task" />
-              <p class="font-medium text-gray-900 truncate flex-1">{{ a.task?.title }}</p>
-              <p class="text-[10px] font-mono text-blue-600 shrink-0">IN_REVIEW</p>
+              <span class="h-2 w-2 rounded-full shrink-0 bg-blue-400 mt-1.5" />
+              <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-500 shrink-0 mt-0.5" title="Project task" />
+              <p class="font-medium text-gray-900 flex-1">{{ a.task?.title }}</p>
+              <p class="text-[10px] font-mono text-blue-600 shrink-0 mt-0.5">IN_REVIEW</p>
             </RouterLink>
           </div>
         </section>
@@ -120,12 +120,12 @@ const statusDot: Record<AssignmentStatus, string> = {
               v-for="a in completed"
               :key="a.id"
               :to="`/tasks/${a.task_id}`"
-              class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+              class="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
             >
-              <span class="h-2 w-2 rounded-full shrink-0 bg-senpai-500" />
-              <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-400 shrink-0" title="Project task" />
-              <span class="text-sm text-gray-500 truncate flex-1">{{ a.task?.title }}</span>
-              <span class="text-[10px] font-mono text-gray-300 shrink-0">DONE</span>
+              <span class="h-2 w-2 rounded-full shrink-0 bg-senpai-500 mt-1.5" />
+              <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-400 shrink-0 mt-0.5" title="Project task" />
+              <span class="text-sm text-gray-500 flex-1">{{ a.task?.title }}</span>
+              <span class="text-[10px] font-mono text-gray-300 shrink-0 mt-0.5">DONE</span>
             </RouterLink>
           </div>
         </section>

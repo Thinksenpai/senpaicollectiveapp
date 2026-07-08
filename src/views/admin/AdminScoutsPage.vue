@@ -182,6 +182,7 @@ async function remove(scout: Scout) {
             <p class="mt-3 text-sm text-gray-500">No scouts yet.</p>
           </div>
           <div v-else class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide text-left">
                 <tr>
@@ -216,6 +217,7 @@ async function remove(scout: Scout) {
                 </tr>
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </template>

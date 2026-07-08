@@ -44,17 +44,15 @@ const authStore = useAuthStore()
                   Dashboard
                 </RouterLink>
               </template>
-              <template v-else>
-                <RouterLink
-                  to="/login"
-                  class="text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
-                  Sign in
-                </RouterLink>
-              </template>
             </div>
-            <!-- Always visible Apply button -->
+            <!-- Sign in + Apply: visible at every width, not just desktop -->
             <template v-if="!authStore.isAuthenticated">
+              <RouterLink
+                to="/login"
+                class="text-sm font-medium text-gray-700 hover:text-gray-900"
+              >
+                Sign in
+              </RouterLink>
               <RouterLink
                 to="/join"
                 class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"

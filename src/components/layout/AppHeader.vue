@@ -229,7 +229,9 @@ function handleLogout() {
           </template>
         </div>
 
-        <div class="-mr-2 flex items-center sm:hidden">
+        <!-- Logged-in mobile nav lives in the bottom tab bar (MobileTabBar) —
+             this disclosure is only needed for the logged-out "Apply" panel. -->
+        <div v-if="!authStore.isAuthenticated" class="-mr-2 flex items-center sm:hidden">
           <DisclosureButton class="inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500">
             <span class="sr-only">Open main menu</span>
             <Bars3Icon v-if="!open" class="block h-6 w-6" />
