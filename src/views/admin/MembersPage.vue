@@ -16,7 +16,7 @@ const statusFilter = ref<MemberStatus | ''>('')
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/)
-  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
+  return parts.length > 1 ? ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
 }
 const roleBadge: Record<string, string> = {
   admin: 'bg-red-50 text-red-700',
@@ -71,6 +71,9 @@ const statusCounts = computed(() => {
 
 // Engine roster: cohort / pod / state / last-active, keyed by member id.
 const roster = ref<Record<string, MemberEngineStatus>>({})
+function r(id: string): MemberEngineStatus {
+  return roster.value[id]!
+}
 async function loadRoster() {
   try {
     const res = await adminEngineApi.memberRoster()
@@ -254,13 +257,13 @@ async function reactivate(id: string, name?: string) {
             <div class="space-y-1 text-sm text-gray-600 mb-4">
               <p>{{ member.profile?.primary_skill?.name || 'No skill set' }}</p>
               <p v-if="roster[member.id]" class="text-gray-500">
-                {{ roster[member.id].cohort_name }}<span v-if="roster[member.id].pod_name"> · {{ roster[member.id].pod_name }}</span>
-                <span class="inline-flex items-center px-1.5 py-0.5 ml-1.5 rounded text-xs font-medium capitalize" :class="stateBadge[roster[member.id].state]">{{ roster[member.id].state }}</span>
+                {{ r(member.id).cohort_name }}<span v-if="r(member.id).pod_name"> · {{ r(member.id).pod_name }}</span>
+                <span class="inline-flex items-center px-1.5 py-0.5 ml-1.5 rounded text-xs font-medium capitalize" :class="stateBadge[r(member.id).state]">{{ r(member.id).state }}</span>
               </p>
               <p v-else class="text-gray-400">Not in a cohort</p>
               <p class="text-gray-400">{{ member.profile?.city ? `${member.profile.city}, ${member.profile.country}` : 'No location' }}</p>
               <p class="font-mono text-xs text-gray-400">
-                Active {{ roster[member.id] ? lastActive(roster[member.id].last_active_at) : '—' }} · Joined {{ new Date(member.created_at).toLocaleDateString() }}
+                Active {{ roster[member.id] ? lastActive(r(member.id).last_active_at) : '—' }} · Joined {{ new Date(member.created_at).toLocaleDateString() }}
               </p>
             </div>
 

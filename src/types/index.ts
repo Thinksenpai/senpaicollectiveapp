@@ -1,3 +1,5 @@
+import type { Activity } from './engine'
+
 // API Response types
 export interface ApiResponse<T = unknown> {
   status: boolean

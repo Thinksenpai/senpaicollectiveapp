@@ -188,6 +188,7 @@ export interface Activity {
   metadata?: Record<string, unknown> | null
   source: 'system' | 'manual'
   created_at: string
+  member?: Member
 }
 
 export interface SubmitTaskPayload {

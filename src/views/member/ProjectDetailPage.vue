@@ -74,7 +74,7 @@ onMounted(async () => {
 
 function initials(name: string) {
   const parts = (name || '').trim().split(/\s+/)
-  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
+  return parts.length > 1 ? ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
 }
 
 const isCreator = computed(() => project.value?.created_by === authStore.member?.id)
@@ -216,7 +216,7 @@ const taskForm = ref({
   due_at: '',
   assignee_ids: [] as string[]
 })
-const kindOptions = ['build', 'research', 'publish', 'portfolio', 'custom'].map((k) => ({ value: k, label: k[0].toUpperCase() + k.slice(1) }))
+const kindOptions = ['build', 'research', 'publish', 'portfolio', 'custom'].map((k) => ({ value: k, label: (k[0] ?? '').toUpperCase() + k.slice(1) }))
 const handinOptions = [
   { value: 'none', label: 'Mark as done (no hand-in)' },
   { value: 'link', label: 'A link' },
@@ -385,7 +385,7 @@ async function ship() {
                 <!-- who's on it, their submission, and peer review — visible to the whole team -->
                 <ProjectTaskRoster
                   v-if="rosterByTask[t.id]?.length"
-                  :assignments="rosterByTask[t.id]"
+                  :assignments="rosterByTask[t.id] ?? []"
                   :is-on-team="isOnTeam"
                   :current-member-id="authStore.member?.id"
                   :reviewing-id="reviewingId"

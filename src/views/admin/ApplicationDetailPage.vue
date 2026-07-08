@@ -25,7 +25,12 @@ const adminStore = useAdminStore()
 const loading = ref(true)
 const actionLoading = ref(false)
 const error = ref<string | null>(null)
-const application = computed(() => adminStore.currentMember?.member ?? null)
+// An application under review always has a submitted profile — narrow the
+// type to match, rather than threading ?. through every field below.
+const application = computed(() => {
+  const member = adminStore.currentMember?.member
+  return member ? (member as typeof member & { profile: NonNullable<typeof member.profile> }) : null
+})
 
 const showApproveModal = ref(false)
 const showDeclineModal = ref(false)

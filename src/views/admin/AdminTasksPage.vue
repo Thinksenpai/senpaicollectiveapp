@@ -42,7 +42,7 @@ function assigneeName(m?: { profile?: { full_name?: string }; email?: string } |
 }
 function initials(name: string) {
   const parts = name.trim().split(/\s+/)
-  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
+  return parts.length > 1 ? ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
 }
 function formatDate(d?: string | null) {
   if (!d) return null
@@ -67,7 +67,7 @@ async function loadCohorts() {
   const fromQuery = route.query.cohort as string | undefined
   if (fromQuery && cohorts.value.some((c) => c.id === fromQuery)) selectedCohortId.value = fromQuery
   else if (!selectedCohortId.value && cohorts.value.length) {
-    selectedCohortId.value = (cohorts.value.find((c) => c.status === 'forming') ?? cohorts.value[0]).id
+    selectedCohortId.value = (cohorts.value.find((c) => c.status === 'forming') ?? cohorts.value[0])!.id
   }
 }
 async function loadTasks() {
@@ -184,7 +184,7 @@ async function saveProgram() {
     programBusy.value = false
   }
 }
-const kindOptions = ['reflection', 'portfolio', 'build', 'publish', 'research', 'custom'].map((k) => ({ value: k, label: k[0].toUpperCase() + k.slice(1) }))
+const kindOptions = ['reflection', 'portfolio', 'build', 'publish', 'research', 'custom'].map((k) => ({ value: k, label: (k[0] ?? '').toUpperCase() + k.slice(1) }))
 const handinOptions = [
   { value: 'none', label: 'Mark as done (no hand-in)' },
   { value: 'link', label: 'A link' },

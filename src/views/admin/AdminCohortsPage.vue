@@ -32,6 +32,16 @@ const targetPod = reactive<Record<string, string>>({}) // cohortId -> pod id
 const busy = reactive<Record<string, boolean>>({})
 const toast = ref('')
 
+// Template-only accessors — every call site below is already guarded by
+// `expandedId === c.id` + a loaded check, so the record entry is guaranteed
+// to exist at render time; this just gives TS a non-undefined view of it.
+function d(id: string): CohortData {
+  return data[id]!
+}
+function sel(id: string): string[] {
+  return selected[id] || []
+}
+
 function flash(msg: string) {
   toast.value = msg
   setTimeout(() => (toast.value = ''), 2500)
@@ -44,7 +54,7 @@ async function loadCohorts() {
 onMounted(async () => {
   try {
     await loadCohorts()
-    if (cohorts.value.length) toggleExpand(cohorts.value[0].id)
+    if (cohorts.value[0]) toggleExpand(cohorts.value[0].id)
   } finally {
     loading.value = false
   }
@@ -98,7 +108,7 @@ const stateStyles: Record<string, string> = {
 const stateOrder: MembershipState[] = ['accepted', 'inducted', 'active']
 function nextState(m: CohortMembership): MembershipState | null {
   const i = stateOrder.indexOf(m.state)
-  return i >= 0 && i < stateOrder.length - 1 ? stateOrder[i + 1] : null
+  return i >= 0 && i < stateOrder.length - 1 ? (stateOrder[i + 1] ?? null) : null
 }
 
 // ---- selection ----
@@ -318,7 +328,7 @@ async function savePod() {
               <div>
                 <p class="font-semibold text-gray-900">{{ c.name }}</p>
                 <p class="text-xs text-gray-500">
-                  <span v-if="data[c.id]">{{ data[c.id].members.length }} members · {{ data[c.id].pods.length }} pods</span>
+                  <span v-if="data[c.id]">{{ d(c.id).members.length }} members · {{ d(c.id).pods.length }} pods</span>
                   <span v-else>Tap to manage</span>
                 </p>
               </div>
@@ -334,7 +344,7 @@ async function savePod() {
 
           <!-- Expanded -->
           <div v-if="expandedId === c.id" class="border-t border-gray-100">
-            <div v-if="!data[c.id] || data[c.id].loading" class="flex justify-center py-10"><LoadingSpinner /></div>
+            <div v-if="!data[c.id] || d(c.id).loading" class="flex justify-center py-10"><LoadingSpinner /></div>
             <div v-else class="p-5 space-y-8">
               <!-- Pods -->
               <section>
@@ -342,9 +352,9 @@ async function savePod() {
                   <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900"><RectangleStackIcon class="h-4 w-4 text-gray-400" /> Pods</h3>
                   <button class="text-sm text-senpai-600 font-medium hover:text-senpai-700" @click="openPodModal(c.id)">+ Add pod</button>
                 </div>
-                <div v-if="data[c.id].pods.length" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div v-if="d(c.id).pods.length" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
-                    v-for="p in data[c.id].pods"
+                    v-for="p in d(c.id).pods"
                     :key="p.id"
                     class="group text-left border border-gray-200 rounded-xl p-4 hover:border-senpai-400 hover:shadow-sm transition-colors"
                     @click="openEditPodModal(c.id, p)"
@@ -352,7 +362,7 @@ async function savePod() {
                     <div class="flex items-start justify-between">
                       <p class="font-medium text-gray-900">{{ p.name }}</p>
                       <div class="flex items-center gap-2 shrink-0">
-                        <span class="text-xs text-gray-400">{{ data[c.id].members.filter((m) => m.pod_id === p.id).length }}/{{ p.capacity }}</span>
+                        <span class="text-xs text-gray-400">{{ d(c.id).members.filter((m) => m.pod_id === p.id).length }}/{{ p.capacity }}</span>
                         <PencilIcon class="h-3.5 w-3.5 text-gray-300 group-hover:text-senpai-500" />
                       </div>
                     </div>
@@ -374,22 +384,22 @@ async function savePod() {
                 <div class="flex items-center justify-between mb-3">
                   <h3 class="flex items-center gap-2 text-sm font-semibold text-gray-900"><UsersIcon class="h-4 w-4 text-gray-400" /> Members</h3>
                   <button
-                    v-if="data[c.id].pods.length && unassignedCount(data[c.id])"
+                    v-if="d(c.id).pods.length && unassignedCount(d(c.id))"
                     class="text-sm text-senpai-600 font-medium hover:text-senpai-700 inline-flex items-center gap-1"
                     :disabled="busy[c.id]"
                     @click="autoAssign(c.id)"
                   >
-                    <SparklesIcon class="h-4 w-4" /> Auto-distribute {{ unassignedCount(data[c.id]) }}
+                    <SparklesIcon class="h-4 w-4" /> Auto-distribute {{ unassignedCount(d(c.id)) }}
                   </button>
                 </div>
 
-                <div v-if="data[c.id].members.length" class="border border-gray-200 rounded-xl overflow-hidden">
+                <div v-if="d(c.id).members.length" class="border border-gray-200 rounded-xl overflow-hidden">
                   <!-- bulk toolbar -->
-                  <div v-if="(selected[c.id]||[]).length" class="flex items-center gap-3 bg-senpai-50 px-4 py-2.5 text-sm">
-                    <span class="font-medium text-senpai-800">{{ selected[c.id].length }} selected</span>
+                  <div v-if="sel(c.id).length" class="flex items-center gap-3 bg-senpai-50 px-4 py-2.5 text-sm">
+                    <span class="font-medium text-senpai-800">{{ sel(c.id).length }} selected</span>
                     <select v-model="targetPod[c.id]" class="border border-gray-200 rounded-lg px-2 py-1 text-sm bg-white">
                       <option value="">Choose pod…</option>
-                      <option v-for="p in data[c.id].pods" :key="p.id" :value="p.id">{{ p.name }}</option>
+                      <option v-for="p in d(c.id).pods" :key="p.id" :value="p.id">{{ p.name }}</option>
                     </select>
                     <button class="px-3 py-1 bg-senpai-600 text-white rounded-lg font-medium hover:bg-senpai-700" :disabled="busy[c.id]" @click="bulkAssign(c.id)">Assign</button>
                     <button class="text-gray-500 hover:text-gray-700 ml-auto" @click="clearSelection(c.id)">Clear</button>
@@ -399,7 +409,7 @@ async function savePod() {
                     <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide text-left">
                       <tr>
                         <th class="px-4 py-2 w-10">
-                          <input type="checkbox" class="rounded border-gray-300 text-senpai-600" :checked="(selected[c.id]||[]).length === data[c.id].members.length && data[c.id].members.length > 0" @change="($event.target as HTMLInputElement).checked ? selectAll(c.id, data[c.id]) : clearSelection(c.id)" />
+                          <input type="checkbox" class="rounded border-gray-300 text-senpai-600" :checked="sel(c.id).length === d(c.id).members.length && d(c.id).members.length > 0" @change="($event.target as HTMLInputElement).checked ? selectAll(c.id, d(c.id)) : clearSelection(c.id)" />
                         </th>
                         <th class="px-4 py-2 font-medium">Member</th>
                         <th class="px-4 py-2 font-medium">State</th>
@@ -408,11 +418,11 @@ async function savePod() {
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                      <tr v-for="m in data[c.id].members" :key="m.id" class="hover:bg-gray-50">
+                      <tr v-for="m in d(c.id).members" :key="m.id" class="hover:bg-gray-50">
                         <td class="px-4 py-2"><input type="checkbox" class="rounded border-gray-300 text-senpai-600" :checked="isSelected(c.id, m.id)" @change="toggleSelect(c.id, m.id)" /></td>
                         <td class="px-4 py-2 font-medium text-gray-900">{{ memberName(m) }}</td>
                         <td class="px-4 py-2"><span class="text-xs px-2 py-0.5 rounded-full capitalize" :class="stateStyles[m.state]">{{ m.state }}</span></td>
-                        <td class="px-4 py-2 text-gray-600">{{ podName(data[c.id], m.pod_id) || '—' }}</td>
+                        <td class="px-4 py-2 text-gray-600">{{ podName(d(c.id), m.pod_id) || '—' }}</td>
                         <td class="px-4 py-2 text-right">
                           <button v-if="nextState(m)" class="text-senpai-600 hover:text-senpai-700 text-xs font-medium inline-flex items-center gap-1" @click="advanceState(c.id, m)">Mark {{ nextState(m) }} <ArrowRightIcon class="h-3 w-3" /></button>
                         </td>
@@ -423,10 +433,10 @@ async function savePod() {
                 <p v-else class="text-sm text-gray-500">No members in this cohort yet.</p>
 
                 <!-- accept approved members -->
-                <div v-if="acceptableFor(data[c.id]).length" class="mt-3 bg-gray-50 rounded-xl p-3">
+                <div v-if="acceptableFor(d(c.id)).length" class="mt-3 bg-gray-50 rounded-xl p-3">
                   <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Approved, not yet in a cohort</p>
                   <div class="flex flex-wrap gap-2">
-                    <button v-for="am in acceptableFor(data[c.id])" :key="am.id" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm hover:border-senpai-400" :disabled="busy[c.id]" @click="accept(c.id, am.id)">
+                    <button v-for="am in acceptableFor(d(c.id))" :key="am.id" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-sm hover:border-senpai-400" :disabled="busy[c.id]" @click="accept(c.id, am.id)">
                       <PlusIcon class="h-3.5 w-3.5 text-senpai-600" /> {{ am.profile?.full_name || am.email }}
                     </button>
                   </div>

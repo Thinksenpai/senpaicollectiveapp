@@ -13,7 +13,7 @@ const initials = computed(() => {
   const name = authStore.member?.profile?.full_name?.trim()
   if (!name) return '?'
   const parts = name.split(/\s+/)
-  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase()
+  return parts.length > 1 ? ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase() : (parts[0]?.slice(0, 2).toUpperCase() ?? '?')
 })
 
 function handleLogout() {

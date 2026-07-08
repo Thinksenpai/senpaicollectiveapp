@@ -485,9 +485,9 @@ function commentTimeAgo(d: string) {
 
                       <!-- Editable: no submission yet, returned for changes, or explicitly resubmitting -->
                       <template v-else>
-                        <textarea v-if="a.task?.handin_type === 'text'" v-model="drafts[a.task_id].body" rows="3" placeholder="Write your response…" class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-senpai-500" />
+                        <textarea v-if="a.task?.handin_type === 'text'" v-model="drafts[a.task_id]!.body" rows="3" placeholder="Write your response…" class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-senpai-500" />
                         <a v-else-if="a.task?.handin_type === 'external_form' && a.task?.external_url" :href="a.task.external_url" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm text-senpai-600 font-medium mb-2">Open the form <ArrowTopRightOnSquareIcon class="h-4 w-4" /></a>
-                        <input v-else-if="a.task?.handin_type !== 'none'" v-model="drafts[a.task_id].link" type="url" placeholder="https://…" class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-senpai-500" />
+                        <input v-else-if="a.task?.handin_type !== 'none'" v-model="drafts[a.task_id]!.link" type="url" placeholder="https://…" class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-senpai-500" />
                         <button class="mt-3 px-4 py-2 bg-senpai-600 text-white rounded-lg text-sm font-medium hover:bg-senpai-700 disabled:opacity-50" :disabled="submitting[a.task_id]" @click="submitTask(a)">
                           {{ submitting[a.task_id] ? 'Submitting…' : hasBeenSubmitted(a) ? 'Resubmit' : a.task?.handin_type === 'none' || a.task?.handin_type === 'external_form' ? 'Mark as done' : 'Submit' }}
                         </button>

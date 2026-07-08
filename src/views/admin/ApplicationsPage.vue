@@ -19,7 +19,7 @@ onMounted(loadTab)
 
 function initials(name: string) {
   const parts = (name || '').trim().split(/\s+/)
-  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
+  return parts.length > 1 ? ((parts[0]?.[0] ?? "") + (parts[parts.length - 1]?.[0] ?? "")).toUpperCase() : parts[0]?.slice(0, 2).toUpperCase() || '?'
 }
 
 // ---- quick approve/decline right from the card ----
