@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router'
 
 // NOTE: Starter copy — review with counsel before relying on it legally.
-const lastUpdated = 'June 2026'
+const lastUpdated = 'July 2026'
 </script>
 
 <template>
@@ -60,9 +60,15 @@ const lastUpdated = 'June 2026'
         <section>
           <h2 class="text-xl font-semibold text-gray-900">4. What other members can see</h2>
           <p>
-            If your application is accepted, your member profile — such as your name,
-            location, skills, and portfolio — is visible to other members of the community.
-            Your password is never visible to anyone and is stored only in hashed form.
+            If your application is accepted, your <strong>full member profile</strong> is
+            visible to other members and to admins — not just a public-safe subset. That
+            includes your name, location, skills, experience, portfolio, and the onboarding
+            answers you give after acceptance (personal goal, MBTI, school/work status,
+            timezone, languages, and birthday — shown as month and day, not year). This is
+            intentional: Senpai is a trust-based member community, and full visibility between
+            members is part of how that trust works. If you propose or join a Project, its
+            problem statement, team, and shipped outcome are also visible to members. Your
+            password is never visible to anyone and is stored only in hashed form.
           </p>
         </section>
 
@@ -96,7 +102,7 @@ const lastUpdated = 'June 2026'
           <h2 class="text-xl font-semibold text-gray-900">8. Contact</h2>
           <p>
             Questions about your data? Reach us at
-            <a href="mailto:hello@thinksenpai.com" class="text-senpai-600 underline hover:text-senpai-700">hello@thinksenpai.com</a>.
+            <a href="mailto:senpaicollective@gmail.com" class="text-senpai-600 underline hover:text-senpai-700">senpaicollective@gmail.com</a>.
           </p>
         </section>
       </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { scoutsApi } from '@/api'
 import type { ScoutDashboardData, ScoutPledge, ScoutLeaderboardEntry } from '@/types'
@@ -521,7 +522,10 @@ onMounted(initPage)
 
         <!-- Tips -->
         <div class="mt-8 bg-white rounded-2xl border border-gray-200 p-6">
-          <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Tips for successful recruiting</p>
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400">// Tips for successful recruiting</p>
+            <RouterLink to="/scout/guide" class="text-sm font-medium text-senpai-600 hover:text-senpai-700 shrink-0">Read the full guide &rarr;</RouterLink>
+          </div>
           <ul class="text-sm text-gray-600 space-y-2">
             <li class="flex items-start">
               <CheckCircleIcon class="h-5 w-5 mr-2 shrink-0 text-senpai-500" />

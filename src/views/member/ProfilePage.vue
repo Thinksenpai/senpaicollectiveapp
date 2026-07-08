@@ -6,6 +6,7 @@ import { engineApi } from '@/api'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import ProfileDisplay from '@/components/member/ProfileDisplay.vue'
 import type { MemberEnrichment, Activity } from '@/types'
+import { activityVerbPhrase, activityChip, activityLink, activityTimeAgo } from '@/utils/activity'
 
 const authStore = useAuthStore()
 
@@ -54,57 +55,6 @@ onMounted(async () => {
 // lives on the task page itself, in context) — the feed just says what kind
 // of thing happened and gives you a clickable way to go see it.
 const activity = ref<Activity[]>([])
-function meta(a: Activity, key: string): string {
-  const v = a.metadata?.[key]
-  return typeof v === 'string' ? v : ''
-}
-function activityVerbPhrase(a: Activity): string {
-  switch (a.verb) {
-    case 'task_submitted': return 'Submitted'
-    case 'task_completed': return 'Completed'
-    case 'task_assigned': return 'Assigned'
-    case 'task_unassigned': return 'Removed from'
-    case 'commented': return 'Commented on'
-    case 'pod_joined': return 'Joined'
-    case 'accepted': return 'Accepted into'
-    case 'approved': {
-      const by = meta(a, 'approved_by')
-      return by ? `Approved by ${by}` : 'Approved'
-    }
-    case 'enrichment_completed': return 'Completed profile enrichment'
-    case 'guidelines_accepted': return 'Accepted community guidelines'
-    case 'pledge_accepted': return 'Accepted the scout pledge'
-    case 'became_scout': return 'Became a scout'
-    case 'induction_attended': return 'Attended induction'
-    case 'active': return 'Was active'
-    default: return a.verb.replace(/_/g, ' ')
-  }
-}
-// The clickable chip text — the task/pod/cohort name, not any comment content.
-function activityChip(a: Activity): string {
-  return meta(a, 'task') || meta(a, 'pod') || meta(a, 'cohort')
-}
-// Where the chip links to. Tasks (and comments on them) go to the task's own
-// page; pod/cohort activities go to the dashboard, since there's no separate
-// pod/cohort detail route yet.
-function activityLink(a: Activity): string | null {
-  if (a.target_type === 'task' && a.target_id) return `/tasks/${a.target_id}`
-  if (a.target_type === 'assignment') {
-    const taskId = meta(a, 'task_id')
-    return taskId ? `/tasks/${taskId}` : null
-  }
-  if (a.target_type === 'pod' || a.target_type === 'cohort') return '/dashboard'
-  return null
-}
-function activityTimeAgo(d: string) {
-  const diff = Date.now() - new Date(d).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return `${Math.floor(hrs / 24)}d ago`
-}
 
 const workLabels: Record<string, string> = {
   student: 'Student', employed: 'Employed', freelance: 'Freelance',

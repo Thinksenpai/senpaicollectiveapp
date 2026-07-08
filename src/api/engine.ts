@@ -22,7 +22,12 @@ import type {
   MemberEngineStatus,
   TaskComment,
   AssignmentComment,
-  TaskPeerStatus
+  TaskPeerStatus,
+  Program,
+  Project,
+  ProjectStatus,
+  ProposeProjectPayload,
+  CreateProjectTaskPayload
 } from '@/types'
 
 export const engineApi = {
@@ -33,6 +38,12 @@ export const engineApi = {
 
   async getMyTasks(): Promise<ApiResponse<TaskAssignment[]>> {
     return apiClient.get('/me/tasks')
+  },
+
+  // A task's own metadata (no submission content) — lets the task page show
+  // project/program context even for a task not (only) assigned to you.
+  async getTask(taskId: string): Promise<ApiResponse<Task>> {
+    return apiClient.get(`/tasks/${taskId}`)
   },
 
   async submitTask(taskId: string, payload: SubmitTaskPayload): Promise<ApiResponse<TaskAssignment>> {
@@ -87,6 +98,53 @@ export const engineApi = {
   },
   async postAssignmentComment(assignmentId: string, body: string): Promise<ApiResponse<AssignmentComment>> {
     return apiClient.post(`/assignments/${assignmentId}/comments`, { body })
+  },
+
+  // Projects — the builder primitive
+  async listProjects(status?: ProjectStatus): Promise<ApiResponse<Project[]>> {
+    return apiClient.get('/projects', { params: status ? { status } : undefined })
+  },
+  async proposeProject(payload: ProposeProjectPayload): Promise<ApiResponse<Project>> {
+    return apiClient.post('/projects', payload)
+  },
+  async getProject(id: string): Promise<ApiResponse<{ project: Project; tasks: Task[] | null }>> {
+    return apiClient.get(`/projects/${id}`)
+  },
+  async joinProject(id: string): Promise<ApiResponse<Project>> {
+    return apiClient.post(`/projects/${id}/join`)
+  },
+  async leaveProject(id: string): Promise<ApiResponse<void>> {
+    return apiClient.post(`/projects/${id}/leave`)
+  },
+  // Creator/admin pulling a specific person onto (or off of) the team directly.
+  async addTeamMember(id: string, memberId: string): Promise<ApiResponse<Project>> {
+    return apiClient.post(`/projects/${id}/members`, { member_id: memberId })
+  },
+  async removeTeamMember(id: string, memberId: string): Promise<ApiResponse<void>> {
+    return apiClient.delete(`/projects/${id}/members/${memberId}`)
+  },
+  async updateProjectStatus(id: string, status: ProjectStatus, outcomeUrl?: string): Promise<ApiResponse<Project>> {
+    return apiClient.put(`/projects/${id}/status`, { status, outcome_url: outcomeUrl })
+  },
+  async getMemberProjects(memberId: string): Promise<ApiResponse<Project[]>> {
+    return apiClient.get(`/members/${memberId}/projects`)
+  },
+
+  // Peer tasks — a project team assigns and reviews its own work
+  async createProjectTask(projectId: string, payload: CreateProjectTaskPayload): Promise<ApiResponse<Task>> {
+    return apiClient.post(`/projects/${projectId}/tasks`, payload)
+  },
+  async getProjectRoster(projectId: string): Promise<ApiResponse<TaskAssignment[]>> {
+    return apiClient.get(`/projects/${projectId}/roster`)
+  },
+  async getProjectActivity(projectId: string): Promise<ApiResponse<Activity[]>> {
+    return apiClient.get(`/projects/${projectId}/activity`)
+  },
+  async getTaskActivity(taskId: string): Promise<ApiResponse<Activity[]>> {
+    return apiClient.get(`/tasks/${taskId}/activity`)
+  },
+  async peerReviewAssignment(assignmentId: string, status: 'completed' | 'returned', note?: string): Promise<ApiResponse<void>> {
+    return apiClient.post(`/assignments/${assignmentId}/peer-review`, { status, note })
   }
 }
 
@@ -131,6 +189,18 @@ export const adminEngineApi = {
   // Members / memberships
   listCohortMembers(cohortId: string): Promise<ApiResponse<CohortMembership[]>> {
     return apiClient.get(`/admin/cohorts/${cohortId}/members`)
+  },
+  listCohortPrograms(cohortId: string): Promise<ApiResponse<Program[]>> {
+    return apiClient.get(`/admin/cohorts/${cohortId}/programs`)
+  },
+  approveProject(projectId: string): Promise<ApiResponse<Project>> {
+    return apiClient.post(`/admin/projects/${projectId}/approve`)
+  },
+  createProgram(cohortId: string, payload: { name: string; description?: string }): Promise<ApiResponse<Program>> {
+    return apiClient.post(`/admin/cohorts/${cohortId}/programs`, payload)
+  },
+  updateProgram(programId: string, payload: { name: string; description?: string }): Promise<ApiResponse<Program>> {
+    return apiClient.put(`/admin/programs/${programId}`, payload)
   },
   memberRoster(): Promise<ApiResponse<MemberEngineStatus[]>> {
     return apiClient.get('/admin/roster')

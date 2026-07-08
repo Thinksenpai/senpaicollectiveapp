@@ -20,11 +20,27 @@ function initials(name: string) {
 }
 const roleBadge: Record<string, string> = {
   admin: 'bg-red-50 text-red-700',
-  scout: 'bg-amber-50 text-amber-700'
+  scout: 'bg-amber-50 text-amber-700',
+  community_lead: 'bg-senpai-50 text-senpai-700'
 }
+const specialRoleNames = ['admin', 'scout', 'community_lead']
 function specialRoles(member: { roles?: { name: string }[] }) {
-  return (member.roles || []).filter((r) => r.name === 'admin' || r.name === 'scout')
+  return (member.roles || []).filter((r) => specialRoleNames.includes(r.name))
 }
+
+// Quick "review at a glance" filter — who currently holds each role. Client-side
+// over the fetched page, since the roster of scouts/leads is always small.
+const roleFilter = ref<'' | 'admin' | 'scout' | 'community_lead'>('')
+const roleFilterOptions = [
+  { value: '', label: 'All roles' },
+  { value: 'scout', label: 'Scouts' },
+  { value: 'community_lead', label: 'Community Leads' },
+  { value: 'admin', label: 'Admins' }
+]
+const visibleMembers = computed(() => {
+  if (!roleFilter.value) return adminStore.members
+  return adminStore.members.filter((m) => (m.roles || []).some((r) => r.name === roleFilter.value))
+})
 
 // Members are people who were actually accepted at some point — pending
 // applicants and declined ones never became a member, and live on the
@@ -89,7 +105,9 @@ function fetchMembers() {
   adminStore.fetchMembers({
     search: search.value || undefined,
     status: statusFilter.value || undefined,
-    limit: 20,
+    // Role rosters (scouts, leads, admins) are always small — widen the page
+    // instead of paginating, so the role filter actually sees everyone.
+    limit: roleFilter.value ? 200 : 20,
     offset: 0
   })
 }
@@ -101,6 +119,7 @@ watch(search, () => {
 })
 
 watch(statusFilter, fetchMembers)
+watch(roleFilter, fetchMembers)
 
 // ---- inline lifecycle actions ----
 const busyId = ref<string | null>(null)
@@ -177,6 +196,13 @@ async function reactivate(id: string, name?: string) {
             placeholder="Filter by status"
           />
         </div>
+        <div class="w-full sm:w-48">
+          <BaseSelect
+            v-model="roleFilter"
+            :options="roleFilterOptions"
+            placeholder="Filter by role"
+          />
+        </div>
       </div>
 
       <!-- Loading -->
@@ -186,7 +212,7 @@ async function reactivate(id: string, name?: string) {
 
       <!-- Empty State -->
       <div
-        v-else-if="adminStore.members.length === 0"
+        v-else-if="visibleMembers.length === 0"
         class="text-center py-12 bg-white rounded-lg"
       >
         <UsersIcon class="mx-auto h-12 w-12 text-gray-400" />
@@ -200,7 +226,7 @@ async function reactivate(id: string, name?: string) {
       <template v-else>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div
-            v-for="member in adminStore.members"
+            v-for="member in visibleMembers"
             :key="member.id"
             class="bg-white rounded-2xl border border-gray-200 p-5 cursor-pointer hover:border-senpai-300 hover:shadow-sm transition flex flex-col"
             @click="$router.push(`/admin/members/${member.id}`)"

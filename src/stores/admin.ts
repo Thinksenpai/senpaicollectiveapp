@@ -163,6 +163,48 @@ export const useAdminStore = defineStore('admin', () => {
     }
   }
 
+  async function removeScout(id: string) {
+    error.value = null
+    try {
+      const response = await adminApi.removeScout(id)
+      if (response.status) {
+        return { success: true }
+      }
+      return { success: false, error: response.message }
+    } catch (e: any) {
+      error.value = e.response?.data?.message || e.message || 'Failed to remove scout access'
+      return { success: false, error: error.value }
+    }
+  }
+
+  async function grantCommunityLead(id: string) {
+    error.value = null
+    try {
+      const response = await adminApi.grantCommunityLead(id)
+      if (response.status) {
+        return { success: true }
+      }
+      return { success: false, error: response.message }
+    } catch (e: any) {
+      error.value = e.response?.data?.message || e.message || 'Failed to grant community lead'
+      return { success: false, error: error.value }
+    }
+  }
+
+  async function revokeCommunityLead(id: string) {
+    error.value = null
+    try {
+      const response = await adminApi.revokeCommunityLead(id)
+      if (response.status) {
+        return { success: true }
+      }
+      return { success: false, error: response.message }
+    } catch (e: any) {
+      error.value = e.response?.data?.message || e.message || 'Failed to revoke community lead'
+      return { success: false, error: error.value }
+    }
+  }
+
   // Stats
   async function fetchStatistics() {
     statsLoading.value = true
@@ -227,6 +269,9 @@ export const useAdminStore = defineStore('admin', () => {
     deactivateMember,
     reactivateMember,
     promoteToScout,
+    removeScout,
+    grantCommunityLead,
+    revokeCommunityLead,
 
     // Stats
     stats,

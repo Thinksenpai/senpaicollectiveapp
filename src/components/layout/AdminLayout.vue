@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import AppLayout from './AppLayout.vue'
+import { useAuthStore } from '@/stores/auth'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 
 // Shared shell for every /admin/* page — one place to change the admin
@@ -18,20 +20,31 @@ interface Props {
   backLabel?: string
 }
 const props = withDefaults(defineProps<Props>(), {
-  backTo: '/admin',
+  backTo: undefined,
   backLabel: 'Back to Overview'
 })
 
 const route = useRoute()
-const tabs = [
+const authStore = useAuthStore()
+
+// Full admins land back on the Overview dashboard; a community lead has no
+// access to that page, so their "back" goes to the one tab they own.
+const backTo = computed(() => props.backTo ?? (authStore.isAdmin ? '/admin' : '/admin/applications'))
+
+// A community lead is delegated one thing — application review — not the
+// rest of the admin surface. Everything else stays admin-only, tab included.
+const allTabs = [
   { name: 'Overview', href: '/admin' },
   { name: 'Applications', href: '/admin/applications' },
   { name: 'Members', href: '/admin/members' },
   { name: 'Cohorts', href: '/admin/cohorts' },
   { name: 'Tasks', href: '/admin/tasks' },
+  { name: 'Projects', href: '/admin/projects' },
+  { name: 'Scouts', href: '/admin/scouts' },
   { name: 'Jobs', href: '/admin/jobs' },
   { name: 'Analytics', href: '/admin/analytics' }
 ]
+const tabs = computed(() => authStore.isAdmin ? allTabs : allTabs.filter((t) => t.name === 'Applications'))
 function isActive(href: string) {
   if (href === '/admin') return route.path === '/admin'
   return route.path.startsWith(href)
@@ -55,8 +68,8 @@ function isActive(href: string) {
         </nav>
       </div>
     </div>
-    <div v-if="route.path !== props.backTo" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-      <RouterLink :to="props.backTo" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
+    <div v-if="route.path !== backTo" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <RouterLink :to="backTo" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
         <ArrowLeftIcon class="h-4 w-4 mr-1" />
         {{ props.backLabel }}
       </RouterLink>

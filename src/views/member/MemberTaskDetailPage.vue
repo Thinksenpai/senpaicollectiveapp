@@ -1,23 +1,31 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { engineApi } from '@/api'
-import type { TaskAssignment, TaskComment, AssignmentComment, TaskPeerStatus } from '@/types'
+import type { Task, TaskAssignment, TaskComment, AssignmentComment, TaskPeerStatus, Project, Activity } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
+import ProjectTaskRoster from '@/components/member/ProjectTaskRoster.vue'
+import ActivityFeed from '@/components/common/ActivityFeed.vue'
 import {
-  ArrowLeftIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, UserCircleIcon
+  ArrowLeftIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, UserCircleIcon, RocketLaunchIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
+const authStore = useAuthStore()
 const taskId = computed(() => route.params.id as string)
 
 const loading = ref(true)
-const assignment = ref<TaskAssignment | null>(null)
-const peers = ref<TaskPeerStatus[]>([])
+const task = ref<Task | null>(null)
+const assignment = ref<TaskAssignment | null>(null) // my own assignment, if any
+const peers = ref<TaskPeerStatus[]>([]) // program/cohort tasks only — status, no submissions
+const projectRoster = ref<TaskAssignment[]>([]) // project tasks only — everyone, with submissions
+const project = ref<Project | null>(null)
 const taskComments = ref<TaskComment[]>([])
 const assignmentComments = ref<AssignmentComment[]>([])
+const activity = ref<Activity[]>([])
 
 const draft = reactive({ link: '', body: '' })
 const resubmitting = ref(false)
@@ -26,6 +34,16 @@ const newTaskComment = ref('')
 const newAssignmentComment = ref('')
 const postingTaskComment = ref(false)
 const postingAssignmentComment = ref(false)
+const reviewingId = ref<string | null>(null)
+
+const isProjectTask = computed(() => !!task.value?.project_id)
+// Any teammate on the project — not just the assignee — can see and review
+// this task's work, since progress on a project depends on everyone seeing
+// everyone's submissions, not just their own.
+const isOnProjectTeam = computed(() =>
+  isProjectTask.value && projectRoster.value.length > 0 &&
+  (project.value?.team || []).some((t) => t.member_id === authStore.member?.id)
+)
 
 function hasBeenSubmitted() {
   return !!assignment.value?.submitted_at
@@ -37,12 +55,34 @@ function isInputActive() {
 async function load() {
   loading.value = true
   try {
-    const [mine, peerRes] = await Promise.all([
-      engineApi.getMyTasks(),
-      engineApi.getTaskPeers(taskId.value)
+    const [taskRes, mine] = await Promise.all([
+      engineApi.getTask(taskId.value),
+      engineApi.getMyTasks()
     ])
+    task.value = taskRes.data ?? null
     assignment.value = (mine.data ?? []).find((a) => a.task_id === taskId.value) ?? null
-    peers.value = (peerRes.data ?? []).filter((p) => !p.is_self)
+
+    if (task.value?.project_id) {
+      // Project task — pull the whole team's roster (submissions included) and
+      // the project itself, for context and the back link. A 403 just means
+      // "not on this team" — fail quietly, the page still shows the task itself.
+      try {
+        const [rosterRes, projectRes] = await Promise.all([
+          engineApi.getProjectRoster(task.value.project_id),
+          engineApi.getProject(task.value.project_id)
+        ])
+        projectRoster.value = (rosterRes.data ?? []).filter((a) => a.task_id === taskId.value)
+        project.value = projectRes.data?.project ?? null
+      } catch {
+        projectRoster.value = []
+        project.value = null
+      }
+    } else if (task.value) {
+      // Program/cohort task — the lighter "who else, what status" view (no submissions).
+      const peerRes = await engineApi.getTaskPeers(taskId.value)
+      peers.value = (peerRes.data ?? []).filter((p) => !p.is_self)
+    }
+
     if (assignment.value) {
       draft.link = assignment.value.link_url ?? ''
       draft.body = assignment.value.body ?? ''
@@ -52,6 +92,18 @@ async function load() {
       ])
       taskComments.value = tc.data ?? []
       assignmentComments.value = ac.data ?? []
+    } else if (!isProjectTask.value) {
+      // Non-project tasks are private 1:1 with admins — no assignment, nothing to show.
+      taskComments.value = []
+    } else {
+      // Project tasks have a shared thread even if this viewer has no assignment of their own.
+      taskComments.value = (await engineApi.getTaskComments(taskId.value)).data ?? []
+    }
+
+    try {
+      activity.value = (await engineApi.getTaskActivity(taskId.value)).data ?? []
+    } catch {
+      activity.value = []
     }
   } finally {
     loading.value = false
@@ -72,6 +124,16 @@ async function submit() {
     await load()
   } finally {
     submitting.value = false
+  }
+}
+
+async function peerReview(a: TaskAssignment, status: 'completed' | 'returned') {
+  reviewingId.value = a.id
+  try {
+    await engineApi.peerReviewAssignment(a.id, status)
+    await load()
+  } finally {
+    reviewingId.value = null
   }
 }
 
@@ -123,9 +185,9 @@ const statusLabel: Record<string, string> = {
   assigned: 'OPEN', in_progress: 'IN_PROGRESS', submitted: 'IN_REVIEW', completed: 'DONE', returned: 'RETURNED'
 }
 const isOverdue = computed(() =>
-  !!assignment.value?.task?.due_at &&
-  new Date(assignment.value.task.due_at) < new Date() &&
-  assignment.value.status !== 'completed'
+  !!(assignment.value?.task?.due_at || task.value?.due_at) &&
+  new Date((assignment.value?.task?.due_at || task.value?.due_at)!) < new Date() &&
+  assignment.value?.status !== 'completed'
 )
 function dueTag(d?: string | null) {
   if (!d) return ''
@@ -136,37 +198,48 @@ function dueTag(d?: string | null) {
 <template>
   <AppLayout>
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <RouterLink to="/tasks" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6">
-        <ArrowLeftIcon class="h-4 w-4 mr-1" /> Back to tasks
+      <!-- Context-aware back link: a project task returns to its project, not the generic list. -->
+      <RouterLink
+        :to="isProjectTask && task?.project_id ? `/projects/${task.project_id}` : '/tasks'"
+        class="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-6"
+      >
+        <ArrowLeftIcon class="h-4 w-4 mr-1" /> {{ isProjectTask ? 'Back to project' : 'Back to tasks' }}
       </RouterLink>
 
       <div v-if="loading" class="flex justify-center py-16"><LoadingSpinner size="lg" /></div>
 
-      <div v-else-if="!assignment" class="text-center py-16">
-        <p class="text-gray-500">This task isn't assigned to you, or doesn't exist.</p>
+      <div v-else-if="!task" class="text-center py-16">
+        <p class="text-gray-500">This task doesn't exist.</p>
       </div>
 
       <div v-else class="space-y-8">
         <!-- Ticket header -->
         <section>
-          <p class="text-[11px] font-mono uppercase tracking-widest text-senpai-600">
-            TASK · {{ assignment.task?.track?.replace('_', ' ') }} · {{ assignment.task?.kind }}
+          <RouterLink
+            v-if="isProjectTask && project"
+            :to="`/projects/${project.id}`"
+            class="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-widest text-senpai-600 hover:text-senpai-700 mb-1"
+          >
+            <RocketLaunchIcon class="h-3.5 w-3.5" /> Project · {{ project.title }}
+          </RouterLink>
+          <p v-else class="text-[11px] font-mono uppercase tracking-widest text-senpai-600">
+            TASK{{ task.program_id ? ' · Induction' : '' }} · {{ task.kind }}
           </p>
-          <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ assignment.task?.title }}</h1>
+          <h1 class="text-2xl font-bold text-gray-900 mt-1">{{ task.title }}</h1>
 
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 pt-4 border-t border-gray-100">
-            <span class="text-[11px] font-mono px-2 py-1 rounded bg-gray-100 text-gray-500">{{ statusLabel[assignment.status] }}</span>
-            <span v-if="assignment.task?.due_at" class="text-[11px] font-mono" :class="isOverdue ? 'text-red-600 font-medium' : 'text-gray-400'">
-              {{ isOverdue ? 'OVERDUE · ' : 'DUE ' }}{{ dueTag(assignment.task.due_at) }}
+            <span v-if="assignment" class="text-[11px] font-mono px-2 py-1 rounded bg-gray-100 text-gray-500">{{ statusLabel[assignment.status] }}</span>
+            <span v-if="task.due_at" class="text-[11px] font-mono" :class="isOverdue ? 'text-red-600 font-medium' : 'text-gray-400'">
+              {{ isOverdue ? 'OVERDUE · ' : 'DUE ' }}{{ dueTag(task.due_at) }}
             </span>
-            <span v-if="assignment.task?.is_required" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-600">REQUIRED</span>
+            <span v-if="task.is_required" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-600">REQUIRED</span>
           </div>
 
-          <p class="text-sm text-gray-700 mt-4 whitespace-pre-wrap leading-relaxed">{{ assignment.task?.description }}</p>
+          <p class="text-sm text-gray-700 mt-4 whitespace-pre-wrap leading-relaxed">{{ task.description }}</p>
         </section>
 
-        <!-- Your submission -->
-        <section class="bg-white rounded-2xl border border-gray-200 p-5">
+        <!-- Your submission (only if this task is actually assigned to you) -->
+        <section v-if="assignment" class="bg-white rounded-2xl border border-gray-200 p-5">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400">// Your submission</h2>
             <span v-if="assignment.status === 'submitted'" class="text-[11px] font-mono text-blue-600 font-medium">IN_REVIEW</span>
@@ -190,8 +263,8 @@ function dueTag(d?: string | null) {
             </button>
           </template>
 
-          <!-- Private thread with admins -->
-          <div v-if="hasBeenSubmitted()" class="mt-4 pt-3 border-t border-gray-100">
+          <!-- Private thread with admins (non-project tasks only) -->
+          <div v-if="hasBeenSubmitted() && !isProjectTask" class="mt-4 pt-3 border-t border-gray-100">
             <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-2">// Comments on your submission</p>
             <div v-if="assignmentComments.length" class="space-y-2 mb-2">
               <div v-for="c in assignmentComments" :key="c.id" class="text-sm bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
@@ -207,8 +280,22 @@ function dueTag(d?: string | null) {
           </div>
         </section>
 
-        <!-- Who else is working on this -->
-        <section v-if="peers.length">
+        <!-- Project tasks: the whole team's work, visible and reviewable by everyone -->
+        <section v-if="isProjectTask && projectRoster.length">
+          <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Team submissions</h2>
+          <div class="bg-white rounded-2xl border border-gray-200">
+            <ProjectTaskRoster
+              :assignments="projectRoster"
+              :is-on-team="isOnProjectTeam"
+              :current-member-id="authStore.member?.id"
+              :reviewing-id="reviewingId"
+              @review="peerReview"
+            />
+          </div>
+        </section>
+
+        <!-- Who else is working on this (program/cohort tasks only) -->
+        <section v-if="!isProjectTask && peers.length">
           <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Who else is working on this</h2>
           <div class="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
             <div v-for="p in peers" :key="p.member_id" class="flex items-center justify-between px-4 py-2.5">
@@ -219,7 +306,7 @@ function dueTag(d?: string | null) {
         </section>
 
         <!-- Shared Q&A -->
-        <section>
+        <section v-if="assignment || isProjectTask">
           <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-1">// Discussion</h2>
           <p class="text-xs text-gray-400 mb-3">A shared thread — anyone assigned can ask questions or help each other here.</p>
           <div v-if="taskComments.length" class="space-y-2 mb-3">
@@ -232,6 +319,14 @@ function dueTag(d?: string | null) {
           <div class="flex items-center gap-2">
             <input v-model="newTaskComment" type="text" placeholder="Ask or answer a question…" class="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-senpai-400" @keyup.enter="postTaskComment" />
             <BaseButton :loading="postingTaskComment" @click="postTaskComment">Post</BaseButton>
+          </div>
+        </section>
+
+        <!-- Activity — what happened on this task -->
+        <section v-if="activity.length">
+          <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Activity</h2>
+          <div class="bg-white rounded-2xl border border-gray-200 p-4">
+            <ActivityFeed :activities="activity" />
           </div>
         </section>
       </div>

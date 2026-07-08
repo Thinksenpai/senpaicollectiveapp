@@ -5,6 +5,7 @@ import { engineApi } from '@/api'
 import type { TaskAssignment, AssignmentStatus } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { RocketLaunchIcon } from '@heroicons/vue/24/outline'
 
 const loading = ref(true)
 const tasks = ref<TaskAssignment[]>([])
@@ -79,10 +80,13 @@ const statusDot: Record<AssignmentStatus, string> = {
               <span class="h-2 w-2 rounded-full shrink-0" :class="a.status === 'returned' ? 'bg-red-400' : statusDot[a.status]" />
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
+                  <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-500 shrink-0" title="Project task" />
                   <p class="font-medium text-gray-900 truncate">{{ a.task?.title }}</p>
                   <span v-if="a.task?.is_required" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-600 shrink-0">REQUIRED</span>
                 </div>
-                <p class="text-[11px] font-mono text-gray-400 mt-0.5 uppercase tracking-wide">{{ a.task?.track?.replace('_', ' ') }}</p>
+                <p class="text-[11px] font-mono text-gray-400 mt-0.5 uppercase tracking-wide">
+                  {{ a.task?.project_id ? 'Project · ' : a.task?.program_id ? 'Induction · ' : '' }}{{ a.task?.kind }}
+                </p>
               </div>
               <div class="text-right shrink-0">
                 <p class="text-[11px] font-mono" :class="isOverdue(a) ? 'text-red-600 font-medium' : 'text-gray-400'">{{ dueLabel(a) || '—' }}</p>
@@ -102,6 +106,7 @@ const statusDot: Record<AssignmentStatus, string> = {
               class="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition-colors"
             >
               <span class="h-2 w-2 rounded-full shrink-0 bg-blue-400" />
+              <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-500 shrink-0" title="Project task" />
               <p class="font-medium text-gray-900 truncate flex-1">{{ a.task?.title }}</p>
               <p class="text-[10px] font-mono text-blue-600 shrink-0">IN_REVIEW</p>
             </RouterLink>
@@ -118,6 +123,7 @@ const statusDot: Record<AssignmentStatus, string> = {
               class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
             >
               <span class="h-2 w-2 rounded-full shrink-0 bg-senpai-500" />
+              <RocketLaunchIcon v-if="a.task?.project_id" class="h-3.5 w-3.5 text-senpai-400 shrink-0" title="Project task" />
               <span class="text-sm text-gray-500 truncate flex-1">{{ a.task?.title }}</span>
               <span class="text-[10px] font-mono text-gray-300 shrink-0">DONE</span>
             </RouterLink>

@@ -12,6 +12,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!member.value && !!apiClient.getToken())
   const isAdmin = computed(() => member.value?.roles?.some(r => r.name === 'admin') ?? false)
+  const isCommunityLead = computed(() => member.value?.roles?.some(r => r.name === 'community_lead') ?? false)
   const isScout = computed(() => {
     // Check both roles array and scout object
     const hasScoutRole = member.value?.roles?.some(r => r.name === 'scout') ?? false
@@ -162,6 +163,7 @@ export const useAuthStore = defineStore('auth', () => {
     error,
     isAuthenticated,
     isAdmin,
+    isCommunityLead,
     isScout,
     isApproved,
     isPending,

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { adminEngineApi, engineApi } from '@/api'
 import type {
   Cohort, Pod, CohortMembership, Task, TaskAssignment,
-  CreateTaskPayload, TaskTrack, TaskKind, HandinType,
+  CreateTaskPayload, TaskKind, HandinType, Program,
   TaskComment, AssignmentComment, AssignmentStatus
 } from '@/types'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
@@ -72,14 +72,16 @@ async function loadCohorts() {
 }
 async function loadTasks() {
   if (!selectedCohortId.value) return
-  const [t, p, m] = await Promise.all([
+  const [t, p, m, pr] = await Promise.all([
     adminEngineApi.listTasks(selectedCohortId.value),
     adminEngineApi.listPods(selectedCohortId.value),
-    adminEngineApi.listCohortMembers(selectedCohortId.value)
+    adminEngineApi.listCohortMembers(selectedCohortId.value),
+    adminEngineApi.listCohortPrograms(selectedCohortId.value)
   ])
   tasks.value = t.data ?? []
   pods.value = p.data ?? []
   members.value = m.data ?? []
+  programs.value = pr.data ?? []
 }
 
 onMounted(async () => {
@@ -110,18 +112,78 @@ const editingTaskId = ref<string | null>(null)
 const editingTaskSlug = ref('')
 const taskForm = reactive({
   title: '', description: '',
-  track: 'induction' as TaskTrack, kind: 'custom' as TaskKind,
+  program_id: '', kind: 'custom' as TaskKind,
   handin_type: 'link' as HandinType, external_url: '',
   is_required: false, status: 'published' as 'draft' | 'published',
   due_at: '', available_at: ''
 })
 // Assign-on-create — only shown when creating a new task, not editing.
 const assignOnCreate = reactive({ type: 'none' as 'none' | 'cohort' | 'pod' | 'individual' | 'global', id: '' })
-const trackOptions = [
-  { value: 'induction', label: 'Induction' },
-  { value: 'personal_dev', label: 'Personal development' },
-  { value: 'building', label: 'Building' }
-]
+// Programs (e.g. Induction) are ordered series with a completion state —
+// a task either belongs to one, or stands alone. This replaced "tracks".
+const programs = ref<Program[]>([])
+const programOptions = computed(() => [
+  { value: '', label: 'None — standalone task' },
+  ...programs.value.map((p) => ({ value: p.id, label: p.name }))
+])
+function programName(id?: string | null) {
+  return programs.value.find((p) => p.id === id)?.name
+}
+
+// ---- manage programs (list / add / rename per cohort) ----
+const programsModal = ref(false)
+const programBusy = ref(false)
+const programError = ref('')
+const newProgram = reactive({ name: '', description: '' })
+const editingProgramId = ref<string | null>(null)
+const editProgram = reactive({ name: '', description: '' })
+
+async function addProgram() {
+  programError.value = ''
+  if (!newProgram.name.trim()) {
+    programError.value = 'Give the program a name.'
+    return
+  }
+  programBusy.value = true
+  try {
+    const res = await adminEngineApi.createProgram(selectedCohortId.value, {
+      name: newProgram.name.trim(),
+      description: newProgram.description.trim() || undefined
+    })
+    if (res.status) {
+      newProgram.name = ''
+      newProgram.description = ''
+      programs.value = (await adminEngineApi.listCohortPrograms(selectedCohortId.value)).data ?? []
+      flash('Program created')
+    } else {
+      programError.value = res.message || 'Failed to create program'
+    }
+  } catch (e: unknown) {
+    programError.value = (e as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to create program'
+  } finally {
+    programBusy.value = false
+  }
+}
+function startEditProgram(p: Program) {
+  editingProgramId.value = p.id
+  editProgram.name = p.name
+  editProgram.description = p.description || ''
+}
+async function saveProgram() {
+  if (!editingProgramId.value || !editProgram.name.trim()) return
+  programBusy.value = true
+  try {
+    await adminEngineApi.updateProgram(editingProgramId.value, {
+      name: editProgram.name.trim(),
+      description: editProgram.description.trim() || undefined
+    })
+    editingProgramId.value = null
+    programs.value = (await adminEngineApi.listCohortPrograms(selectedCohortId.value)).data ?? []
+    flash('Program updated')
+  } finally {
+    programBusy.value = false
+  }
+}
 const kindOptions = ['reflection', 'portfolio', 'build', 'publish', 'research', 'custom'].map((k) => ({ value: k, label: k[0].toUpperCase() + k.slice(1) }))
 const handinOptions = [
   { value: 'none', label: 'Mark as done (no hand-in)' },
@@ -137,7 +199,7 @@ function openTaskModal() {
   editingTaskId.value = null
   taskForm.title = ''
   taskForm.description = ''
-  taskForm.track = 'induction'
+  taskForm.program_id = ''
   taskForm.kind = 'custom'
   taskForm.handin_type = 'link'
   taskForm.external_url = ''
@@ -157,7 +219,7 @@ function openEditTaskModal(t: Task) {
   editingTaskSlug.value = t.slug
   taskForm.title = t.title
   taskForm.description = t.description
-  taskForm.track = t.track
+  taskForm.program_id = t.program_id || ''
   taskForm.kind = t.kind
   taskForm.handin_type = t.handin_type
   taskForm.external_url = t.external_url || ''
@@ -180,12 +242,15 @@ async function saveTask() {
   if (!validateTaskForm()) return
   savingTask.value = true
   try {
+    const chosenProgram = programs.value.find((p) => p.id === taskForm.program_id)
     const payload: CreateTaskPayload = {
       title: taskForm.title,
       slug: editingTaskId.value ? editingTaskSlug.value : `${slugify(taskForm.title)}-${Math.random().toString(36).slice(2, 6)}`,
       description: taskForm.description,
       kind: taskForm.kind,
-      track: taskForm.track,
+      // Legacy column, derived — programs replaced tracks (blueprint v3).
+      track: chosenProgram?.kind === 'induction' ? 'induction' : 'building',
+      program_id: taskForm.program_id || undefined,
       handin_type: taskForm.handin_type,
       external_url: taskForm.handin_type === 'external_form' ? taskForm.external_url || undefined : undefined,
       cohort_id: selectedCohortId.value,
@@ -406,6 +471,9 @@ async function unassign(a: TaskAssignment) {
           <div class="min-w-[200px]">
             <BaseSelect v-model="selectedCohortId" :options="cohorts.map((c) => ({ value: c.id, label: c.name }))" />
           </div>
+          <button class="text-sm font-medium text-senpai-600 hover:text-senpai-700" @click="programsModal = true">
+            Manage programs
+          </button>
         </div>
 
         <div v-if="tasks.length" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -426,7 +494,7 @@ async function unassign(a: TaskAssignment) {
                     <span class="font-medium text-gray-900">{{ t.title }}</span>
                     <span v-if="t.is_required" class="text-[11px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 shrink-0">Required</span>
                   </div>
-                  <p class="text-xs text-gray-400 mt-0.5 capitalize">{{ t.track.replace('_', ' ') }} · {{ t.kind }} · {{ t.handin_type.replace('_', ' ') }}</p>
+                  <p class="text-xs text-gray-400 mt-0.5 capitalize">{{ programName(t.program_id) ? programName(t.program_id) + ' · ' : '' }}{{ t.kind }} · {{ t.handin_type.replace('_', ' ') }}</p>
                 </td>
                 <td class="px-5 py-3" @click.stop>
                   <div v-if="t.assigned_to?.length" class="flex flex-wrap gap-1 max-w-[220px]">
@@ -484,7 +552,7 @@ async function unassign(a: TaskAssignment) {
         <BaseInput v-model="taskForm.title" label="Title" placeholder="Upgrade your portfolio" :error="taskFormErrors.title" required />
         <BaseTextarea v-model="taskForm.description" label="Description" :rows="3" placeholder="What should they do, and what does done look like?" :error="taskFormErrors.description" required />
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <BaseSelect v-model="taskForm.track" :options="trackOptions" label="Track" />
+          <BaseSelect v-model="taskForm.program_id" :options="programOptions" label="Program" />
           <BaseSelect v-model="taskForm.kind" :options="kindOptions" label="Kind" />
           <BaseSelect v-model="taskForm.handin_type" :options="handinOptions" label="Hand-in" />
         </div>
@@ -518,6 +586,52 @@ async function unassign(a: TaskAssignment) {
         <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="taskModal = false">Cancel</button>
         <BaseButton :loading="savingTask" @click="saveTask">{{ editingTaskId ? 'Save changes' : 'Create task' }}</BaseButton>
       </template>
+    </BaseModal>
+
+    <!-- Manage programs modal -->
+    <BaseModal
+      :show="programsModal"
+      title="Programs"
+      subtitle="Ordered task series for this cohort. Induction is built in — add your own series alongside it."
+      @close="programsModal = false"
+    >
+      <div class="space-y-4">
+        <BaseAlert v-if="programError" type="error">{{ programError }}</BaseAlert>
+
+        <ul v-if="programs.length" class="divide-y divide-gray-100 border border-gray-200 rounded-xl">
+          <li v-for="p in programs" :key="p.id" class="px-4 py-3">
+            <template v-if="editingProgramId === p.id">
+              <div class="space-y-2">
+                <BaseInput v-model="editProgram.name" label="Name" />
+                <BaseInput v-model="editProgram.description" label="Description (optional)" />
+                <div class="flex items-center gap-3">
+                  <BaseButton size="sm" :loading="programBusy" @click="saveProgram">Save</BaseButton>
+                  <button class="text-sm text-gray-500 hover:text-gray-700" @click="editingProgramId = null">Cancel</button>
+                </div>
+              </div>
+            </template>
+            <template v-else>
+              <div class="flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <p class="font-medium text-gray-900 flex items-center gap-2">
+                    {{ p.name }}
+                    <span v-if="p.kind === 'induction'" class="text-[10px] font-mono uppercase tracking-wide text-senpai-600">Gates matriculation</span>
+                  </p>
+                  <p v-if="p.description" class="text-sm text-gray-500 truncate">{{ p.description }}</p>
+                </div>
+                <button class="text-sm font-medium text-senpai-600 hover:text-senpai-700 shrink-0" @click="startEditProgram(p)">Edit</button>
+              </div>
+            </template>
+          </li>
+        </ul>
+
+        <div class="pt-4 border-t border-gray-100 space-y-3">
+          <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400">// New program</p>
+          <BaseInput v-model="newProgram.name" label="Name" placeholder="Writing Series" />
+          <BaseInput v-model="newProgram.description" label="Description (optional)" placeholder="What this series builds toward" />
+          <BaseButton :loading="programBusy" @click="addProgram">Add program</BaseButton>
+        </div>
+      </div>
     </BaseModal>
 
     <!-- Assign modal -->
@@ -556,7 +670,7 @@ async function unassign(a: TaskAssignment) {
         <div class="relative w-full max-w-2xl bg-white h-full overflow-y-auto shadow-2xl">
           <div class="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-start justify-between z-10">
             <div>
-              <p class="text-xs text-gray-400 uppercase tracking-wide capitalize">{{ detailTask.track.replace('_', ' ') }} · {{ detailTask.kind }}</p>
+              <p class="text-xs text-gray-400 uppercase tracking-wide capitalize">{{ programName(detailTask.program_id) ? programName(detailTask.program_id) + ' · ' : '' }}{{ detailTask.kind }}</p>
               <h2 class="text-lg font-semibold text-gray-900 mt-0.5">{{ detailTask.title }}</h2>
             </div>
             <div class="flex items-center gap-1 shrink-0">

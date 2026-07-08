@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { ApiResponse, ScoutPledge, ScoutDashboardData, ScoutLeaderboardEntry } from '@/types'
+import type { ApiResponse, ScoutPledge, ScoutDashboardData, ScoutLeaderboardEntry, ScoutRequest, MyScoutRequestStatus } from '@/types'
 
 export const scoutsApi = {
   // Get scout pledge content
@@ -36,5 +36,15 @@ export const scoutsApi = {
   // the "invited by" banner on the registration page.
   async getByCode(scoutCode: string): Promise<ApiResponse<{ full_name: string; photo_url?: string }>> {
     return apiClient.get(`/scout/by-code/${encodeURIComponent(scoutCode)}`)
+  },
+
+  // One-click "I'd like to scout" request — reviewed by an admin.
+  async requestToBecomeScout(): Promise<ApiResponse<ScoutRequest>> {
+    return apiClient.post('/scouts/request')
+  },
+
+  // Powers the Scout Guide page's CTA: apply / pending / already-a-scout.
+  async getMyRequestStatus(): Promise<ApiResponse<MyScoutRequestStatus>> {
+    return apiClient.get('/scouts/request/status')
   }
 }

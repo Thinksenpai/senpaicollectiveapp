@@ -10,6 +10,7 @@ interface RouteMeta {
   requiresAuth?: boolean
   requiresApproved?: boolean
   requiresAdmin?: boolean
+  requiresCommunityAccess?: boolean // admin OR community_lead
   requiresScout?: boolean
 }
 
@@ -158,6 +159,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/projects',
+      name: 'projects',
+      component: () => import('@/views/member/ProjectsPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/projects/:id',
+      name: 'project-detail',
+      component: () => import('@/views/member/ProjectDetailPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       // The enhanced profile is now consolidated into the single profile edit page.
       path: '/enrichment',
       redirect: '/profile/edit'
@@ -230,6 +243,12 @@ const router = createRouter({
       component: () => import('@/views/scout/ScoutDashboardPage.vue'),
       meta: { requiresAuth: true, requiresScout: true }
     },
+    {
+      path: '/scout/guide',
+      name: 'scout-guide',
+      component: () => import('@/views/scout/ScoutGuidePage.vue'),
+      meta: { requiresAuth: true, requiresApproved: true }
+    },
 
     // Admin routes
     {
@@ -242,13 +261,13 @@ const router = createRouter({
       path: '/admin/applications',
       name: 'admin-applications',
       component: () => import('@/views/admin/ApplicationsPage.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresCommunityAccess: true }
     },
     {
       path: '/admin/applications/:id',
       name: 'admin-application-detail',
       component: () => import('@/views/admin/ApplicationDetailPage.vue'),
-      meta: { requiresAuth: true, requiresAdmin: true }
+      meta: { requiresAuth: true, requiresCommunityAccess: true }
     },
     {
       path: '/admin/members',
@@ -273,6 +292,18 @@ const router = createRouter({
       name: 'admin-tasks',
       component: () => import('@/views/admin/AdminTasksPage.vue'),
       meta: { requiresAuth: true, requiresAdmin: true, title: 'Tasks | Admin' }
+    },
+    {
+      path: '/admin/projects',
+      name: 'admin-projects',
+      component: () => import('@/views/admin/AdminProjectsPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Projects | Admin' }
+    },
+    {
+      path: '/admin/scouts',
+      name: 'admin-scouts',
+      component: () => import('@/views/admin/AdminScoutsPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Scouts | Admin' }
     },
     {
       path: '/admin/analytics',
@@ -355,6 +386,11 @@ router.beforeEach(async (to, _from, next) => {
 
   // Admin only
   if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    return next({ name: 'dashboard' })
+  }
+
+  // Admin or community lead
+  if (to.meta.requiresCommunityAccess && !authStore.isAdmin && !authStore.isCommunityLead) {
     return next({ name: 'dashboard' })
   }
 

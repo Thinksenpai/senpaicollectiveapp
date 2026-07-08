@@ -64,10 +64,12 @@ export interface Task {
   slug: string
   description: string
   kind: TaskKind
-  track: TaskTrack
+  track: TaskTrack // deprecated: programs + kind replaced it
   handin_type: HandinType
   external_url?: string | null
   cohort_id?: string | null
+  program_id?: string | null
+  project_id?: string | null
   is_required: boolean
   show_submissions: boolean
   order_index: number
@@ -230,12 +232,71 @@ export interface CreateTaskPayload {
   handin_type: HandinType
   external_url?: string
   cohort_id?: string
+  program_id?: string
+  project_id?: string
   is_required: boolean
   show_submissions: boolean
   order_index?: number
   available_at?: string
   due_at?: string
   status: 'draft' | 'published' | 'archived'
+}
+
+// ============ Programs & Projects (blueprint v3) ============
+
+// A program is an ordered task series for a cohort with a completion state.
+// Induction is the first: finishing its required tasks matriculates you.
+export interface Program {
+  id: string
+  cohort_id: string
+  name: string
+  kind: 'induction' | 'series'
+  description?: string | null
+  created_at: string
+}
+
+export type ProjectStatus = 'proposed' | 'active' | 'shipped' | 'parked'
+
+// The builder primitive: a problem statement + a small team + linked tasks +
+// an outcome. Members propose, an admin approves, open join up to team_cap.
+export interface Project {
+  id: string
+  title: string
+  problem_statement: string
+  status: ProjectStatus
+  team_cap: number
+  outcome_url?: string | null
+  created_by: string
+  approved_at?: string | null
+  shipped_at?: string | null
+  created_at: string
+  team?: ProjectMember[]
+  team_count: number
+  creator?: Member
+}
+
+export interface ProjectMember {
+  id: string
+  project_id: string
+  member_id: string
+  joined_at: string
+  member?: Member
+}
+
+export interface ProposeProjectPayload {
+  title: string
+  problem_statement: string
+  team_cap: number
+}
+
+// A teammate creating work inside their project. Empty assignee_ids = whole team.
+export interface CreateProjectTaskPayload {
+  title: string
+  description: string
+  kind: TaskKind
+  handin_type: HandinType
+  due_at?: string
+  assignee_ids?: string[]
 }
 
 export interface AssignTaskPayload {

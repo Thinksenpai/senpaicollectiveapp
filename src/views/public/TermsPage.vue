@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router'
 
 // NOTE: Starter copy — review with counsel before relying on it legally.
-const lastUpdated = 'June 2026'
+const lastUpdated = 'July 2026'
 </script>
 
 <template>
@@ -79,23 +79,58 @@ const lastUpdated = 'June 2026'
         <section>
           <h2 class="text-xl font-semibold text-gray-900">6. Your content & profile</h2>
           <p>
-            If accepted, your member profile (such as your name, location, skills, and
-            portfolio) will be visible to other members of the community. You retain
-            ownership of the content you submit, and grant Senpai permission to display it
-            within the platform for the purpose of running the community.
+            If accepted, your member profile — including your name, location, skills,
+            experience, portfolio, and the answers you give during onboarding (such as your
+            personal goal, MBTI, school/work status, timezone, and languages) — is fully
+            visible to other members and to admins. This is a member community, not a public
+            directory: full visibility between members is a deliberate part of how trust and
+            collaboration work here, not an oversight. You retain ownership of the content you
+            submit, and grant Senpai a license to display it within the platform for the
+            purpose of running the community.
           </p>
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">7. Ending membership</h2>
+          <h2 class="text-xl font-semibold text-gray-900">7. Projects & intellectual property</h2>
           <p>
-            You may leave at any time by contacting us. We may suspend or end a membership
-            that breaches these terms or the code of conduct.
+            Senpai Collective works like a venture studio: we bring the platform, the
+            community, the team-matching, and the review process; members bring the ideas and
+            the work. Projects are team efforts — proposed by members, organized, approved,
+            and run under the Senpai Collective name.
+          </p>
+          <p class="mt-3">
+            Intellectual property created through a Project — the code, designs, brand, and
+            any resulting product — belongs to Senpai Collective. In return, every contributor
+            is credited by name and role, publicly, on their profile and the project's own
+            record, for as long as the project exists. And when a Project grows into a real,
+            profitable venture, the team behind it is offered equity and a co-ownership stake
+            in what they built — that's not a rare exception, it's the point of building this
+            way together.
+          </p>
+          <p class="mt-3">
+            This only applies to work built <em>through</em> the platform's Projects feature.
+            Anything you build independently — outside a Project, using your own time and
+            tools — is entirely yours; Senpai Collective makes no claim over it. Any
+            intellectual property you bring into a Project from outside the collective (prior
+            work, existing tools) also remains yours and is unaffected by these terms.
           </p>
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">8. Changes to these terms</h2>
+          <h2 class="text-xl font-semibold text-gray-900">8. Ending membership</h2>
+          <p>
+            You may leave at any time by contacting us. <strong>Membership is a privilege, not
+            a right</strong> — Senpai Collective may suspend, deactivate, or revoke a
+            membership at our discretion, including but not limited to breach of these terms,
+            the code of conduct, or the community's standards, or extended inactivity. Ending
+            your membership does not change the ownership of any Project you contributed to
+            (see section 7) or of work you built independently, outside a Project — but it
+            does end your access to the platform and community.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold text-gray-900">9. Changes to these terms</h2>
           <p>
             We may update these terms as the community evolves. We'll make the current
             version available here, and material changes will be communicated to members.
@@ -103,10 +138,10 @@ const lastUpdated = 'June 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">9. Contact</h2>
+          <h2 class="text-xl font-semibold text-gray-900">10. Contact</h2>
           <p>
             Questions about these terms? Reach us at
-            <a href="mailto:hello@thinksenpai.com" class="text-senpai-600 underline hover:text-senpai-700">hello@thinksenpai.com</a>.
+            <a href="mailto:senpaicollective@gmail.com" class="text-senpai-600 underline hover:text-senpai-700">senpaicollective@gmail.com</a>.
           </p>
         </section>
       </div>

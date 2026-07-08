@@ -24,7 +24,8 @@ import {
   DocumentTextIcon,
   ClipboardDocumentListIcon,
   ChartBarSquareIcon,
-  SparklesIcon
+  SparklesIcon,
+  RocketLaunchIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -33,6 +34,7 @@ const authStore = useAuthStore()
 const navigation = ref([
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, requiresAuth: true },
   { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon, requiresAuth: true, requiresApproved: true },
+  { name: 'Projects', href: '/projects', icon: RocketLaunchIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Directory', href: '/members', icon: UsersIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Jobs', href: '/jobs', icon: BriefcaseIcon, requiresAuth: true, requiresApproved: true }
 ])
@@ -106,6 +108,18 @@ function handleLogout() {
                 {{ item.name }}
               </RouterLink>
             </template>
+            <!-- Community leads don't get the full /admin dashboard — send them
+                 straight to the one thing they're delegated: applications. -->
+            <template v-else-if="authStore.isCommunityLead">
+              <RouterLink
+                to="/admin/applications"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-senpai-600 rounded-md hover:bg-senpai-50"
+                active-class="text-senpai-600 bg-senpai-50"
+              >
+                <ChartBarIcon class="h-5 w-5 mr-1.5" />
+                Applications
+              </RouterLink>
+            </template>
           </div>
         </div>
 
@@ -164,6 +178,17 @@ function handleLogout() {
                     >
                       <UsersIcon class="h-5 w-5 mr-2 text-gray-400" />
                       Scout Dashboard
+                    </RouterLink>
+                  </MenuItem>
+                  <!-- Every approved member can reach the guide, scout or not — it's
+                       also where the "apply to be a scout" CTA lives. -->
+                  <MenuItem v-if="authStore.isApproved" v-slot="{ active }">
+                    <RouterLink
+                      to="/scout/guide"
+                      :class="[active ? 'bg-gray-100' : '', 'flex items-center px-4 py-2 text-sm text-gray-700']"
+                    >
+                      <SparklesIcon class="h-5 w-5 mr-2 text-gray-400" />
+                      Scout Guide
                     </RouterLink>
                   </MenuItem>
                   <MenuItem v-slot="{ active }">

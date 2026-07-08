@@ -9,7 +9,8 @@ import type {
   AdminNote,
   ApplicationFilters,
   AdminMemberFilters,
-  Scout
+  Scout,
+  ScoutRequest
 } from '@/types'
 
 export const adminApi = {
@@ -66,6 +67,27 @@ export const adminApi = {
 
   async getScouts(): Promise<ApiResponse<Scout[]>> {
     return apiClient.get('/admin/scouts')
+  },
+
+  async getScoutRequests(): Promise<ApiResponse<ScoutRequest[]>> {
+    return apiClient.get('/admin/scout-requests')
+  },
+
+  async approveScoutRequest(id: string): Promise<ApiResponse<Scout>> {
+    return apiClient.post(`/admin/scout-requests/${id}/approve`)
+  },
+
+  async declineScoutRequest(id: string, reason?: string): Promise<ApiResponse> {
+    return apiClient.post(`/admin/scout-requests/${id}/decline`, { reason })
+  },
+
+  // Community lead — the first delegated-permission tier (membership review only)
+  async grantCommunityLead(id: string): Promise<ApiResponse> {
+    return apiClient.post(`/admin/members/${id}/community-lead`)
+  },
+
+  async revokeCommunityLead(id: string): Promise<ApiResponse> {
+    return apiClient.delete(`/admin/members/${id}/community-lead`)
   },
 
   // Statistics

@@ -28,6 +28,9 @@ const error = ref<string | null>(null)
 const showDeactivateModal = ref(false)
 const deactivateReason = ref('')
 const promotingToScout = ref(false)
+const removingScout = ref(false)
+const grantingCommunityLead = ref(false)
+const revokingCommunityLead = ref(false)
 
 const statusCodeClasses: Record<string, string> = {
   pending: 'text-amber-600',
@@ -182,6 +185,44 @@ async function handlePromoteToScout() {
   promotingToScout.value = false
 }
 
+async function handleRemoveScout() {
+  if (!confirm('Remove Scout access from this member?')) return
+  removingScout.value = true
+  error.value = null
+  const result = await adminStore.removeScout(route.params.id as string)
+  if (result.success) {
+    await adminStore.fetchMember(route.params.id as string)
+  } else {
+    error.value = result.error || 'Failed to remove scout access'
+  }
+  removingScout.value = false
+}
+
+async function handleGrantCommunityLead() {
+  grantingCommunityLead.value = true
+  error.value = null
+  const result = await adminStore.grantCommunityLead(route.params.id as string)
+  if (result.success) {
+    await adminStore.fetchMember(route.params.id as string)
+  } else {
+    error.value = result.error || 'Failed to grant community lead'
+  }
+  grantingCommunityLead.value = false
+}
+
+async function handleRevokeCommunityLead() {
+  if (!confirm('Revoke Community Lead access from this member?')) return
+  revokingCommunityLead.value = true
+  error.value = null
+  const result = await adminStore.revokeCommunityLead(route.params.id as string)
+  if (result.success) {
+    await adminStore.fetchMember(route.params.id as string)
+  } else {
+    error.value = result.error || 'Failed to revoke community lead'
+  }
+  revokingCommunityLead.value = false
+}
+
 const reactivating = ref(false)
 async function handleReactivate() {
   reactivating.value = true
@@ -226,6 +267,12 @@ async function handleDecline() {
 const isScout = () => {
   return adminStore.currentMember?.member?.roles?.some(r => r.name === 'scout') ||
          adminStore.currentMember?.member?.scout != null
+}
+const isCommunityLead = () => {
+  return adminStore.currentMember?.member?.roles?.some(r => r.name === 'community_lead') ?? false
+}
+const isMemberAdmin = () => {
+  return adminStore.currentMember?.member?.roles?.some(r => r.name === 'admin') ?? false
 }
 
 const stateBadge: Record<string, string> = {
@@ -390,19 +437,6 @@ function lastActive(iso?: string | null) {
               </div>
 
               <div v-else-if="adminStore.currentMember.member.status === 'approved'" class="flex flex-col gap-2">
-                <BaseButton
-                  v-if="!isScout()"
-                  class="w-full"
-                  @click="handlePromoteToScout"
-                  :loading="promotingToScout"
-                >
-                  <SparklesIcon class="h-5 w-5 mr-2" />
-                  Promote to Scout
-                </BaseButton>
-                <div v-else class="flex items-center text-sm text-senpai-700 bg-senpai-50 px-3 py-2 rounded-lg">
-                  <SparklesIcon class="h-5 w-5 mr-2" />
-                  This member is a Scout
-                </div>
                 <BaseButton class="w-full" variant="danger" @click="showDeactivateModal = true">
                   <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
                   Deactivate Member
@@ -414,6 +448,40 @@ function lastActive(iso?: string | null) {
               </div>
 
               <p v-else class="text-sm text-gray-500">No actions available for a declined application.</p>
+            </div>
+
+            <!-- Roles & Permissions — every grant/revoke shortcut lives here, one
+                 place, instead of scattered one-off buttons. Admin itself isn't
+                 toggleable from this panel — that's seed/support-only, not a
+                 click away from an accidental self-demotion. -->
+            <div v-if="adminStore.currentMember.member.status === 'approved'" class="bg-white rounded-2xl border border-gray-200 p-5">
+              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Roles &amp; Permissions</p>
+
+              <div class="space-y-3">
+                <div v-if="isMemberAdmin()" class="flex items-center justify-between text-sm bg-red-50 text-red-700 px-3 py-2 rounded-lg">
+                  <span class="font-medium">Admin</span>
+                  <span class="text-xs">Full access</span>
+                </div>
+
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center text-sm" :class="isScout() ? 'text-senpai-700' : 'text-gray-500'">
+                    <SparklesIcon class="h-4 w-4 mr-1.5" />
+                    Scout
+                  </div>
+                  <BaseButton v-if="!isScout()" size="sm" variant="outline" :loading="promotingToScout" @click="handlePromoteToScout">Promote</BaseButton>
+                  <button v-else class="text-sm text-gray-400 hover:text-red-600 disabled:opacity-50" :disabled="removingScout" @click="handleRemoveScout">Remove</button>
+                </div>
+
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center text-sm" :class="isCommunityLead() ? 'text-senpai-700' : 'text-gray-500'">
+                    <StarIcon class="h-4 w-4 mr-1.5" />
+                    Community Lead
+                  </div>
+                  <BaseButton v-if="!isCommunityLead()" size="sm" variant="outline" :loading="grantingCommunityLead" @click="handleGrantCommunityLead">Grant</BaseButton>
+                  <button v-else class="text-sm text-gray-400 hover:text-red-600 disabled:opacity-50" :disabled="revokingCommunityLead" @click="handleRevokeCommunityLead">Revoke</button>
+                </div>
+              </div>
+              <p class="text-xs text-gray-400 mt-3">Community Lead can review and accept membership applications — nothing else.</p>
             </div>
           </div>
         </div>

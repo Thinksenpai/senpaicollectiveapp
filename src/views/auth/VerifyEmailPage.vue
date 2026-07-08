@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { CheckCircleIcon, XCircleIcon } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -33,15 +34,16 @@ onMounted(async () => {
 
 <template>
   <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <RouterLink to="/" class="block text-center text-3xl font-bold text-indigo-600">Senpai</RouterLink>
-      <h2 class="mt-6 text-center text-2xl font-bold text-gray-900">
-        Email Verification
-      </h2>
+    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
+      <RouterLink to="/" class="inline-flex items-center gap-2">
+        <img src="/senpai_logo.svg" alt="Senpai Collective" class="h-10 w-auto" />
+        <span class="text-xl font-bold text-gray-900">Senpai Collective</span>
+      </RouterLink>
+      <p class="mt-3 text-xs font-mono uppercase tracking-widest text-senpai-600">// Email verification</p>
     </div>
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <div class="bg-white rounded-2xl border border-gray-200 py-8 px-4 sm:px-10">
         <!-- Loading State -->
         <div v-if="status === 'loading'" class="text-center py-8">
           <LoadingSpinner size="lg" class="mx-auto mb-4" />
@@ -50,48 +52,44 @@ onMounted(async () => {
 
         <!-- Success State -->
         <div v-else-if="status === 'success'" class="text-center">
-          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-senpai-50 mb-4">
+            <CheckCircleIcon class="h-7 w-7 text-senpai-600" />
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Email Verified!</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Email verified</h3>
           <p class="text-sm text-gray-600 mb-6">{{ message }}</p>
-          <div class="bg-indigo-50 rounded-lg p-4 mb-6 text-left">
-            <h4 class="font-medium text-indigo-900 mb-2">What's next?</h4>
-            <p class="text-sm text-indigo-700">
+          <div class="bg-senpai-50 rounded-xl p-4 mb-6 text-left">
+            <p class="text-[11px] font-mono uppercase tracking-widest text-senpai-700 mb-2">// What's next</p>
+            <p class="text-sm text-senpai-800">
               Your application is now being reviewed by our team. You'll receive an email once a decision has been made.
             </p>
           </div>
           <RouterLink
             to="/login"
-            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-senpai-600 hover:bg-senpai-700"
           >
-            Go to Login
+            Go to login
           </RouterLink>
         </div>
 
         <!-- Error State -->
         <div v-else class="text-center">
-          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+          <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4">
+            <XCircleIcon class="h-7 w-7 text-red-500" />
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Verification Failed</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">Verification failed</h3>
           <p class="text-sm text-gray-600 mb-6">{{ message }}</p>
           <div class="space-y-3">
             <RouterLink
               to="/login"
-              class="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+              class="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-senpai-600 hover:bg-senpai-700"
             >
-              Go to Login
+              Go to login
             </RouterLink>
             <RouterLink
               to="/join"
-              class="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50"
+              class="block w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50"
             >
-              Register Again
+              Register again
             </RouterLink>
           </div>
         </div>

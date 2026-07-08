@@ -120,6 +120,28 @@ export interface Scout {
   accepted_pledge_version?: number
   score: number
   created_at: string
+  removed_at?: string
+  member?: Member
+}
+
+export type ScoutRequestStatus = 'pending' | 'approved' | 'declined'
+
+export interface ScoutRequest {
+  id: string
+  member_id: string
+  status: ScoutRequestStatus
+  requested_at: string
+  reviewed_by?: string
+  reviewed_at?: string
+  decline_reason?: string
+  member?: Member
+}
+
+export interface MyScoutRequestStatus {
+  is_scout: boolean
+  has_pending: boolean
+  request_id?: string
+  last_status?: ScoutRequestStatus
 }
 
 export interface ScoutInvite {
@@ -249,13 +271,6 @@ export interface Notification {
   type: string
   message: string
   read: boolean
-  created_at: string
-}
-
-export interface Activity {
-  id: string
-  type: string
-  description: string
   created_at: string
 }
 
