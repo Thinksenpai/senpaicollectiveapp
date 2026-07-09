@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { useWindowScroll } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import { SENPAI_MANIFESTO } from '@/content/manifesto'
+import { vReveal } from '@/composables/useScrollReveal'
 import {
   UserGroupIcon,
   BriefcaseIcon,
@@ -10,12 +12,21 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const authStore = useAuthStore()
+
+// Nav gains weight (more opaque, a hairline shadow) once content scrolls under it —
+// a translucent material should read heavier over busy content, not float unchanged forever.
+const { y: scrollY } = useWindowScroll()
 </script>
 
 <template>
   <div class="min-h-screen bg-white">
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b transition-colors duration-300"
+      :class="scrollY > 8
+        ? 'bg-white/90 border-gray-200 shadow-sm'
+        : 'bg-white/70 border-transparent'"
+    >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16 items-center">
           <RouterLink to="/" class="flex items-center">
@@ -55,7 +66,7 @@ const authStore = useAuthStore()
               </RouterLink>
               <RouterLink
                 to="/join"
-                class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+                class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition active:scale-[0.97]"
               >
                 Apply Now
               </RouterLink>
@@ -63,7 +74,7 @@ const authStore = useAuthStore()
             <template v-else>
               <RouterLink
                 to="/dashboard"
-                class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+                class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition active:scale-[0.97]"
               >
                 Dashboard
               </RouterLink>
@@ -76,7 +87,7 @@ const authStore = useAuthStore()
     <!-- Hero Section -->
     <section class="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-4xl mx-auto text-center">
-        <div class="mb-6">
+        <div v-reveal.now class="mb-6">
           <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
             <span class="font-medium tracking-wide uppercase">Senpai Collective</span>
             <span class="text-gray-300">·</span>
@@ -86,19 +97,23 @@ const authStore = useAuthStore()
             </a>
           </div>
         </div>
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-          Africa's Future Systems Will Be Built By <span class="text-senpai-500">US.</span>
+        <h1 v-reveal.now="80" class="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+          Africa's Future Systems Will Be Built By
+          <span class="relative inline-block text-senpai-500">
+            US.
+            <span class="hero-underline absolute left-0 -bottom-1 h-1 w-full rounded-full bg-senpai-300/70" />
+          </span>
         </h1>
-        <p class="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        <p v-reveal.now="160" class="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           Senpai Collective is an elite community of creatives building the future of Africa through culture, technology, business, art, and systems. This is not a network. It's a movement.
         </p>
         <!-- Apply CTA -->
-        <div class="mt-10">
+        <div v-reveal.now="240" class="mt-10">
           <!-- Apply Now CTA -->
           <div class="max-w-md mx-auto">
             <RouterLink
               to="/join"
-              class="inline-flex w-full items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors"
+              class="inline-flex w-full items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition active:scale-[0.97]"
             >
               Apply Now
             </RouterLink>
@@ -109,7 +124,7 @@ const authStore = useAuthStore()
           <div class="mt-6">
             <RouterLink
               to="/manifesto"
-              class="inline-flex items-center justify-center px-8 py-4 rounded-lg border border-gray-300 text-gray-700 text-lg font-medium hover:bg-gray-50 transition-colors"
+              class="inline-flex items-center justify-center px-8 py-4 rounded-lg border border-gray-300 text-gray-700 text-lg font-medium hover:bg-gray-50 transition active:scale-[0.97]"
             >
               Read Our Manifesto
             </RouterLink>
@@ -121,10 +136,10 @@ const authStore = useAuthStore()
     <!-- The Problem + What We're Building Section -->
     <section class="py-20 bg-gray-50">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">
+        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">
           The Old Way Is Broken
         </h2>
-        <p class="text-lg text-gray-600 text-center max-w-3xl mx-auto mb-12">
+        <p v-reveal="80" class="text-lg text-gray-600 text-center max-w-3xl mx-auto mb-12">
           Africa has no shortage of talent. What we lack is infrastructure.
         </p>
 
@@ -132,7 +147,7 @@ const authStore = useAuthStore()
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           <!-- Left: The systemic failures -->
           <div class="space-y-6">
-            <div class="flex gap-4">
+            <div v-reveal class="flex gap-4">
               <div class="shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-sm">1</div>
               <div>
                 <h3 class="text-lg font-bold text-gray-900 mb-1">Schools don't prepare us</h3>
@@ -142,7 +157,7 @@ const authStore = useAuthStore()
               </div>
             </div>
 
-            <div class="flex gap-4">
+            <div v-reveal="100" class="flex gap-4">
               <div class="shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-sm">2</div>
               <div>
                 <h3 class="text-lg font-bold text-gray-900 mb-1">Investors don't fund us</h3>
@@ -152,7 +167,7 @@ const authStore = useAuthStore()
               </div>
             </div>
 
-            <div class="flex gap-4">
+            <div v-reveal="200" class="flex gap-4">
               <div class="shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-sm">3</div>
               <div>
                 <h3 class="text-lg font-bold text-gray-900 mb-1">Clients don't hire us</h3>
@@ -164,7 +179,7 @@ const authStore = useAuthStore()
           </div>
 
           <!-- Right: The consequence -->
-          <div class="bg-gray-900 rounded-2xl p-8 text-white">
+          <div v-reveal="120" class="bg-gray-900 rounded-2xl p-8 text-white">
             <h3 class="text-xl font-bold mb-4">The Cost of Broken Systems</h3>
             <p class="text-gray-300 mb-4">
               When legitimate paths to success are blocked, talented people find other ways. Some give up. Others take shortcuts.
@@ -179,7 +194,7 @@ const authStore = useAuthStore()
         </div>
 
         <!-- The Pivot -->
-        <div class="text-center mb-16">
+        <div v-reveal class="text-center mb-16">
           <p class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
             So we're building these systems ourselves.
           </p>
@@ -190,37 +205,37 @@ const authStore = useAuthStore()
 
         <!-- What We're Building (Five Pillars) -->
         <div>
-          <h3 class="text-2xl font-bold text-gray-900 text-center mb-4">What We're Building</h3>
-          <p class="text-gray-600 text-center mb-10 max-w-2xl mx-auto">
+          <h3 v-reveal class="text-2xl font-bold text-gray-900 text-center mb-4">What We're Building</h3>
+          <p v-reveal="80" class="text-gray-600 text-center mb-10 max-w-2xl mx-auto">
             Senpai Collective members are building across five pillars. We don't just participate in these spaces. We build them.
           </p>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-md transition-all">
+            <div v-reveal="0" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
               <span class="text-3xl mb-3 block">🎭</span>
               <h4 class="font-bold text-gray-900 mb-2">Culture</h4>
               <p class="text-sm text-gray-600">The stories, art, and ideas that shape how Africa sees itself — and how the world sees us.</p>
             </div>
 
-            <div class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-md transition-all">
+            <div v-reveal="60" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
               <span class="text-3xl mb-3 block">💻</span>
               <h4 class="font-bold text-gray-900 mb-2">Technology</h4>
               <p class="text-sm text-gray-600">Products, platforms, and tools that solve real problems and create new possibilities.</p>
             </div>
 
-            <div class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-md transition-all">
+            <div v-reveal="120" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
               <span class="text-3xl mb-3 block">📈</span>
               <h4 class="font-bold text-gray-900 mb-2">Business</h4>
               <p class="text-sm text-gray-600">Companies, ventures, and systems that create wealth and opportunity for our communities.</p>
             </div>
 
-            <div class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-md transition-all">
+            <div v-reveal="180" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
               <span class="text-3xl mb-3 block">🎨</span>
               <h4 class="font-bold text-gray-900 mb-2">Art</h4>
               <p class="text-sm text-gray-600">Visual, sonic, and experiential work that moves people and shifts perspectives.</p>
             </div>
 
-            <div class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-md transition-all sm:col-span-2 lg:col-span-1">
+            <div v-reveal="240" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 sm:col-span-2 lg:col-span-1">
               <span class="text-3xl mb-3 block">⚙️</span>
               <h4 class="font-bold text-gray-900 mb-2">Systems</h4>
               <p class="text-sm text-gray-600">Processes, frameworks, and infrastructure that make everything else possible.</p>
@@ -233,11 +248,11 @@ const authStore = useAuthStore()
     <!-- What Senpai Collective Is Section -->
     <section class="py-20 bg-white">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-10">
+        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-10">
           A Different Kind of Collective
         </h2>
 
-        <div class="text-center mb-12">
+        <div v-reveal="80" class="text-center mb-12">
           <p class="text-lg text-gray-600 mb-2">Senpai Collective is not a freelance marketplace.</p>
           <p class="text-lg text-gray-600 mb-2">Senpai Collective is not a Slack group.</p>
           <p class="text-lg text-gray-600 mb-6">Senpai Collective is not a place to "network."</p>
@@ -246,12 +261,12 @@ const authStore = useAuthStore()
           </p>
         </div>
 
-        <p class="text-lg text-gray-700 text-center mb-12 max-w-3xl mx-auto">
+        <p v-reveal="120" class="text-lg text-gray-700 text-center mb-12 max-w-3xl mx-auto">
           We find ambitious creatives — designers, developers, founders, artists, storytellers, builders of all kinds — and we give them three things:
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div class="text-center">
+          <div v-reveal="0" class="text-center">
             <div class="w-16 h-16 bg-senpai-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <UserGroupIcon class="h-8 w-8 text-senpai-600" />
             </div>
@@ -261,7 +276,7 @@ const authStore = useAuthStore()
             </p>
           </div>
 
-          <div class="text-center">
+          <div v-reveal="80" class="text-center">
             <div class="w-16 h-16 bg-senpai-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <BriefcaseIcon class="h-8 w-8 text-senpai-600" />
             </div>
@@ -271,7 +286,7 @@ const authStore = useAuthStore()
             </p>
           </div>
 
-          <div class="text-center">
+          <div v-reveal="160" class="text-center">
             <div class="w-16 h-16 bg-senpai-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <AcademicCapIcon class="h-8 w-8 text-senpai-600" />
             </div>
@@ -287,7 +302,7 @@ const authStore = useAuthStore()
     <!-- Core Values Section -->
     <section id="values" class="py-20 bg-gray-900">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
+        <div v-reveal class="text-center mb-16">
           <img src="/corevalues.svg" alt="Core Values" class="mx-auto h-24 w-auto mb-6" />
           <h2 class="text-3xl font-bold text-white mb-4">Our Core Values</h2>
           <p class="text-gray-400 text-lg max-w-2xl mx-auto">
@@ -299,7 +314,8 @@ const authStore = useAuthStore()
           <div
             v-for="(value, index) in SENPAI_MANIFESTO.values"
             :key="value.name"
-            class="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 hover:border-gray-500/50 transition-colors"
+            v-reveal="(index % 3) * 70"
+            class="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50 hover:border-gray-500/50 hover:bg-gray-800/80 hover:-translate-y-1 transition-all duration-300"
           >
             <div class="flex items-center mb-4">
               <span class="w-8 h-8 rounded-full bg-white/10 text-white flex items-center justify-center text-sm font-bold mr-3">
@@ -329,17 +345,17 @@ const authStore = useAuthStore()
     <!-- Who This Is For Section -->
     <section class="py-20 bg-gray-50">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">
+        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">
           This Is For The Ones Who Know
         </h2>
 
-        <div class="text-center mb-12 space-y-2">
+        <div v-reveal="80" class="text-center mb-12 space-y-2">
           <p class="text-lg text-gray-700">You know you're capable of more.</p>
           <p class="text-lg text-gray-700">You know you haven't found your people yet.</p>
           <p class="text-lg text-gray-700">You know that growth requires community, not just content.</p>
         </div>
 
-        <div class="bg-white rounded-2xl p-8 border border-gray-200 mb-10">
+        <div v-reveal="140" class="bg-white rounded-2xl p-8 border border-gray-200 mb-10">
           <h3 class="text-xl font-bold text-gray-900 mb-6 text-center">Senpai Collective is for:</h3>
           <div class="space-y-4 max-w-2xl mx-auto">
             <p class="flex items-start">
@@ -369,7 +385,7 @@ const authStore = useAuthStore()
           </div>
         </div>
 
-        <div class="text-center">
+        <div v-reveal="200" class="text-center">
           <p class="text-xl font-bold text-gray-900 mb-4">This is not for everyone.</p>
           <div class="text-gray-600 space-y-1">
             <p>If you're looking for shortcuts, we're not it.</p>
@@ -386,15 +402,22 @@ const authStore = useAuthStore()
     <!-- The Path Section -->
     <section class="py-20 bg-white">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-4">
+        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-4">
           The Path
         </h2>
-        <p class="text-gray-600 text-center mb-16 max-w-2xl mx-auto">
+        <p v-reveal="80" class="text-gray-600 text-center mb-16 max-w-2xl mx-auto">
           This isn't a community you just join. It's a commitment to build — yourself, your work, and the people around you.
         </p>
 
-        <div class="space-y-8">
-          <div class="flex gap-6">
+        <div class="relative space-y-8">
+          <!-- Connecting line grows top-to-bottom as the path comes into view -->
+          <div
+            v-reveal="120"
+            class="reveal-line absolute left-6 top-6 bottom-6 w-px bg-gray-200"
+            aria-hidden="true"
+          />
+
+          <div v-reveal class="relative flex gap-6">
             <div class="shrink-0 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold">
               01
             </div>
@@ -406,7 +429,7 @@ const authStore = useAuthStore()
             </div>
           </div>
 
-          <div class="flex gap-6">
+          <div v-reveal="90" class="relative flex gap-6">
             <div class="shrink-0 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold">
               02
             </div>
@@ -418,7 +441,7 @@ const authStore = useAuthStore()
             </div>
           </div>
 
-          <div class="flex gap-6">
+          <div v-reveal="180" class="relative flex gap-6">
             <div class="shrink-0 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold">
               03
             </div>
@@ -430,7 +453,7 @@ const authStore = useAuthStore()
             </div>
           </div>
 
-          <div class="flex gap-6">
+          <div v-reveal="270" class="relative flex gap-6">
             <div class="shrink-0 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold">
               04
             </div>
@@ -442,7 +465,7 @@ const authStore = useAuthStore()
             </div>
           </div>
 
-          <div class="flex gap-6">
+          <div v-reveal="360" class="relative flex gap-6">
             <div class="shrink-0 w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold">
               05
             </div>
@@ -460,7 +483,7 @@ const authStore = useAuthStore()
     <!-- What The Collective Provides Section -->
     <section class="py-20 bg-gray-50">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
+        <div v-reveal class="text-center mb-16">
           <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">What The Collective Provides</h2>
           <p class="text-lg text-gray-600 max-w-2xl mx-auto">
             Most creatives fail not because they lack talent — but because they lack access. Access to information. Access to structure. Access to people who've done it before.
@@ -469,7 +492,7 @@ const authStore = useAuthStore()
 
         <div class="space-y-12">
           <!-- Information -->
-          <div class="flex gap-6">
+          <div v-reveal class="flex gap-6">
             <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
               <AcademicCapIcon class="h-7 w-7 text-senpai-600" />
             </div>
@@ -485,7 +508,7 @@ const authStore = useAuthStore()
           </div>
 
           <!-- Structure -->
-          <div class="flex gap-6">
+          <div v-reveal="100" class="flex gap-6">
             <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
               <svg class="h-7 w-7 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
@@ -503,7 +526,7 @@ const authStore = useAuthStore()
           </div>
 
           <!-- People -->
-          <div class="flex gap-6">
+          <div v-reveal="200" class="flex gap-6">
             <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
               <UserGroupIcon class="h-7 w-7 text-senpai-600" />
             </div>
@@ -533,24 +556,24 @@ const authStore = useAuthStore()
     <!-- The Pledge Section -->
     <section class="py-20 bg-gray-900">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl sm:text-4xl font-bold text-white text-center mb-4">
+        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-white text-center mb-4">
           The Senpai Pledge
         </h2>
-        <p class="text-gray-400 text-center mb-12">
+        <p v-reveal="60" class="text-gray-400 text-center mb-12">
           Every member commits to our shared values. This is what holds us together.
         </p>
 
         <div class="bg-gray-800/50 rounded-2xl p-8 sm:p-10 border border-gray-700/50">
           <div class="space-y-4 text-lg text-gray-300 italic">
-            <p class="text-white font-semibold not-italic">I am Senpai.</p>
-            <p>I pledge to grow — every single day.</p>
-            <p>I pledge to build — things that matter.</p>
-            <p>I pledge to lift — those coming behind me.</p>
-            <p>I pledge to pay forward — what was given to me.</p>
-            <p class="pt-4">I carry this name with honor.</p>
-            <p>My success is not mine alone.</p>
-            <p>Where one rises, we all rise.</p>
-            <p class="pt-4 text-white font-semibold not-italic">I am Senpai. I will not waste this opportunity.</p>
+            <p v-reveal="0" class="text-white font-semibold not-italic">I am Senpai.</p>
+            <p v-reveal="60">I pledge to grow — every single day.</p>
+            <p v-reveal="110">I pledge to build — things that matter.</p>
+            <p v-reveal="160">I pledge to lift — those coming behind me.</p>
+            <p v-reveal="210">I pledge to pay forward — what was given to me.</p>
+            <p v-reveal="280" class="pt-4">I carry this name with honor.</p>
+            <p v-reveal="330">My success is not mine alone.</p>
+            <p v-reveal="380">Where one rises, we all rise.</p>
+            <p v-reveal="450" class="pt-4 text-white font-semibold not-italic">I am Senpai. I will not waste this opportunity.</p>
           </div>
         </div>
 
@@ -573,7 +596,7 @@ const authStore = useAuthStore()
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <!-- Left: Value proposition -->
-          <div>
+          <div v-reveal>
             <p class="text-senpai-500 font-semibold mb-3">For Companies & Clients</p>
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
               Skip the Search.<br />Hire From The Collective.
@@ -611,7 +634,7 @@ const authStore = useAuthStore()
 
             <RouterLink
               to="/submit-job"
-              class="inline-flex items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition-colors"
+              class="inline-flex items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition active:scale-[0.97]"
             >
               <BriefcaseIcon class="h-5 w-5 mr-2" />
               Post a Job
@@ -619,7 +642,7 @@ const authStore = useAuthStore()
           </div>
 
           <!-- Right: Visual card -->
-          <div class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white">
+          <div v-reveal="150" class="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white">
             <h3 class="text-xl font-bold mb-6">How It Works</h3>
             <div class="space-y-6">
               <div class="flex gap-4">
@@ -657,26 +680,26 @@ const authStore = useAuthStore()
     <!-- Final CTA Section -->
     <section class="py-24 bg-gray-900">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
+        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-white mb-6">
           Your Move
         </h2>
-        <p class="text-xl text-gray-300 mb-4">
+        <p v-reveal="60" class="text-xl text-gray-300 mb-4">
           Africa's future systems won't build themselves.
         </p>
-        <div class="text-gray-400 mb-10 space-y-1">
+        <div v-reveal="120" class="text-gray-400 mb-10 space-y-1">
           <p>We need designers who think in products.</p>
           <p>Developers who think in systems.</p>
           <p>Founders who think in decades.</p>
           <p>Artists who think in movements.</p>
           <p>Builders who refuse to wait.</p>
         </div>
-        <p class="text-xl text-white font-semibold mb-8">Is that you?</p>
+        <p v-reveal="180" class="text-xl text-white font-semibold mb-8">Is that you?</p>
 
         <!-- Apply Now CTA (Bottom) -->
-        <div class="max-w-md mx-auto">
+        <div v-reveal="240" class="max-w-md mx-auto">
           <RouterLink
             to="/join"
-            class="inline-flex w-full items-center justify-center px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors"
+            class="inline-flex w-full items-center justify-center px-10 py-5 rounded-xl bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition active:scale-[0.97]"
           >
             Apply Now
           </RouterLink>

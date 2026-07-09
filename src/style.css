@@ -32,3 +32,64 @@ body {
 #app {
   min-height: 100vh;
 }
+
+/* Scroll/entrance reveal — see src/composables/useScrollReveal.ts */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-line {
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal-line.is-visible {
+  transform: scaleY(1);
+}
+
+.hero-underline {
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: hero-underline-draw 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+}
+
+@keyframes hero-underline-draw {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  .reveal-line {
+    transition: opacity 0.3s ease !important;
+    transform: none !important;
+  }
+  [data-reveal] {
+    opacity: 0;
+  }
+  [data-reveal].is-visible {
+    opacity: 1;
+  }
+  .reveal-line {
+    opacity: 0;
+  }
+  .reveal-line.is-visible {
+    opacity: 1;
+  }
+  .hero-underline {
+    animation: none;
+    transform: scaleX(1);
+  }
+}
