@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
+import { ArrowLeftIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()
@@ -57,9 +58,26 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
+  <div class="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
+    <RouterLink
+      to="/login"
+      class="fixed top-4 left-4 sm:top-6 sm:left-6 inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors z-10"
+    >
+      <ArrowLeftIcon class="h-4 w-4" />
+      Back
+    </RouterLink>
+    <RouterLink
+      to="/"
+      aria-label="Close"
+      class="fixed top-4 right-4 sm:top-6 sm:right-6 text-gray-300 hover:text-gray-500 transition-colors z-10"
+    >
+      <XMarkIcon class="h-6 w-6" />
+    </RouterLink>
+
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <RouterLink to="/" class="block text-center text-3xl font-bold text-indigo-600">Senpai</RouterLink>
+      <RouterLink to="/" class="flex justify-center">
+        <img src="/senpai_logo.svg" alt="Senpai" class="h-12 w-auto" />
+      </RouterLink>
       <h2 class="mt-6 text-center text-2xl font-bold text-gray-900">
         Set new password
       </h2>
@@ -80,7 +98,7 @@ async function handleSubmit() {
           </p>
           <RouterLink
             to="/login"
-            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-senpai-600 hover:bg-senpai-700"
           >
             Sign in
           </RouterLink>

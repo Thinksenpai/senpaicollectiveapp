@@ -14,6 +14,7 @@ import BaseButton from '@/components/common/BaseButton.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import { SENPAI_MANIFESTO } from '@/content/manifesto'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()
@@ -22,16 +23,16 @@ const skillsStore = useSkillsStore()
 const scoutCode = (route.query.ref as string) || (route.query.scout as string) || ''
 const referringScout = ref<{ full_name: string; photo_url?: string } | null>(null)
 
-// Password complexity — must match Zitadel's policy (min 8, upper, lower, number, symbol),
-// otherwise weak passwords pass here and get rejected server-side with a confusing 400.
+// Password complexity — must match Zitadel's org policy (min 8, upper, lower,
+// number). No symbol requirement: Google's password manager won't generate
+// symbols, so requiring one broke autofill/suggested passwords for most users.
 const passwordChecks = computed(() => {
   const p = form.value.password || ''
   return [
     { label: 'At least 8 characters', met: p.length >= 8 },
     { label: 'An uppercase letter', met: /[A-Z]/.test(p) },
     { label: 'A lowercase letter', met: /[a-z]/.test(p) },
-    { label: 'A number', met: /[0-9]/.test(p) },
-    { label: 'A symbol', met: /[^A-Za-z0-9]/.test(p) }
+    { label: 'A number', met: /[0-9]/.test(p) }
   ]
 })
 const passwordValid = computed(() => passwordChecks.value.every((c) => c.met))
@@ -293,7 +294,15 @@ function removeLink(index: number) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 py-12">
+  <div class="relative min-h-screen bg-gray-50 py-12">
+    <RouterLink
+      to="/"
+      aria-label="Close"
+      class="fixed top-4 right-4 sm:top-6 sm:right-6 text-gray-300 hover:text-gray-500 transition-colors z-10"
+    >
+      <XMarkIcon class="h-6 w-6" />
+    </RouterLink>
+
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="text-center mb-8">

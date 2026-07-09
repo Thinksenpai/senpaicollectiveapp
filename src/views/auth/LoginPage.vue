@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
-import { ClockIcon } from '@heroicons/vue/24/outline'
+import { ClockIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const route = useRoute()
@@ -73,7 +73,15 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
+  <div class="relative min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
+    <RouterLink
+      to="/"
+      aria-label="Close"
+      class="fixed top-4 right-4 sm:top-6 sm:right-6 text-gray-300 hover:text-gray-500 transition-colors z-10"
+    >
+      <XMarkIcon class="h-6 w-6" />
+    </RouterLink>
+
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <RouterLink to="/" class="flex justify-center">
         <img src="/senpai_logo.svg" alt="Senpai" class="h-12 w-auto" />
