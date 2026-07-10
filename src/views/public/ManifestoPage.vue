@@ -167,8 +167,8 @@ import { vReveal } from '@/composables/useScrollReveal'
             :key="index"
             v-reveal="index * 50"
             :class="{
-              'text-2xl sm:text-3xl font-bold text-white': index === 0 || index === SENPAI_MANIFESTO.creed.length - 1,
-              'text-xl text-gray-300': index !== 0 && index !== SENPAI_MANIFESTO.creed.length - 1
+              'text-2xl sm:text-3xl font-bold text-white': index >= SENPAI_MANIFESTO.creed.length - 2,
+              'text-xl text-gray-300': index < SENPAI_MANIFESTO.creed.length - 2
             }"
           >
             {{ line }}

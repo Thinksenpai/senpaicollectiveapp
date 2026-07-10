@@ -666,7 +666,7 @@ function commentTimeAgo(d: string) {
               <h3 class="font-semibold text-gray-900">Your Pledge</h3>
             </div>
             <div class="space-y-2 text-sm text-gray-600 italic">
-              <p v-for="line in SENPAI_MANIFESTO.creed.slice(1, 4)" :key="line">{{ line }}</p>
+              <p v-for="line in SENPAI_MANIFESTO.creed.slice(0, 3)" :key="line">{{ line }}</p>
             </div>
             <RouterLink
               to="/manifesto"

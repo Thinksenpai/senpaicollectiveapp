@@ -132,15 +132,12 @@ We do not accept this as inevitable.`,
 
   // The Pledge - What it means to be Senpai
   creed: [
-    "I am Senpai.",
-    "I pledge to grow — every single day.",
-    "I pledge to build — things that matter.",
-    "I pledge to lift — those coming behind me.",
-    "I pledge to pay forward — what was given to me.",
-    "I carry this name with honor.",
+    "I pledge to grow, because Africa's future needs builders who are still becoming.",
+    "I pledge to build things that matter, because we are done waiting for permission.",
+    "I pledge to lift those coming behind me, because talent without access is a waste we refuse to accept.",
+    "I pledge to pay forward what was given to me, because this is how the collective outlasts any one person.",
     "My success is not mine alone.",
-    "Where one rises, we all rise.",
-    "I am Senpai. I will not waste this opportunity."
+    "Where one rises, we all rise."
   ],
 
   // What we expect from members

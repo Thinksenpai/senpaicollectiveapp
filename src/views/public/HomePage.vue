@@ -6,12 +6,7 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
 import { ALUMNI } from '@/content/alumni'
 import { vReveal } from '@/composables/useScrollReveal'
 import AlumniMarquee from '@/components/public/AlumniMarquee.vue'
-import {
-  UserGroupIcon,
-  BriefcaseIcon,
-  AcademicCapIcon,
-  SparklesIcon
-} from '@heroicons/vue/24/outline'
+import { BriefcaseIcon } from '@heroicons/vue/24/outline'
 
 const authStore = useAuthStore()
 
@@ -484,75 +479,59 @@ const { y: scrollY } = useWindowScroll()
     </section>
 
     <!-- What The Collective Provides Section -->
-    <section class="py-20 bg-gray-50">
+    <section class="py-20 bg-white">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div v-reveal class="text-center mb-16">
-          <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">What The Collective Provides</h2>
-          <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Most creatives fail not because they lack talent — but because they lack access. Access to information. Access to structure. Access to people who've done it before.
-          </p>
-        </div>
+        <p v-reveal class="text-sm font-bold text-senpai-500 uppercase tracking-widest mb-3">
+          What You Actually Get
+        </p>
+        <h2 v-reveal="60" class="text-4xl sm:text-5xl font-black text-gray-900 leading-[1.3] mb-6 max-w-2xl">
+          Most creatives don't fail for lack of talent. They fail for lack of access.
+        </h2>
 
-        <div class="space-y-12">
+        <div class="border-t border-gray-200">
           <!-- Information -->
-          <div v-reveal class="flex gap-6">
-            <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
-              <AcademicCapIcon class="h-7 w-7 text-senpai-600" />
-            </div>
+          <div v-reveal class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-12 py-10 border-b border-gray-200">
+            <h3 class="text-3xl font-black uppercase tracking-tight text-gray-900">Information</h3>
             <div>
-              <h3 class="text-xl font-bold text-gray-900 mb-3">The Information You Need</h3>
-              <p class="text-gray-600 mb-3">
-                How do you price your work? How do you negotiate a contract? How do you build a personal brand? How do you actually get clients?
+              <p class="text-gray-900 font-semibold mb-2">
+                How do you price your work? Negotiate a contract? Build a personal brand? Actually get clients?
               </p>
-              <p class="text-gray-700">
-                The answers exist — but they're scattered, gatekept, or buried in expensive courses. We bring that knowledge together. Members share what works. No gatekeeping. No fluff.
+              <p class="text-gray-600">
+                The answers exist, but they're scattered, gatekept, or buried in expensive courses. We bring that knowledge together. Members share what works. No gatekeeping. No fluff.
               </p>
             </div>
           </div>
 
           <!-- Structure -->
-          <div v-reveal="100" class="flex gap-6">
-            <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
-              <svg class="h-7 w-7 text-senpai-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-              </svg>
-            </div>
+          <div v-reveal="100" class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-12 py-10 border-b border-gray-200">
+            <h3 class="text-3xl font-black uppercase tracking-tight text-gray-900">Structure</h3>
             <div>
-              <h3 class="text-xl font-bold text-gray-900 mb-3">The Structure to Execute</h3>
-              <p class="text-gray-600 mb-3">
-                Talent without structure goes nowhere. You know what you want to do — but the path from here to there is unclear.
+              <p class="text-gray-900 font-semibold mb-2">
+                Talent without structure goes nowhere. You know what you want to do. The path from here to there isn't clear.
               </p>
-              <p class="text-gray-700">
-                The collective provides frameworks, accountability, and a clear path forward. We help you turn ambition into action — with people who hold you to it.
+              <p class="text-gray-600">
+                The collective provides frameworks, accountability, and a clear path forward, with people who hold you to it.
               </p>
             </div>
           </div>
 
           <!-- People -->
-          <div v-reveal="200" class="flex gap-6">
-            <div class="shrink-0 w-14 h-14 bg-senpai-100 rounded-2xl flex items-center justify-center">
-              <UserGroupIcon class="h-7 w-7 text-senpai-600" />
-            </div>
+          <div v-reveal="200" class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-12 py-10">
+            <h3 class="text-3xl font-black uppercase tracking-tight text-gray-900">People</h3>
             <div>
-              <h3 class="text-xl font-bold text-gray-900 mb-3">The People Who Get It</h3>
-              <p class="text-gray-600 mb-3">
-                Your environment shapes you. If everyone around you thinks small, you'll think small. If no one around you has done what you want to do, you'll doubt it's possible.
+              <p class="text-gray-900 font-semibold mb-2">
+                Your environment shapes you. If no one around you has done what you want to do, you'll doubt it's possible.
               </p>
-              <p class="text-gray-700">
-                The collective surrounds you with people who are building, shipping, growing. People who've walked the path you're on — and people walking it alongside you.
+              <p class="text-gray-600">
+                The collective surrounds you with people who are building, shipping, growing: people who've walked the path you're on, and people walking it beside you.
               </p>
             </div>
           </div>
         </div>
 
-        <div class="mt-16 text-center">
-          <p class="text-xl font-semibold text-gray-900">
-            This is what it takes to maximize your creative potential.
-          </p>
-          <p class="text-gray-600 mt-2">
-            Not more content. Not another course. Real access. Real structure. Real people.
-          </p>
-        </div>
+        <p v-reveal="300" class="mt-10 text-xl font-bold text-gray-900 max-w-2xl">
+          Not more content. Not another course. Real access. Real structure. Real people.
+        </p>
       </div>
     </section>
 
@@ -563,7 +542,7 @@ const { y: scrollY } = useWindowScroll()
           v-reveal
           src="/henry-senpai-2017.webp"
           alt="The Senpai Collective community in 2017"
-          class="w-full rounded-2xl shadow-lg object-cover aspect-[16/9] mb-12"
+          class="w-full rounded-2xl shadow-lg object-cover aspect-[21/9] mb-10"
         />
 
         <p v-reveal="40" class="text-sm font-bold text-senpai-500 uppercase tracking-widest mb-3">The Story Behind This</p>
@@ -573,28 +552,28 @@ const { y: scrollY } = useWindowScroll()
 
         <div class="space-y-5 text-lg text-gray-700 leading-relaxed max-w-3xl">
           <p v-reveal="120">
-            Nigeria has never lacked talent. What we lack are systems — real infrastructure that takes a young person with ability and actually gets them somewhere. I watched it play out over and over: designers, photographers, storytellers, artists with real skill and no one showing them how to turn that skill into a career.
+            Nigeria has never lacked talent. What we lack are <strong class="font-bold text-gray-900">systems</strong> — real infrastructure that takes a young person with ability and actually gets them somewhere. I watched it play out over and over: designers, photographers, storytellers, artists with real skill and no one showing them how to turn that skill into a career.
           </p>
           <p v-reveal="160">
-            When I moved into the Lagos tech community in January 2017, I found the same gap. Every community that existed was built for developers. If you were a creative using technology as your tool, there was still nowhere that felt built for you. So I built one.
+            When I moved into the Lagos tech community in January 2017, I found the same gap. Every community that existed was built for <em>developers</em>. If you were a creative using technology as your tool, there was still nowhere that felt built for you. <strong class="font-bold text-gray-900">So I built one.</strong>
           </p>
           <p v-reveal="200">
-            I named it SENPAI, the Japanese word for an experienced guide who leads through example, not instruction. We started on Tuesday, August 22nd, 2017. Not a school. Not a bootcamp. A community of people who were a few steps ahead, pulling others forward.
+            I named it <strong class="font-bold text-gray-900">SENPAI</strong>, the Japanese word for an experienced guide who leads through example, not instruction. We started on Tuesday, August 22nd, 2017. Not a school. Not a bootcamp. A community of people who were a few steps ahead, pulling others forward.
           </p>
           <p v-reveal="240">
-            Within the first year we had 574 registered members, growing four or five a day. I set a goal: 2,000 people by the end of 2019 — founders, artists, nerds, storytellers, anyone who believed a creative mind was as valuable in tech as a technical one.
+            Within the first year we had 574 registered members, growing four or five a day. I set a goal: <strong class="font-bold text-gray-900">2,000 people by the end of 2019</strong> — founders, artists, nerds, storytellers, anyone who believed a creative mind was as valuable in tech as a technical one.
           </p>
           <p v-reveal="280">
-            Over four cohorts we hit it and kept going, past 2,000+ members. The first cohort alone put 157 students into 13 mentor groups. 45 graduated, and about 35 of them are now earning in dollars or working at top firms.
+            Over four cohorts we hit it and kept going, past 2,000+ members. The first cohort alone put <strong class="font-bold text-gray-900">157 students into 13 mentor groups</strong>. 45 graduated, and about 35 of them are now earning in dollars or working at top firms.
           </p>
           <p v-reveal="320">
-            I also got it wrong more than once. Early on I built a Slack group and 300+ people joined almost overnight. Within weeks the channel went quiet, full of accounts that never engaged. I had introduced people to the brand faster than I could actually build relationships with them, and it diluted the culture I was trying to create. The lesson stuck: you don't grow a real community by adding people faster. You grow it by going deep with a few people first.
+            I also got it wrong more than once. Early on I built a Slack group and <strong class="font-bold text-gray-900">300+ people joined almost overnight</strong>. Within weeks the channel went quiet, full of accounts that never engaged. I had introduced people to the brand faster than I could actually build relationships with them, and it diluted the culture I was trying to create. The lesson stuck: <em>you don't grow a real community by adding people faster. You grow it by going deep with a few people first.</em>
           </p>
           <p v-reveal="360">
-            Running the curriculum, the mentors, the events, and the community all on my own taught me something else I couldn't unlearn: I hadn't yet built the internal capacity to lead the way the community deserved. If I was going to ask people to grow, I had to lead by example, which meant stepping back to build that foundation in myself first. Senpai went quiet, on purpose.
+            Running the curriculum, the mentors, the events, and the community all on my own taught me something else I couldn't unlearn: I hadn't yet built the internal capacity to lead the way the community deserved. If I was going to ask people to grow, I had to lead by example, which meant stepping back to build that foundation in myself first. <strong class="font-bold text-gray-900">Senpai went quiet, on purpose.</strong>
           </p>
           <p v-reveal="400">
-            The vision never died. For five years, I went into the wilderness. Not to pick up a new skill, but to build the internal structure strong enough to actually hold what I was asking for. That meant facing the parts of myself I'd been avoiding, doing the quieter work no one sees. Passion without that structure is just exhaustion waiting to happen.
+            The vision never died. For five years, I went into the wilderness. Not to pick up a new skill, but to build <strong class="font-bold text-gray-900">the internal structure strong enough to actually hold what I was asking for</strong>. That meant facing the parts of myself I'd been avoiding, doing the quieter work no one sees. Passion without that structure is just exhaustion waiting to happen.
           </p>
           <p v-reveal="440">
             Now I'm back. Not to restart Senpai, but to <em>rebuild</em> it with the technical skills, the systems thinking, and the discipline to go deep with people instead of wide.
@@ -651,15 +630,17 @@ const { y: scrollY } = useWindowScroll()
 
         <div class="bg-gray-800/50 rounded-2xl p-8 sm:p-10 border border-gray-700/50">
           <div class="space-y-4 text-lg text-gray-300 italic">
-            <p v-reveal="0" class="text-white font-semibold not-italic">I am Senpai.</p>
-            <p v-reveal="60">I pledge to grow — every single day.</p>
-            <p v-reveal="110">I pledge to build — things that matter.</p>
-            <p v-reveal="160">I pledge to lift — those coming behind me.</p>
-            <p v-reveal="210">I pledge to pay forward — what was given to me.</p>
-            <p v-reveal="280" class="pt-4">I carry this name with honor.</p>
-            <p v-reveal="330">My success is not mine alone.</p>
-            <p v-reveal="380">Where one rises, we all rise.</p>
-            <p v-reveal="450" class="pt-4 text-white font-semibold not-italic">I am Senpai. I will not waste this opportunity.</p>
+            <p
+              v-for="(line, index) in SENPAI_MANIFESTO.creed"
+              :key="index"
+              v-reveal="index * 50"
+              :class="{
+                'text-white font-semibold not-italic': index >= SENPAI_MANIFESTO.creed.length - 2,
+                'pt-4': index === SENPAI_MANIFESTO.creed.length - 2
+              }"
+            >
+              {{ line }}
+            </p>
           </div>
         </div>
 
@@ -765,21 +746,23 @@ const { y: scrollY } = useWindowScroll()
 
     <!-- Final CTA Section -->
     <section class="py-24 bg-gray-900">
-      <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-white mb-6">
+      <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p v-reveal class="text-sm font-bold text-senpai-400 uppercase tracking-widest mb-4">
           Your Move
-        </h2>
-        <p v-reveal="60" class="text-xl text-gray-300 mb-4">
-          Africa's future systems won't build themselves.
         </p>
-        <div v-reveal="120" class="text-gray-400 mb-10 space-y-1">
-          <p>We need designers who think in products.</p>
-          <p>Developers who think in systems.</p>
-          <p>Founders who think in decades.</p>
-          <p>Artists who think in movements.</p>
-          <p>Builders who refuse to wait.</p>
+        <h2 v-reveal="60" class="text-3xl sm:text-4xl font-black text-white leading-[1.3] mb-10">
+          Africa's future systems won't build themselves.
+        </h2>
+
+        <div v-reveal="120" class="mb-10 space-y-3">
+          <p class="text-lg sm:text-xl text-gray-300"><span class="text-white font-bold">Designers</span> who think in products.</p>
+          <p class="text-lg sm:text-xl text-gray-300"><span class="text-white font-bold">Developers</span> who think in systems.</p>
+          <p class="text-lg sm:text-xl text-gray-300"><span class="text-white font-bold">Founders</span> who think in decades.</p>
+          <p class="text-lg sm:text-xl text-gray-300"><span class="text-white font-bold">Artists</span> who think in movements.</p>
+          <p class="text-lg sm:text-xl text-gray-300"><span class="text-white font-bold">Builders</span> who refuse to wait.</p>
         </div>
-        <p v-reveal="180" class="text-xl text-white font-semibold mb-8">Is that you?</p>
+
+        <p v-reveal="180" class="text-2xl text-white font-black mb-10">Is that you?</p>
 
         <!-- Apply Now CTA (Bottom) -->
         <div v-reveal="240" class="max-w-md mx-auto">
@@ -792,7 +775,7 @@ const { y: scrollY } = useWindowScroll()
         </div>
 
         <p class="mt-6 text-gray-500 text-sm">
-          Applications are open. Not everyone gets in — and that's the point.
+          Applications are open. Not everyone gets in, and that's the point.
         </p>
       </div>
     </section>

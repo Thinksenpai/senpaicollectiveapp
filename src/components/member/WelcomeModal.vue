@@ -16,8 +16,8 @@ const currentSlide = ref(0)
 const totalSlides = 3
 const acceptingPledge = ref(false)
 
-// Pledge checkboxes (7 items from creed, excluding first and last "I am Senpai")
-const pledgeChecks = ref<boolean[]>(new Array(7).fill(false))
+// Pledge checkboxes — one per creed line
+const pledgeChecks = ref<boolean[]>(new Array(SENPAI_MANIFESTO.creed.length).fill(false))
 
 const allPledgesChecked = computed(() => {
   return pledgeChecks.value.every(checked => checked)
@@ -117,7 +117,7 @@ function handleComplete() {
           <div class="bg-gray-50 rounded-xl p-6 mb-6 border-2 border-gray-200">
             <div class="space-y-4">
               <label
-                v-for="(line, index) in SENPAI_MANIFESTO.creed.slice(1, -1)"
+                v-for="(line, index) in SENPAI_MANIFESTO.creed"
                 :key="index"
                 class="flex items-start cursor-pointer group"
               >
