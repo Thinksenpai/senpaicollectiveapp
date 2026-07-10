@@ -666,15 +666,13 @@ function commentTimeAgo(d: string) {
               <h3 class="font-semibold text-gray-900">Your Pledge</h3>
             </div>
             <div class="space-y-2 text-sm text-gray-600 italic">
-              <p>I pledge to grow — every single day.</p>
-              <p>I pledge to build — things that matter.</p>
-              <p>I pledge to lift — those coming behind me.</p>
+              <p v-for="line in SENPAI_MANIFESTO.creed.slice(1, 4)" :key="line">{{ line }}</p>
             </div>
             <RouterLink
               to="/manifesto"
               class="mt-4 inline-flex items-center text-sm text-senpai-600 hover:text-senpai-700 font-medium"
             >
-              Read full manifesto
+              Read the Manifesto
               <ArrowRightIcon class="h-3 w-3 ml-1" />
             </RouterLink>
           </div>

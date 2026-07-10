@@ -35,6 +35,55 @@ We are not waiting for permission. We are building power.`,
 
   vision: "A continent transformed by skilled, connected, empowered creatives who build systems of progress. We are training the architects of Africa's future.",
 
+  // Opening declaration — the manifesto page's thesis statement
+  declarationHeadline: "We are building Africa's creative infrastructure.",
+  declarationBody: `Not because it will be easy. Not because anyone asked us to. But because it must be done — and no one else is doing it the way it needs to be done.
+
+The Senpai Collective exists because we refuse to accept that African creatives must struggle alone, learn alone, and build alone. We refuse to accept that talent without access should wither. We refuse to accept that the future of our continent will be designed by anyone other than us.`,
+
+  worldAsItIs: `We see what's happening.
+
+Schools graduate students unprepared for the world that exists. Capital flows to those who already have it. Global opportunities go to the usual suspects while African talent remains invisible — not for lack of skill, but lack of infrastructure.
+
+And when legitimate paths are blocked, people find other ways. Some give up. Some take shortcuts. A generation of brilliant minds chooses destruction over creation — not because they lack ambition, but because they lack systems that work for them.
+
+We do not accept this as inevitable.`,
+
+  beliefs: [
+    "that Africa's future will be shaped by those who build it — designers, developers, founders, artists, storytellers, and systems thinkers.",
+    "that creativity is power — the power to imagine what doesn't exist and bring it into being.",
+    "that community is infrastructure — that who you know, who believes in you, and who holds you accountable matters as much as what you know.",
+    "that growth requires sacrifice — comfort must be traded for progress, and transformation demands commitment.",
+    "that success is not individual — that every person who rises has an obligation to lift others, and that hoarding opportunity is a betrayal of those who gave you yours.",
+    "that given real access, real mentorship, and real community — our people will build, not destroy."
+  ],
+
+  rejections: [
+    "the lie that you must leave Africa to succeed.",
+    "the scarcity mindset that sees another's success as your loss.",
+    "the gatekeeping that hoards knowledge, opportunity, and connection.",
+    "the mediocrity that accepts \"good enough\" when excellence is possible.",
+    "the individualism that builds alone and falls alone.",
+    "the shortcuts that promise quick wins but destroy long-term trust.",
+    "waiting for permission to build what needs to exist."
+  ],
+
+  commitments: [
+    { title: "We will find you.", description: "Through our scouts, our events, our content — we are searching for ambitious creatives who haven't yet found their people. If you're out there building alone, we want to bring you home." },
+    { title: "We will challenge you.", description: "This is not a comfortable place. We will push you to grow, to ship, to put your work in front of others, to receive feedback that stings, to become better than you thought possible." },
+    { title: "We will connect you.", description: "To collaborators, to opportunities, to mentors who've walked your path, to peers who will hold you accountable. Your network becomes our network. Our doors become your doors." },
+    { title: "We will expect you to pay it forward.", description: "Every member who grows here has an obligation to help the next one grow. This is not optional. This is how the collective sustains itself. This is how we build something that outlasts any individual." }
+  ],
+
+  // The five pillars — also shown on the homepage, kept here as the canonical copy
+  pillars: [
+    { emoji: "🎭", name: "Culture", description: "The stories, art, and ideas that shape how Africa sees itself — and how the world sees us." },
+    { emoji: "💻", name: "Technology", description: "Products, platforms, and tools that solve real problems and create new possibilities." },
+    { emoji: "📈", name: "Business", description: "Companies, ventures, and economic systems that create wealth and opportunity for our communities." },
+    { emoji: "🎨", name: "Art", description: "Visual, sonic, and experiential work that moves people and shifts perspectives." },
+    { emoji: "⚙️", name: "Systems", description: "Processes, frameworks, and infrastructure that make everything else possible. The invisible architecture of progress." }
+  ],
+
   // The Six Core Values - Original from Henry's article
   values: [
     {
@@ -81,17 +130,17 @@ We are not waiting for permission. We are building power.`,
     }
   ],
 
-  // The Creed - What it means to be Senpai
+  // The Pledge - What it means to be Senpai
   creed: [
     "I am Senpai.",
-    "I collaborate with others and help them grow.",
-    "I have empathy for all humans.",
-    "I design sustainable things for the future.",
-    "I spread love and positivity wherever I go.",
-    "I learn something new every day.",
-    "I remember to breathe.",
-    "I am part of something bigger than myself.",
-    "I am Senpai."
+    "I pledge to grow — every single day.",
+    "I pledge to build — things that matter.",
+    "I pledge to lift — those coming behind me.",
+    "I pledge to pay forward — what was given to me.",
+    "I carry this name with honor.",
+    "My success is not mine alone.",
+    "Where one rises, we all rise.",
+    "I am Senpai. I will not waste this opportunity."
   ],
 
   // What we expect from members

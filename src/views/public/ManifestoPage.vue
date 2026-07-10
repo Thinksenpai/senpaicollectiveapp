@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import { SENPAI_MANIFESTO } from '@/content/manifesto'
+import { vReveal } from '@/composables/useScrollReveal'
 </script>
 
 <template>
@@ -13,18 +14,15 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
             <img src="/senpai_logo.svg" alt="Senpai Collective" class="h-8 w-auto" />
           </RouterLink>
           <div class="flex items-center gap-4">
-            <!-- Desktop only navigation -->
-            <div class="hidden sm:flex items-center gap-4">
-              <RouterLink
-                to="/"
-                class="text-sm font-medium text-gray-700 hover:text-gray-900"
-              >
-                Home
-              </RouterLink>
-            </div>
+            <RouterLink
+              to="/"
+              class="hidden sm:block text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              Home
+            </RouterLink>
             <RouterLink
               to="/join"
-              class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+              class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition active:scale-[0.97]"
             >
               Apply to Join
             </RouterLink>
@@ -33,99 +31,144 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
       </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="pt-32 pb-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
-      <div class="max-w-3xl mx-auto text-center">
-        <p class="text-gray-600 font-medium mb-4">{{ SENPAI_MANIFESTO.founding.relationship }}</p>
-        <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 leading-tight mb-6">
-          The Senpai Collective Manifesto
+    <!-- Bounded reading column — the sections below have full-bleed color
+         backgrounds; capping the page here (rather than at the viewport)
+         keeps those from turning into wide empty gutters on large screens. -->
+    <div class="max-w-5xl mx-auto lg:border-x lg:border-gray-100">
+
+    <!-- Hero -->
+    <section class="relative pt-32 pb-16 px-4 sm:px-6 lg:px-8 bg-gray-900 overflow-hidden">
+      <div
+        class="absolute -top-32 left-1/2 -translate-x-1/2 w-[560px] h-[560px] rounded-full bg-senpai-500/20 blur-[100px] pointer-events-none"
+        aria-hidden="true"
+      />
+      <div class="relative max-w-3xl mx-auto text-center">
+        <p v-reveal.now class="text-senpai-400 font-medium tracking-wide uppercase mb-6">The Senpai Collective</p>
+        <h1 v-reveal.now="80" class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-8">
+          Manifesto
         </h1>
-        <p class="text-xl text-gray-600">
-          The future of creativity, design, and technology.
+        <p v-reveal.now="160" class="text-xl text-gray-400 italic">
+          "A declaration of who we are, what we believe, and why we build."
         </p>
       </div>
     </section>
 
-    <!-- Mission Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
+    <!-- The Manifesto Content -->
+    <article class="py-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl mx-auto">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Our Mission</h2>
-        <div class="bg-gray-900 rounded-2xl p-8">
-          <p class="text-white text-lg leading-relaxed whitespace-pre-line">{{ SENPAI_MANIFESTO.mission }}</p>
-        </div>
-      </div>
-    </section>
 
-    <!-- Identity Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div class="max-w-3xl mx-auto">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Who We Are</h2>
-        <div class="prose prose-lg text-gray-700">
-          <p class="whitespace-pre-line leading-relaxed">{{ SENPAI_MANIFESTO.identity }}</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- For Ambitious Creatives Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8 bg-gray-100">
-      <div class="max-w-3xl mx-auto text-center">
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">{{ SENPAI_MANIFESTO.promise.headline }}</h2>
-        <p class="text-xl text-gray-700 leading-relaxed">
-          {{ SENPAI_MANIFESTO.promise.description }}
-        </p>
-      </div>
-    </section>
-
-    <!-- Core Values Section -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-16">
-          <img src="/corevalues.svg" alt="Core Values" class="mx-auto h-24 w-auto mb-6" />
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Core Values</h2>
-          <p class="text-gray-600 text-lg">
-            Come back here from time to time to remind yourself of these values.
-            We hold each other accountable to them.
+        <!-- Opening Declaration -->
+        <section class="mb-20">
+          <p v-reveal class="text-2xl sm:text-3xl font-bold text-gray-900 leading-relaxed mb-8">
+            {{ SENPAI_MANIFESTO.declarationHeadline }}
           </p>
-        </div>
+          <p v-reveal="80" class="text-lg text-gray-700 leading-relaxed whitespace-pre-line">{{ SENPAI_MANIFESTO.declarationBody }}</p>
+        </section>
 
-        <div class="space-y-12">
-          <div
-            v-for="(value, index) in SENPAI_MANIFESTO.values"
-            :key="value.name"
-            class="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
-          >
-            <div class="p-8">
-              <div class="flex items-start gap-6">
-                <div class="w-12 h-12 rounded-full bg-gray-100 text-gray-900 flex items-center justify-center text-xl font-bold shrink-0">
-                  {{ index + 1 }}
-                </div>
-                <div class="flex-1">
-                  <h3 class="text-xl font-bold text-gray-900 mb-4">{{ value.name }}</h3>
-                  <p class="text-gray-700 leading-relaxed mb-4">{{ value.description }}</p>
-                  <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                    <p class="text-gray-700 italic">"{{ value.insight }}"</p>
-                  </div>
-                </div>
-              </div>
+        <!-- The World As It Is -->
+        <section class="mb-20">
+          <h2 v-reveal class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">The World As It Is</h2>
+          <p v-reveal="80" class="text-lg text-gray-700 leading-relaxed whitespace-pre-line">{{ SENPAI_MANIFESTO.worldAsItIs }}</p>
+        </section>
+
+        <!-- What We Believe -->
+        <section class="mb-20">
+          <h2 v-reveal class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">What We Believe</h2>
+          <div class="space-y-6">
+            <p
+              v-for="(belief, index) in SENPAI_MANIFESTO.beliefs"
+              :key="index"
+              v-reveal="index * 60"
+              class="text-lg text-gray-900 leading-relaxed"
+            >
+              <span class="font-bold">We believe</span> {{ belief }}
+            </p>
+          </div>
+        </section>
+
+        <!-- What We Reject -->
+        <section v-reveal class="mb-20 bg-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-12">
+          <div class="max-w-3xl mx-auto">
+            <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">What We Reject</h2>
+            <div class="space-y-4 text-lg text-gray-800">
+              <p v-for="(rejection, index) in SENPAI_MANIFESTO.rejections" :key="index">
+                <span class="font-bold text-gray-900">We reject</span> {{ rejection }}
+              </p>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
+        </section>
 
-    <!-- The Creed Section -->
+        <!-- Our Commitment -->
+        <section class="mb-20">
+          <h2 v-reveal class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Our Commitment</h2>
+          <p v-reveal="60" class="text-lg text-gray-700 leading-relaxed mb-8">
+            To every member who joins this collective, we make these promises:
+          </p>
+          <div class="space-y-8">
+            <div v-for="(commitment, index) in SENPAI_MANIFESTO.commitments" :key="commitment.title" v-reveal="index * 60">
+              <h3 class="text-xl font-bold text-gray-900 mb-2">{{ commitment.title }}</h3>
+              <p class="text-gray-700">{{ commitment.description }}</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Core Values -->
+        <section class="mb-20">
+          <img v-reveal src="/corevalues.svg" alt="" class="h-16 w-16 mb-6" />
+          <h2 v-reveal="40" class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">Core Values</h2>
+          <p v-reveal="100" class="text-lg text-gray-700 leading-relaxed mb-8">
+            These are not aspirations. These are how we live:
+          </p>
+          <div class="space-y-8">
+            <div
+              v-for="(value, index) in SENPAI_MANIFESTO.values"
+              :key="value.name"
+              v-reveal="index * 60"
+              class="border-l-4 border-gray-900 pl-6"
+            >
+              <h3 class="text-xl font-bold text-gray-900 mb-2">{{ value.name }}</h3>
+              <p class="text-gray-700">{{ value.description }}</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- What We're Building -->
+        <section class="mb-20">
+          <h2 v-reveal class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">What We're Building</h2>
+          <p v-reveal="60" class="text-lg text-gray-700 leading-relaxed mb-8">
+            The Senpai Collective builds across five pillars. Not because we chose them arbitrarily, but because these are the domains that shape civilizations:
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div
+              v-for="(pillar, index) in SENPAI_MANIFESTO.pillars"
+              :key="pillar.name"
+              v-reveal="index * 60"
+              class="bg-gray-50 rounded-xl p-6"
+              :class="{ 'sm:col-span-2': pillar.name === 'Systems' }"
+            >
+              <span class="text-2xl mb-3 block">{{ pillar.emoji }}</span>
+              <h3 class="font-bold text-gray-900 mb-2">{{ pillar.name }}</h3>
+              <p class="text-sm text-gray-600">{{ pillar.description }}</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </article>
+
+    <!-- The Pledge Section -->
     <section id="creed" class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
-      <div class="max-w-3xl mx-auto text-center">
-        <h2 class="text-2xl font-bold text-white mb-2">The Senpai Creed</h2>
-        <p class="text-gray-400 mb-12">This is who we are. This is how we operate.</p>
-        <div class="space-y-4">
+      <div class="max-w-3xl mx-auto">
+        <h2 v-reveal class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-8 text-center">The Pledge</h2>
+
+        <div class="text-center space-y-6">
           <p
             v-for="(line, index) in SENPAI_MANIFESTO.creed"
             :key="index"
-            class="text-white font-medium"
+            v-reveal="index * 50"
             :class="{
               'text-2xl sm:text-3xl font-bold text-white': index === 0 || index === SENPAI_MANIFESTO.creed.length - 1,
-              'text-lg sm:text-xl': index !== 0 && index !== SENPAI_MANIFESTO.creed.length - 1
+              'text-xl text-gray-300': index !== 0 && index !== SENPAI_MANIFESTO.creed.length - 1
             }"
           >
             {{ line }}
@@ -134,73 +177,43 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
       </div>
     </section>
 
-    <!-- Why It Matters Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8">
+    <!-- Closing -->
+    <section class="py-20 px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl mx-auto">
-        <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">Why This Matters</h2>
+        <h2 v-reveal class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">The Invitation</h2>
 
-        <div class="space-y-6">
-          <div class="bg-red-50 rounded-xl p-6 border border-red-100">
-            <h3 class="font-semibold text-red-900 mb-2 flex items-center">
-              <span class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center mr-3 text-sm font-bold">!</span>
-              The Challenge
-            </h3>
-            <p class="text-red-800">{{ SENPAI_MANIFESTO.whyItMatters.problem }}</p>
-          </div>
-
-          <div class="bg-gray-100 rounded-xl p-6 border border-gray-200">
-            <h3 class="font-semibold text-gray-900 mb-2 flex items-center">
-              <span class="w-8 h-8 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center mr-3 text-sm font-bold">→</span>
-              Our Response
-            </h3>
-            <p class="text-gray-700">{{ SENPAI_MANIFESTO.whyItMatters.solution }}</p>
-          </div>
-
-          <div class="bg-green-50 rounded-xl p-6 border border-green-100">
-            <h3 class="font-semibold text-green-900 mb-2 flex items-center">
-              <span class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-3 text-sm font-bold">✓</span>
-              The Impact
-            </h3>
-            <p class="text-green-800">{{ SENPAI_MANIFESTO.whyItMatters.impact }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- What We Expect Section -->
-    <section class="py-16 px-4 sm:px-6 lg:px-8 bg-amber-50">
-      <div class="max-w-3xl mx-auto">
-        <div class="text-center mb-10">
-          <h2 class="text-2xl font-bold text-gray-900 mb-4">What We Expect From Members</h2>
-          <p class="text-gray-600">Being part of the Collective is a commitment.</p>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div
-            v-for="expectation in SENPAI_MANIFESTO.expectations"
-            :key="expectation.title"
-            class="bg-white rounded-xl p-6 border border-amber-100"
-          >
-            <h4 class="font-semibold text-gray-900 mb-2">{{ expectation.title }}</h4>
-            <p class="text-gray-600 text-sm">{{ expectation.description }}</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900">
-      <div class="max-w-3xl mx-auto text-center">
-        <h2 class="text-3xl font-bold text-white mb-4">Ready to Join?</h2>
-        <p class="text-gray-400 mb-8 text-lg">
-          {{ SENPAI_MANIFESTO.promise.commitment }}
+        <p v-reveal="60" class="text-lg text-gray-700 leading-relaxed mb-6">
+          This manifesto is not a marketing document. It is a declaration of war — against mediocrity, against isolation, against the systems that have failed our people.
         </p>
+
+        <p v-reveal="120" class="text-lg text-gray-700 leading-relaxed mb-6">
+          If you read this and felt something stir — that's the signal. That restlessness, that recognition, that sense of "finally, someone said it" — that's how you know you might belong here.
+        </p>
+
+        <p v-reveal="180" class="text-lg text-gray-700 leading-relaxed mb-8">
+          We are not looking for spectators. We are looking for builders. People who will show up, do the work, challenge themselves, and lift others as they climb.
+        </p>
+
+        <p v-reveal="240" class="text-xl font-bold text-gray-900 mb-8">
+          If that's you — we're ready when you are.
+        </p>
+
         <RouterLink
+          v-reveal="300"
           to="/join"
-          class="inline-flex items-center justify-center px-8 py-4 rounded-lg bg-white text-gray-900 text-lg font-medium hover:bg-gray-100 transition-colors"
+          class="inline-flex items-center justify-center px-8 py-4 rounded-lg bg-gray-900 text-white text-lg font-medium hover:bg-gray-800 transition active:scale-[0.97]"
         >
           Apply to Join the Collective
         </RouterLink>
+      </div>
+    </section>
+
+    <!-- Signature -->
+    <section class="py-12 px-4 sm:px-6 lg:px-8 border-t border-gray-200">
+      <div class="max-w-3xl mx-auto">
+        <p class="text-gray-400 text-sm">
+          Est. {{ SENPAI_MANIFESTO.founding.established }}. Reaffirmed {{ new Date().getFullYear() }}.
+        </p>
       </div>
     </section>
 
@@ -214,8 +227,6 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
               <img src="/senpai.svg" alt="Senpai" class="h-6 w-auto ml-2" />
               <span class="ml-2 text-sm font-medium text-gray-400">SENPAI</span>
             </a>
-            <span class="mx-2 text-gray-600">·</span>
-            <span class="text-sm text-gray-500">Est. {{ SENPAI_MANIFESTO.founding.established }}</span>
           </div>
           <p class="text-sm">
             &copy; {{ new Date().getFullYear() }} Senpai Collective. All rights reserved.
@@ -223,5 +234,7 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
         </div>
       </div>
     </footer>
+
+    </div>
   </div>
 </template>

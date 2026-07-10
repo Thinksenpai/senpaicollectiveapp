@@ -3,7 +3,9 @@ import { RouterLink } from 'vue-router'
 import { useWindowScroll } from '@vueuse/core'
 import { useAuthStore } from '@/stores/auth'
 import { SENPAI_MANIFESTO } from '@/content/manifesto'
+import { ALUMNI } from '@/content/alumni'
 import { vReveal } from '@/composables/useScrollReveal'
+import AlumniMarquee from '@/components/public/AlumniMarquee.vue'
 import {
   UserGroupIcon,
   BriefcaseIcon,
@@ -104,7 +106,24 @@ const { y: scrollY } = useWindowScroll()
             <span class="hero-underline absolute left-0 -bottom-1 h-1 w-full rounded-full bg-senpai-300/70" />
           </span>
         </h1>
-        <p v-reveal.now="160" class="mt-6 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+      </div>
+
+      <!-- Member photo grid — moving strip of member photos, sharp corners -->
+      <div v-reveal.now="140" class="mt-8 photo-grid-mask">
+        <div class="photo-grid-track">
+          <img
+            v-for="(person, i) in [...ALUMNI, ...ALUMNI]"
+            :key="`${person.name}-${i}`"
+            :src="person.photoUrl"
+            :alt="person.name"
+            loading="lazy"
+            class="photo-grid-item"
+          />
+        </div>
+      </div>
+
+      <div class="max-w-4xl mx-auto text-center">
+        <p v-reveal.now="160" class="mt-8 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           Senpai Collective is an elite community of creatives building the future of Africa through culture, technology, business, art, and systems. This is not a network. It's a movement.
         </p>
         <!-- Apply CTA -->
@@ -117,7 +136,7 @@ const { y: scrollY } = useWindowScroll()
             >
               Apply Now
             </RouterLink>
-            <p class="text-gray-500 text-sm mt-3">Applications are open. We review every one.</p>
+            <p class="text-gray-500 text-sm mt-3">Applications are open. Not everyone gets in — and that's the point.</p>
           </div>
 
           <!-- Manifesto Link -->
@@ -126,7 +145,7 @@ const { y: scrollY } = useWindowScroll()
               to="/manifesto"
               class="inline-flex items-center justify-center px-8 py-4 rounded-lg border border-gray-300 text-gray-700 text-lg font-medium hover:bg-gray-50 transition active:scale-[0.97]"
             >
-              Read Our Manifesto
+              Read the Manifesto
             </RouterLink>
           </div>
         </div>
@@ -202,44 +221,56 @@ const { y: scrollY } = useWindowScroll()
             Joining Senpai Collective means signing up to work on these hard problems — together. We're creating the infrastructure that should have existed. We're proving there's a better way.
           </p>
         </div>
+      </div>
+    </section>
 
-        <!-- What We're Building (Five Pillars) -->
-        <div>
-          <h3 v-reveal class="text-2xl font-bold text-gray-900 text-center mb-4">What We're Building</h3>
-          <p v-reveal="80" class="text-gray-600 text-center mb-10 max-w-2xl mx-auto">
-            Senpai Collective members are building across five pillars. We don't just participate in these spaces. We build them.
-          </p>
+    <!-- What We're Building (Five Pillars) -->
+    <section class="py-20 bg-white">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h3 v-reveal class="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-4">What We're Building</h3>
+        <p v-reveal="80" class="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+          Senpai Collective members are building across five pillars. We don't just participate in these spaces. We build them.
+        </p>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div v-reveal="0" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <span class="text-3xl mb-3 block">🎭</span>
-              <h4 class="font-bold text-gray-900 mb-2">Culture</h4>
-              <p class="text-sm text-gray-600">The stories, art, and ideas that shape how Africa sees itself — and how the world sees us.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div v-reveal="0" class="bg-white p-7 border border-gray-200">
+            <h4 class="text-3xl font-black uppercase tracking-tight text-amber-500 mb-3">Culture</h4>
+            <p class="text-gray-600">The stories, art, and ideas that shape how Africa sees itself — and how the world sees us.</p>
+          </div>
+
+          <div v-reveal="60" class="bg-white p-7 border border-gray-200">
+            <h4 class="text-3xl font-black uppercase tracking-tight text-blue-500 mb-3">Technology</h4>
+            <p class="text-gray-600">Products, platforms, and tools that solve real problems and create new possibilities.</p>
+          </div>
+
+          <div v-reveal="120" class="bg-white p-7 border border-gray-200">
+            <h4 class="text-3xl font-black uppercase tracking-tight text-green-500 mb-3">Business</h4>
+            <p class="text-gray-600">Companies, ventures, and systems that create wealth and opportunity for our communities.</p>
+          </div>
+
+          <div v-reveal="180" class="bg-white p-7 border border-gray-200">
+            <h4 class="text-3xl font-black uppercase tracking-tight text-pink-500 mb-3">Art</h4>
+            <p class="text-gray-600">Visual, sonic, and experiential work that moves people and shifts perspectives.</p>
+          </div>
+
+          <div v-reveal="240" class="bg-white p-7 border border-gray-200">
+            <h4 class="text-3xl font-black uppercase tracking-tight text-senpai-500 mb-3">Systems</h4>
+            <p class="text-gray-600">Processes, frameworks, and infrastructure that make everything else possible.</p>
+          </div>
+
+          <!-- Sixth tile: flat brand color, no gradient — keeps the grid from
+               ending on an orphaned card and threads back to the ask. -->
+          <div v-reveal="300" class="bg-gray-900 p-7 flex flex-col justify-between">
+            <div>
+              <h4 class="font-bold text-white mb-2 text-lg">Which one is yours?</h4>
+              <p class="text-gray-400">Apply to build alongside people working across these five pillars right now.</p>
             </div>
-
-            <div v-reveal="60" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <span class="text-3xl mb-3 block">💻</span>
-              <h4 class="font-bold text-gray-900 mb-2">Technology</h4>
-              <p class="text-sm text-gray-600">Products, platforms, and tools that solve real problems and create new possibilities.</p>
-            </div>
-
-            <div v-reveal="120" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <span class="text-3xl mb-3 block">📈</span>
-              <h4 class="font-bold text-gray-900 mb-2">Business</h4>
-              <p class="text-sm text-gray-600">Companies, ventures, and systems that create wealth and opportunity for our communities.</p>
-            </div>
-
-            <div v-reveal="180" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-              <span class="text-3xl mb-3 block">🎨</span>
-              <h4 class="font-bold text-gray-900 mb-2">Art</h4>
-              <p class="text-sm text-gray-600">Visual, sonic, and experiential work that moves people and shifts perspectives.</p>
-            </div>
-
-            <div v-reveal="240" class="bg-white rounded-xl p-6 border border-gray-200 hover:border-senpai-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 sm:col-span-2 lg:col-span-1">
-              <span class="text-3xl mb-3 block">⚙️</span>
-              <h4 class="font-bold text-gray-900 mb-2">Systems</h4>
-              <p class="text-sm text-gray-600">Processes, frameworks, and infrastructure that make everything else possible.</p>
-            </div>
+            <RouterLink to="/join" class="mt-5 inline-flex items-center text-white font-semibold">
+              Apply to Join
+              <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </RouterLink>
           </div>
         </div>
       </div>
@@ -248,49 +279,42 @@ const { y: scrollY } = useWindowScroll()
     <!-- What Senpai Collective Is Section -->
     <section class="py-20 bg-white">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-10">
+        <p v-reveal class="text-sm font-bold text-senpai-500 uppercase tracking-widest mb-3">
           A Different Kind of Collective
+        </p>
+
+        <h2 v-reveal="60" class="text-4xl sm:text-5xl font-black text-gray-900 leading-[1.3] mb-6 max-w-3xl">
+          Not a marketplace. Not a Slack group. Not a place to
+          <span v-reveal="200" class="reveal-strike text-gray-400">"network."</span>
+          <span class="block mt-2">
+            <span v-reveal="400" class="reveal-highlight px-3 py-1">Senpai Collective</span> is a transformation engine.
+          </span>
         </h2>
 
-        <div v-reveal="80" class="text-center mb-12">
-          <p class="text-lg text-gray-600 mb-2">Senpai Collective is not a freelance marketplace.</p>
-          <p class="text-lg text-gray-600 mb-2">Senpai Collective is not a Slack group.</p>
-          <p class="text-lg text-gray-600 mb-6">Senpai Collective is not a place to "network."</p>
-          <p class="text-2xl sm:text-3xl font-bold text-senpai-500">
-            Senpai Collective is a transformation engine.
-          </p>
-        </div>
-
-        <p v-reveal="120" class="text-lg text-gray-700 text-center mb-12 max-w-3xl mx-auto">
+        <p v-reveal="140" class="text-lg text-gray-600 mb-12 max-w-2xl">
           We find ambitious creatives — designers, developers, founders, artists, storytellers, builders of all kinds — and we give them three things:
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div v-reveal="0" class="text-center">
-            <div class="w-16 h-16 bg-senpai-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <UserGroupIcon class="h-8 w-8 text-senpai-600" />
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-3">Community</h3>
+        <div class="flex flex-col md:flex-row md:divide-x divide-gray-200 border-t border-b border-gray-200">
+          <div v-reveal="0" class="flex-1 py-8 md:px-8 first:md:pl-0 last:md:pr-0">
+            <span class="block text-sm font-mono text-gray-400 mb-2">01</span>
+            <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-3">Community</h3>
             <p class="text-gray-600">
               Your people. The ones who understand. The ones who push you. The ones who won't let you stay comfortable.
             </p>
           </div>
 
-          <div v-reveal="80" class="text-center">
-            <div class="w-16 h-16 bg-senpai-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <BriefcaseIcon class="h-8 w-8 text-senpai-600" />
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-3">Opportunity</h3>
+          <div v-reveal="80" class="flex-1 py-8 md:px-8 first:md:pl-0 last:md:pr-0">
+            <span class="block text-sm font-mono text-gray-400 mb-2">02</span>
+            <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-3">Opportunity</h3>
             <p class="text-gray-600">
               Real projects. Real jobs. Real collaborations. Not empty promises — actual doors that open because you're one of us.
             </p>
           </div>
 
-          <div v-reveal="160" class="text-center">
-            <div class="w-16 h-16 bg-senpai-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <AcademicCapIcon class="h-8 w-8 text-senpai-600" />
-            </div>
-            <h3 class="text-xl font-bold text-gray-900 mb-3">Growth</h3>
+          <div v-reveal="160" class="flex-1 py-8 md:px-8 first:md:pl-0 last:md:pr-0">
+            <span class="block text-sm font-mono text-gray-400 mb-2">03</span>
+            <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-3">Growth</h3>
             <p class="text-gray-600">
               Skills, mentorship, accountability. We don't just connect you — we transform you. And we expect you to transform others.
             </p>
@@ -333,7 +357,7 @@ const { y: scrollY } = useWindowScroll()
             to="/manifesto"
             class="inline-flex items-center text-gray-300 hover:text-white font-medium"
           >
-            Read our full manifesto
+            Read the Manifesto
             <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
@@ -345,54 +369,33 @@ const { y: scrollY } = useWindowScroll()
     <!-- Who This Is For Section -->
     <section class="py-20 bg-gray-50">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 v-reveal class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">
-          This Is For The Ones Who Know
+        <p v-reveal class="text-sm font-bold text-senpai-500 uppercase tracking-widest mb-3">
+          Who This Is For
+        </p>
+        <h2 v-reveal="60" class="text-4xl sm:text-5xl font-black text-gray-900 leading-[1.3] mb-4 max-w-2xl">
+          You know you're capable of more.
         </h2>
+        <p v-reveal="100" class="text-lg text-gray-600 mb-12 max-w-2xl">
+          You haven't found your people yet. And you know growth requires community, not just content.
+        </p>
 
-        <div v-reveal="80" class="text-center mb-12 space-y-2">
-          <p class="text-lg text-gray-700">You know you're capable of more.</p>
-          <p class="text-lg text-gray-700">You know you haven't found your people yet.</p>
-          <p class="text-lg text-gray-700">You know that growth requires community, not just content.</p>
+        <div v-reveal="140" class="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 mb-12">
+          <p class="text-gray-800"><span class="font-semibold text-gray-900">Designers</span> who want to <span class="font-semibold text-gray-900">build products</span>, <span class="text-gray-400 line-through decoration-2">not just push pixels</span></p>
+          <p class="text-gray-800"><span class="font-semibold text-gray-900">Developers</span> who want to <span class="font-semibold text-gray-900">create systems</span>, <span class="text-gray-400 line-through decoration-2">not just write code</span></p>
+          <p class="text-gray-800"><span class="font-semibold text-gray-900">Founders</span> who want <span class="font-semibold text-gray-900">co-conspirators</span>, <span class="text-gray-400 line-through decoration-2">not just connections</span></p>
+          <p class="text-gray-800"><span class="font-semibold text-gray-900">Artists</span> who want <span class="font-semibold text-gray-900">impact</span>, <span class="text-gray-400 line-through decoration-2">not just applause</span></p>
+          <p class="text-gray-800"><span class="font-semibold text-gray-900">Storytellers</span> who want to <span class="font-semibold text-gray-900">shape culture</span>, <span class="text-gray-400 line-through decoration-2">not just follow it</span></p>
+          <p class="text-gray-800"><span class="font-semibold text-gray-900">Anyone</span> who <span class="font-semibold text-gray-900">refuses to wait for permission</span> to build</p>
         </div>
 
-        <div v-reveal="140" class="bg-white rounded-2xl p-8 border border-gray-200 mb-10">
-          <h3 class="text-xl font-bold text-gray-900 mb-6 text-center">Senpai Collective is for:</h3>
-          <div class="space-y-4 max-w-2xl mx-auto">
-            <p class="flex items-start">
-              <span class="text-senpai-500 mr-3 mt-1">→</span>
-              <span class="text-gray-700">Designers who want to build products, not just push pixels</span>
-            </p>
-            <p class="flex items-start">
-              <span class="text-senpai-500 mr-3 mt-1">→</span>
-              <span class="text-gray-700">Developers who want to create systems, not just write code</span>
-            </p>
-            <p class="flex items-start">
-              <span class="text-senpai-500 mr-3 mt-1">→</span>
-              <span class="text-gray-700">Founders who want co-conspirators, not just connections</span>
-            </p>
-            <p class="flex items-start">
-              <span class="text-senpai-500 mr-3 mt-1">→</span>
-              <span class="text-gray-700">Artists who want impact, not just applause</span>
-            </p>
-            <p class="flex items-start">
-              <span class="text-senpai-500 mr-3 mt-1">→</span>
-              <span class="text-gray-700">Storytellers who want to shape culture, not just follow it</span>
-            </p>
-            <p class="flex items-start">
-              <span class="text-senpai-500 mr-3 mt-1">→</span>
-              <span class="text-gray-700">Anyone who refuses to wait for permission to build</span>
-            </p>
-          </div>
-        </div>
-
-        <div v-reveal="200" class="text-center">
-          <p class="text-xl font-bold text-gray-900 mb-4">This is not for everyone.</p>
-          <div class="text-gray-600 space-y-1">
+        <div v-reveal="200" class="bg-gray-900 rounded-2xl p-8 sm:p-10">
+          <p class="text-2xl font-black text-white uppercase tracking-tight mb-4">This is not for everyone.</p>
+          <div class="text-gray-400 space-y-1 mb-6">
             <p>If you're looking for shortcuts, we're not it.</p>
             <p>If you want to take without giving, look elsewhere.</p>
             <p>If you're not serious about growth, don't apply.</p>
           </div>
-          <p class="mt-6 text-lg text-gray-800 font-medium">
+          <p class="text-lg text-senpai-400 font-semibold">
             But if you're ready to be challenged, supported, and transformed — keep reading.
           </p>
         </div>
@@ -553,6 +556,89 @@ const { y: scrollY } = useWindowScroll()
       </div>
     </section>
 
+    <!-- Origin Story, with the alumni wall folded in as the same story's evidence -->
+    <section class="py-20 bg-white overflow-hidden">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <img
+          v-reveal
+          src="/henry-senpai-2017.webp"
+          alt="The Senpai Collective community in 2017"
+          class="w-full rounded-2xl shadow-lg object-cover aspect-[16/9] mb-12"
+        />
+
+        <p v-reveal="40" class="text-sm font-bold text-senpai-500 uppercase tracking-widest mb-3">The Story Behind This</p>
+        <h2 v-reveal="80" class="text-3xl sm:text-4xl font-black text-gray-900 leading-[1.3] mb-8 max-w-2xl">
+          One person's belief. It grew into a movement of 2,000.
+        </h2>
+
+        <div class="space-y-5 text-lg text-gray-700 leading-relaxed max-w-3xl">
+          <p v-reveal="120">
+            Nigeria has never lacked talent. What we lack are systems — real infrastructure that takes a young person with ability and actually gets them somewhere. I watched it play out over and over: designers, photographers, storytellers, artists with real skill and no one showing them how to turn that skill into a career.
+          </p>
+          <p v-reveal="160">
+            When I moved into the Lagos tech community in January 2017, I found the same gap. Every community that existed was built for developers. If you were a creative using technology as your tool, there was still nowhere that felt built for you. So I built one.
+          </p>
+          <p v-reveal="200">
+            I named it SENPAI, the Japanese word for an experienced guide who leads through example, not instruction. We started on Tuesday, August 22nd, 2017. Not a school. Not a bootcamp. A community of people who were a few steps ahead, pulling others forward.
+          </p>
+          <p v-reveal="240">
+            Within the first year we had 574 registered members, growing four or five a day. I set a goal: 2,000 people by the end of 2019 — founders, artists, nerds, storytellers, anyone who believed a creative mind was as valuable in tech as a technical one.
+          </p>
+          <p v-reveal="280">
+            Over four cohorts we hit it and kept going, past 2,000+ members. The first cohort alone put 157 students into 13 mentor groups. 45 graduated, and about 35 of them are now earning in dollars or working at top firms.
+          </p>
+          <p v-reveal="320">
+            I also got it wrong more than once. Early on I built a Slack group and 300+ people joined almost overnight. Within weeks the channel went quiet, full of accounts that never engaged. I had introduced people to the brand faster than I could actually build relationships with them, and it diluted the culture I was trying to create. The lesson stuck: you don't grow a real community by adding people faster. You grow it by going deep with a few people first.
+          </p>
+          <p v-reveal="360">
+            Running the curriculum, the mentors, the events, and the community all on my own taught me something else I couldn't unlearn: I hadn't yet built the internal capacity to lead the way the community deserved. If I was going to ask people to grow, I had to lead by example, which meant stepping back to build that foundation in myself first. Senpai went quiet, on purpose.
+          </p>
+          <p v-reveal="400">
+            The vision never died. For five years, I went into the wilderness. Not to pick up a new skill, but to build the internal structure strong enough to actually hold what I was asking for. That meant facing the parts of myself I'd been avoiding, doing the quieter work no one sees. Passion without that structure is just exhaustion waiting to happen.
+          </p>
+          <p v-reveal="440">
+            Now I'm back. Not to restart Senpai, but to <em>rebuild</em> it with the technical skills, the systems thinking, and the discipline to go deep with people instead of wide.
+          </p>
+          <p v-reveal="480" class="text-gray-900 font-semibold">
+            This time, we're building infrastructure that scales. Systems that don't depend on one person. A community that sustains itself.
+          </p>
+        </div>
+
+        <div v-reveal="520" class="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-6 border-t border-gray-200 pt-8 max-w-3xl">
+          <div>
+            <p class="text-2xl font-bold text-gray-900">2,000+</p>
+            <p class="text-sm text-gray-500">Community members</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-gray-900">4</p>
+            <p class="text-sm text-gray-500">Cohorts run</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-gray-900">157</p>
+            <p class="text-sm text-gray-500">First-cohort students</p>
+          </div>
+          <div>
+            <p class="text-2xl font-bold text-gray-900">78%</p>
+            <p class="text-sm text-gray-500">Of graduates earning at top firms</p>
+          </div>
+        </div>
+
+        <div v-reveal="560" class="mt-8">
+          <a href="https://www.henryikoh.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-900 underline decoration-gray-300 underline-offset-4 hover:text-senpai-600 hover:decoration-senpai-500 transition-colors">Henry Ikoh</a>
+          <p class="text-sm text-gray-500">Founder, Senpai</p>
+        </div>
+      </div>
+
+      <!-- The people behind those numbers -->
+      <div class="mt-16">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+          <h3 class="text-2xl sm:text-3xl font-black text-gray-900">A Hundred Faces From That History</h3>
+          <p class="text-gray-600 mt-2 max-w-2xl">Some of the builders who came through the Collective, and what they were making.</p>
+        </div>
+        <AlumniMarquee />
+      </div>
+    </section>
+
     <!-- The Pledge Section -->
     <section class="py-20 bg-gray-900">
       <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -582,7 +668,7 @@ const { y: scrollY } = useWindowScroll()
             to="/manifesto"
             class="inline-flex items-center text-gray-300 hover:text-white font-medium"
           >
-            Read our full manifesto
+            Read the Manifesto
             <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
             </svg>
@@ -728,3 +814,38 @@ const { y: scrollY } = useWindowScroll()
     </footer>
   </div>
 </template>
+
+<style scoped>
+.photo-grid-mask {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+.photo-grid-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, 1fr);
+  gap: 4px;
+  width: max-content;
+  animation: photo-grid-scroll 140s linear infinite;
+}
+
+.photo-grid-item {
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: cover;
+  display: block;
+}
+
+@keyframes photo-grid-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .photo-grid-track {
+    animation: none !important;
+  }
+}
+</style>
