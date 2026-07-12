@@ -194,7 +194,9 @@ function handleComplete() {
 
           <div class="bg-gray-900 rounded-xl p-4 mb-6 text-center">
             <p class="text-white text-sm font-medium">
-              Remember: When we help each other grow, we help the world become a better place.
+              You're now one of the people building the systems Africans need to thrive — in
+              the global market, and at home. Everything you do here compounds: your work
+              makes the next member more credible, and theirs does the same for you.
             </p>
           </div>
 

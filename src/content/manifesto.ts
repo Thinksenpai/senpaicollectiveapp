@@ -45,9 +45,15 @@ The Senpai Collective exists because we refuse to accept that African creatives 
 
 Schools graduate students unprepared for the world that exists. Capital flows to those who already have it. Global opportunities go to the usual suspects while African talent remains invisible — not for lack of skill, but lack of infrastructure.
 
+Today, being Nigerian is a risk score. Entire platforms ban us by default. Payment systems turn us away before we type a word. To half the internet, our country is a checkbox marked "high risk" — and no amount of individual talent unchecks it.
+
 And when legitimate paths are blocked, people find other ways. Some give up. Some take shortcuts. A generation of brilliant minds chooses destruction over creation — not because they lack ambition, but because they lack systems that work for them.
 
-We do not accept this as inevitable.`,
+We do not accept this as inevitable.
+
+One brilliant designer cannot fix this. A thousand scattered freelancers cannot fix this. Alone, each of us is priced by the worst thing anyone from our country has ever done. Together, we can be priced by the best.
+
+Their platforms shut us out by default. So we are building our own — one we fully own, that no one can ban us from.`,
 
   beliefs: [
     "that Africa's future will be shaped by those who build it — designers, developers, founders, artists, storytellers, and systems thinkers.",
@@ -56,6 +62,15 @@ We do not accept this as inevitable.`,
     "that growth requires sacrifice — comfort must be traded for progress, and transformation demands commitment.",
     "that success is not individual — that every person who rises has an obligation to lift others, and that hoarding opportunity is a betrayal of those who gave you yours.",
     "that given real access, real mentorship, and real community — our people will build, not destroy."
+  ],
+
+  // How the collective actually changes the world-as-it-is — public-safe, no internal mechanics
+  howWeChange: [
+    "We gather the best and hold a standard. Entry is earned, and the standard is enforced — because a vouch that costs nothing is worth nothing.",
+    "Every member builds a real, visible record of shipped work. Not claims. Not certificates. Work the world can inspect.",
+    "The collective stakes its name on its members. Where an individual gets auto-rejected, an institution with receipts gets a meeting.",
+    "We build across five pillars — culture, technology, business, art, systems — for the global market and for home. The same hands that ship for clients abroad redesign the systems our own communities live with every day.",
+    "And every contribution compounds. Each project shipped makes every member more credible. Each member who rises makes the collective harder to ignore. This is how individual talent becomes collective power: nothing you do here is only yours."
   ],
 
   rejections: [

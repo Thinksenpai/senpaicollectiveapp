@@ -92,6 +92,20 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
+          <h2 class="text-xl font-semibold text-gray-900">6. Carry the name</h2>
+          <p>
+            Membership here means the collective stakes its name on you — to clients, to
+            partners, to the world. That's what makes your membership worth something, and
+            it's why the standard is enforced. When you work with anyone under the Senpai
+            name, you carry every other member's credibility with you.
+          </p>
+          <p class="mt-3">
+            That trust is sustained by consistent work, not bursts of it. Membership isn't a
+            badge you earned once; it's a record you keep adding to.
+          </p>
+        </section>
+
+        <section>
           <h2 class="text-xl font-semibold text-gray-900">What happens if this isn't followed</h2>
           <p>
             Most of the time, a quiet word from an admin is enough — nobody's perfect and this

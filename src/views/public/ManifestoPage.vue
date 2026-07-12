@@ -86,6 +86,21 @@ import { vReveal } from '@/composables/useScrollReveal'
           </div>
         </section>
 
+        <!-- How We Change This -->
+        <section class="mb-20">
+          <h2 v-reveal class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-6">How We Change This</h2>
+          <div class="space-y-6">
+            <p
+              v-for="(line, index) in SENPAI_MANIFESTO.howWeChange"
+              :key="index"
+              v-reveal="index * 60"
+              class="text-lg text-gray-900 leading-relaxed"
+            >
+              {{ line }}
+            </p>
+          </div>
+        </section>
+
         <!-- What We Reject -->
         <section v-reveal class="mb-20 bg-gray-100 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-12">
           <div class="max-w-3xl mx-auto">
