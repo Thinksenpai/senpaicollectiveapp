@@ -190,6 +190,16 @@ const { y: scrollY } = useWindowScroll()
                 </p>
               </div>
             </div>
+
+            <div v-reveal="300" class="flex gap-4">
+              <div class="shrink-0 w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-sm">4</div>
+              <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-1">Platforms ban us by default</h3>
+                <p class="text-gray-600">
+                  To the global work economy, our whole country is a risk score. Locked out before we type a word — no matter how good we are.
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Right: The consequence -->
@@ -208,12 +218,12 @@ const { y: scrollY } = useWindowScroll()
         </div>
 
         <!-- The Pivot -->
-        <div v-reveal class="text-center mb-16">
+        <div v-reveal class="text-center">
           <p class="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
             So we're building these systems ourselves.
           </p>
           <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-            Joining Senpai Collective means signing up to work on these hard problems — together. We're creating the infrastructure that should have existed. We're proving there's a better way.
+            Joining Senpai Collective means signing up to work on these hard problems — together. On a platform we fully own, that no one can ban us from. We're creating the infrastructure that should have existed.
           </p>
         </div>
       </div>
