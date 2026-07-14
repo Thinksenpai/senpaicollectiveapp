@@ -50,6 +50,19 @@ export const engineApi = {
     return apiClient.post(`/tasks/${taskId}/submit`, payload)
   },
 
+  // The open board: published, claimable tasks anyone can pull.
+  async getOpenTasks(): Promise<ApiResponse<Task[]>> {
+    return apiClient.get('/tasks/open')
+  },
+
+  async claimTask(taskId: string): Promise<ApiResponse<TaskAssignment>> {
+    return apiClient.post(`/tasks/${taskId}/claim`)
+  },
+
+  async startTask(taskId: string): Promise<ApiResponse<TaskAssignment>> {
+    return apiClient.post(`/tasks/${taskId}/start`)
+  },
+
   async getTaskPeers(taskId: string): Promise<ApiResponse<TaskPeerStatus[]>> {
     return apiClient.get(`/tasks/${taskId}/peers`)
   },
@@ -114,8 +127,9 @@ export const engineApi = {
   async getProject(id: string): Promise<ApiResponse<{ project: Project; tasks: Task[] | null }>> {
     return apiClient.get(`/projects/${id}`)
   },
-  async joinProject(id: string): Promise<ApiResponse<Project>> {
-    return apiClient.post(`/projects/${id}/join`)
+  // skillId is the seat's role — what you join the team AS (optional).
+  async joinProject(id: string, skillId?: number): Promise<ApiResponse<Project>> {
+    return apiClient.post(`/projects/${id}/join`, skillId ? { skill_id: skillId } : {})
   },
   async leaveProject(id: string): Promise<ApiResponse<void>> {
     return apiClient.post(`/projects/${id}/leave`)

@@ -2,8 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { engineApi, membersApi } from '@/api'
-import type { Project, Task, ProjectStatus, TaskAssignment, TaskKind, HandinType, Activity } from '@/types'
+import { engineApi, membersApi, skillsApi } from '@/api'
+import type { Project, Task, ProjectStatus, TaskAssignment, TaskKind, HandinType, Activity, Skill } from '@/types'
 import ActivityFeed from '@/components/common/ActivityFeed.vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -24,6 +24,10 @@ const project = ref<Project | null>(null)
 const tasks = ref<Task[]>([])
 const error = ref('')
 const busy = ref(false)
+// Joining-as role for the seat — feeds the member's record (phase 2 ratings).
+const joinSkillId = ref('')
+const allSkills = ref<Skill[]>([])
+skillsApi.getSkills().then((res) => { allSkills.value = res.data ?? [] }).catch(() => {})
 const toast = ref('')
 
 function flash(msg: string) {
@@ -91,7 +95,7 @@ const statusCode: Record<ProjectStatus, { label: string; cls: string }> = {
 async function join() {
   busy.value = true
   try {
-    const res = await engineApi.joinProject(project.value!.id)
+    const res = await engineApi.joinProject(project.value!.id, joinSkillId.value ? Number(joinSkillId.value) : undefined)
     flash(res.status ? "You're on the team" : res.message || 'Failed to join')
     await load()
   } catch (e: any) {
@@ -448,7 +452,14 @@ async function ship() {
             </p>
 
             <div v-else-if="project.status === 'active'" class="flex flex-col gap-2">
-              <BaseButton v-if="!isOnTeam && project.team_count < project.team_cap" class="w-full" :loading="busy" @click="join">Join the team</BaseButton>
+              <template v-if="!isOnTeam && project.team_count < project.team_cap">
+                <!-- The seat's role: what you join this team AS — feeds your record -->
+                <select v-model="joinSkillId" class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700">
+                  <option value="">Joining as… (optional role)</option>
+                  <option v-for="s in allSkills" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
+                </select>
+                <BaseButton class="w-full" :loading="busy" @click="join">Join the team</BaseButton>
+              </template>
               <p v-else-if="!isOnTeam" class="text-sm text-gray-500">The team is full.</p>
 
               <template v-if="canManage">

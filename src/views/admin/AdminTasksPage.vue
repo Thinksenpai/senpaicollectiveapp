@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { adminEngineApi, engineApi } from '@/api'
+import { adminEngineApi, engineApi, skillsApi } from '@/api'
 import type {
   Cohort, Pod, CohortMembership, Task, TaskAssignment,
   CreateTaskPayload, TaskKind, HandinType, Program,
-  TaskComment, AssignmentComment, AssignmentStatus
+  TaskComment, AssignmentComment, AssignmentStatus, Skill
 } from '@/types'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -115,7 +115,10 @@ const taskForm = reactive({
   program_id: '', kind: 'custom' as TaskKind,
   handin_type: 'link' as HandinType, external_url: '',
   is_required: false, status: 'published' as 'draft' | 'published',
-  due_at: '', available_at: ''
+  due_at: '', available_at: '',
+  // Role/claiming layer
+  skill_id: '' as string, circle: '', reviewer_id: '' as string,
+  claimable: false, claim_cap: '' as string
 })
 // Assign-on-create — only shown when creating a new task, not editing.
 const assignOnCreate = reactive({ type: 'none' as 'none' | 'cohort' | 'pod' | 'individual' | 'global', id: '' })
@@ -184,6 +187,20 @@ async function saveProgram() {
     programBusy.value = false
   }
 }
+// Skills catalog — the role a task exercises (counts toward verification later).
+const skills = ref<Skill[]>([])
+skillsApi.getSkills().then((res) => { skills.value = res.data ?? [] }).catch(() => {})
+const skillOptions = computed(() => [
+  { value: '', label: 'None — no role tag' },
+  ...skills.value.map((s) => ({ value: String(s.id), label: s.name }))
+])
+const circleOptions = [
+  { value: '', label: 'None' },
+  { value: 'content', label: 'Content' },
+  { value: 'product', label: 'Product' },
+  { value: 'growth', label: 'Growth' }
+]
+
 const kindOptions = ['reflection', 'portfolio', 'build', 'publish', 'research', 'custom'].map((k) => ({ value: k, label: (k[0] ?? '').toUpperCase() + k.slice(1) }))
 const handinOptions = [
   { value: 'none', label: 'Mark as done (no hand-in)' },
@@ -207,6 +224,11 @@ function openTaskModal() {
   taskForm.status = 'published'
   taskForm.due_at = ''
   taskForm.available_at = ''
+  taskForm.skill_id = ''
+  taskForm.circle = ''
+  taskForm.reviewer_id = ''
+  taskForm.claimable = false
+  taskForm.claim_cap = ''
   assignOnCreate.type = 'none'
   assignOnCreate.id = ''
   taskFormError.value = ''
@@ -227,6 +249,11 @@ function openEditTaskModal(t: Task) {
   taskForm.status = t.status === 'archived' ? 'draft' : t.status
   taskForm.due_at = t.due_at ? t.due_at.slice(0, 10) : ''
   taskForm.available_at = t.available_at ? t.available_at.slice(0, 10) : ''
+  taskForm.skill_id = t.skill_id ? String(t.skill_id) : ''
+  taskForm.circle = t.circle || ''
+  taskForm.reviewer_id = t.reviewer_id || ''
+  taskForm.claimable = t.claimable
+  taskForm.claim_cap = t.claim_cap ? String(t.claim_cap) : ''
   taskFormError.value = ''
   taskFormErrors.title = undefined
   taskFormErrors.description = undefined
@@ -258,7 +285,13 @@ async function saveTask() {
       show_submissions: true,
       status: taskForm.status,
       due_at: taskForm.due_at ? new Date(taskForm.due_at).toISOString() : undefined,
-      available_at: taskForm.available_at ? new Date(taskForm.available_at).toISOString() : undefined
+      available_at: taskForm.available_at ? new Date(taskForm.available_at).toISOString() : undefined,
+      skill_id: taskForm.skill_id ? Number(taskForm.skill_id) : undefined,
+      circle: taskForm.circle || undefined,
+      reviewer_id: taskForm.reviewer_id || undefined,
+      claimable: taskForm.claimable,
+      claim_cap: taskForm.claimable && taskForm.claim_cap ? Number(taskForm.claim_cap) : undefined,
+      audience: 'open'
     }
     if (editingTaskId.value) {
       const res = await adminEngineApi.updateTask(editingTaskId.value, payload)
@@ -567,6 +600,26 @@ async function unassign(a: TaskAssignment) {
           <input type="checkbox" v-model="taskForm.is_required" class="rounded border-gray-300 text-senpai-600 focus:ring-senpai-500" />
           Required to complete induction
         </label>
+
+        <!-- Role/claiming layer: the skill this work exercises + the open board -->
+        <div class="pt-4 border-t border-gray-100 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseSelect v-model="taskForm.skill_id" :options="skillOptions" label="Role (skill this task exercises)" />
+            <BaseSelect v-model="taskForm.circle" :options="circleOptions" label="Circle (optional)" />
+          </div>
+          <BaseSelect
+            v-model="taskForm.reviewer_id"
+            :options="[{ value: '', label: 'You (default)' }, ...members.map((m) => ({ value: m.member_id, label: memberName(m) }))]"
+            label="Reviewer — who reviews the submission"
+          />
+          <div class="flex items-center gap-4">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" v-model="taskForm.claimable" class="rounded border-gray-300 text-senpai-600 focus:ring-senpai-500" />
+              Claimable — anyone can pull this from the open board
+            </label>
+            <BaseInput v-if="taskForm.claimable" v-model="taskForm.claim_cap" type="number" placeholder="No limit" label="Claim slots" class="w-32" />
+          </div>
+        </div>
 
         <div v-if="!editingTaskId" class="pt-4 border-t border-gray-100 space-y-3">
           <BaseSelect

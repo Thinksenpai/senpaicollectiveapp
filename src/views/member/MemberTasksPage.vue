@@ -58,7 +58,12 @@ const statusDot: Record<AssignmentStatus, string> = {
           <p class="text-xs font-mono uppercase tracking-widest text-senpai-600">Work log</p>
           <h1 class="text-2xl font-bold text-gray-900 mt-1">Your tasks</h1>
         </div>
-        <p v-if="!loading && tasks.length" class="text-xs font-mono text-gray-400 shrink-0">{{ openCount }} OPEN · {{ completed.length }} DONE</p>
+        <div class="flex items-center gap-4 shrink-0">
+          <p v-if="!loading && tasks.length" class="text-xs font-mono text-gray-400">{{ openCount }} OPEN · {{ completed.length }} DONE</p>
+          <RouterLink to="/tasks/open" class="text-xs font-semibold text-senpai-600 hover:text-senpai-700">
+            Open board &rarr;
+          </RouterLink>
+        </div>
       </div>
 
       <div v-if="loading" class="flex justify-center py-24"><LoadingSpinner size="lg" /></div>

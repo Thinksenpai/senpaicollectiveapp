@@ -162,6 +162,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/tasks/open',
+      name: 'open-tasks',
+      component: () => import('@/views/member/OpenTasksPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/tasks/:id',
       name: 'my-task-detail',
       component: () => import('@/views/member/MemberTaskDetailPage.vue'),

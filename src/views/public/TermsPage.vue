@@ -117,7 +117,48 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">8. Ending membership</h2>
+          <h2 class="text-xl font-semibold text-gray-900">8. Confidentiality</h2>
+          <p>
+            Being trusted with real information — about the collective, its members, and the
+            clients it works with — is part of what membership means. That trust has real
+            obligations attached to it.
+          </p>
+          <p class="mt-3">
+            <strong>Internal collective information</strong> — unpublished strategy, business
+            plans, unreleased projects, admin or platform systems, and other members' personal
+            information you access through the platform — is shared with you only to
+            participate in the collective. It is confidential and is not to be shared, posted,
+            copied, or disclosed outside the collective, in whole or in part, without prior
+            written approval from Senpai Collective.
+          </p>
+          <p class="mt-3">
+            <strong>Client information</strong> — anything you learn or are given access to
+            while working on a client engagement through the platform, including deliverables,
+            communications, data, and business details — belongs to that confidentiality
+            relationship, not to you individually. It may not be shared, published, retained,
+            or reused outside that engagement without the client's and Senpai Collective's
+            written consent, even after the project ends or your membership ends. This is
+            separate from, and in addition to, the public project credit described in section
+            7 — being named as a contributor does not give you the right to disclose
+            confidential project details, materials, or client information.
+          </p>
+          <p class="mt-3">
+            Breaching this section is treated as a serious violation: it can result in
+            immediate suspension or removal from the collective, and, where it causes harm to
+            Senpai Collective, a client, or another member — including reputational or
+            financial harm — <strong>we may pursue legal action</strong>, including claims for
+            damages and injunctive relief to stop further disclosure. This obligation survives
+            the end of your membership: leaving the collective does not release you from it.
+          </p>
+          <p class="mt-3">
+            None of this restricts you from work you own independently under section 7, from
+            disclosures required by law, or from discussing your own experience as a member in
+            ordinary, non-confidential terms.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold text-gray-900">9. Ending membership</h2>
           <p>
             You may leave at any time by contacting us. <strong>Membership is a privilege, not
             a right</strong> — Senpai Collective may suspend, deactivate, or revoke a
@@ -130,7 +171,7 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">9. Changes to these terms</h2>
+          <h2 class="text-xl font-semibold text-gray-900">10. Changes to these terms</h2>
           <p>
             We may update these terms as the community evolves. We'll make the current
             version available here, and material changes will be communicated to members.
@@ -138,7 +179,7 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">10. Contact</h2>
+          <h2 class="text-xl font-semibold text-gray-900">11. Contact</h2>
           <p>
             Questions about these terms? Reach us at
             <a href="mailto:senpaicollective@gmail.com" class="text-senpai-600 underline hover:text-senpai-700">senpaicollective@gmail.com</a>.

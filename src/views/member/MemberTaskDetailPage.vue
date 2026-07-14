@@ -30,6 +30,7 @@ const activity = ref<Activity[]>([])
 const draft = reactive({ link: '', body: '' })
 const resubmitting = ref(false)
 const submitting = ref(false)
+const starting = ref(false)
 const newTaskComment = ref('')
 const newAssignmentComment = ref('')
 const postingTaskComment = ref(false)
@@ -110,6 +111,17 @@ async function load() {
   }
 }
 onMounted(load)
+
+async function start() {
+  if (!assignment.value) return
+  starting.value = true
+  try {
+    const res = await engineApi.startTask(taskId.value)
+    if (res.data) assignment.value = { ...assignment.value, status: res.data.status }
+  } finally {
+    starting.value = false
+  }
+}
 
 async function submit() {
   if (!assignment.value) return
@@ -229,11 +241,20 @@ function dueTag(d?: string | null) {
 
           <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 pt-4 border-t border-gray-100">
             <span v-if="assignment" class="text-[11px] font-mono px-2 py-1 rounded bg-gray-100 text-gray-500">{{ statusLabel[assignment.status] }}</span>
+            <span v-if="task.skill_name" class="text-[11px] font-mono px-2 py-1 rounded bg-senpai-50 text-senpai-700 uppercase">{{ task.skill_name }}</span>
+            <span v-if="task.circle" class="text-[11px] font-mono px-2 py-1 rounded bg-gray-100 text-gray-500 uppercase">{{ task.circle }}</span>
             <span v-if="task.due_at" class="text-[11px] font-mono" :class="isOverdue ? 'text-red-600 font-medium' : 'text-gray-400'">
               {{ isOverdue ? 'OVERDUE · ' : 'DUE ' }}{{ dueTag(task.due_at) }}
             </span>
             <span v-if="task.is_required" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-50 text-red-600">REQUIRED</span>
           </div>
+
+          <!-- Attribution — never vague: who created this, who reviews it -->
+          <p v-if="task.creator_name || task.reviewer_name" class="text-[11px] font-mono text-gray-400 mt-2 uppercase tracking-wide">
+            <template v-if="task.creator_name">CREATED BY {{ task.creator_name }}</template>
+            <template v-if="task.creator_name && task.reviewer_name"> · </template>
+            <template v-if="task.reviewer_name">REVIEWED BY {{ task.reviewer_name }}</template>
+          </p>
 
           <p class="text-sm text-gray-700 mt-4 whitespace-pre-wrap leading-relaxed">{{ task.description }}</p>
         </section>
@@ -242,7 +263,16 @@ function dueTag(d?: string | null) {
         <section v-if="assignment" class="bg-white rounded-2xl border border-gray-200 p-5">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400">// Your submission</h2>
-            <span v-if="assignment.status === 'submitted'" class="text-[11px] font-mono text-blue-600 font-medium">IN_REVIEW</span>
+            <button
+              v-if="assignment.status === 'assigned'"
+              class="text-[11px] font-mono font-medium px-2.5 py-1 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 transition disabled:opacity-50"
+              :disabled="starting"
+              @click="start"
+            >
+              {{ starting ? 'STARTING…' : '▶ START WORKING' }}
+            </button>
+            <span v-else-if="assignment.status === 'in_progress'" class="text-[11px] font-mono text-amber-600 font-medium">IN_PROGRESS</span>
+            <span v-else-if="assignment.status === 'submitted'" class="text-[11px] font-mono text-blue-600 font-medium">IN_REVIEW</span>
             <span v-else-if="assignment.status === 'returned'" class="text-[11px] font-mono text-red-600 font-medium">RETURNED</span>
             <span v-else-if="assignment.status === 'completed'" class="text-[11px] font-mono text-senpai-700 font-medium inline-flex items-center gap-1"><CheckCircleIcon class="h-3.5 w-3.5" /> DONE</span>
           </div>

@@ -2,8 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { membersApi, engineApi } from '@/api'
-import type { WorkStatus, SchoolStatus, EnrichmentPayload } from '@/types'
+import { membersApi, engineApi, skillsApi } from '@/api'
+import type { WorkStatus, SchoolStatus, EnrichmentPayload, Skill } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
@@ -28,6 +28,47 @@ const photoInput = ref<HTMLInputElement | null>(null)
 
 const profile = computed(() => authStore.member?.profile)
 const member = computed(() => authStore.member)
+
+// Skills — self-declared after joining too, not just at application. This is
+// the only unlock for claiming open tasks tagged with a role picked up later.
+const allSkills = ref<Skill[]>([])
+const skillBusyId = ref<number | null>(null)
+const addSkillId = ref('')
+const mySkillIds = computed(() => new Set((member.value?.skills ?? []).map((s) => s.id)))
+const addableSkills = computed(() => allSkills.value.filter((s) => !mySkillIds.value.has(s.id)))
+
+skillsApi.getSkills().then((res) => { allSkills.value = res.data ?? [] }).catch(() => {})
+
+async function addSkill() {
+  if (!addSkillId.value) return
+  const id = Number(addSkillId.value)
+  skillBusyId.value = id
+  try {
+    await skillsApi.addMySkill(id)
+    await authStore.fetchCurrentMember()
+    addSkillId.value = ''
+  } finally {
+    skillBusyId.value = null
+  }
+}
+async function removeSkill(id: number) {
+  skillBusyId.value = id
+  try {
+    await skillsApi.removeMySkill(id)
+    await authStore.fetchCurrentMember()
+  } finally {
+    skillBusyId.value = null
+  }
+}
+async function makePrimary(id: number) {
+  skillBusyId.value = id
+  try {
+    await skillsApi.setMyPrimarySkill(id)
+    await authStore.fetchCurrentMember()
+  } finally {
+    skillBusyId.value = null
+  }
+}
 
 const experienceLevelLabels: Record<string, string> = {
   none: 'No professional experience',
@@ -342,22 +383,49 @@ async function onPhotoSelected(e: Event) {
           <BaseInput v-model="form.gender" label="Gender (optional)" placeholder="Self-describe" />
         </section>
 
-        <!-- Skills (read-only, set at application) -->
-        <section v-if="member?.skills && member.skills.length > 0">
+        <!-- Skills — editable; adding one unlocks claiming open tasks tagged with it -->
+        <section>
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Skills</h2>
-          <div class="flex flex-wrap gap-2">
+          <div v-if="member?.skills && member.skills.length > 0" class="flex flex-wrap gap-2 mb-3">
             <span
               v-for="skill in member.skills"
               :key="skill.id"
               :class="[
-                'inline-flex items-center px-3 py-1 rounded-full text-sm font-medium',
+                'inline-flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full text-sm font-medium',
                 skill.id === profile?.primary_skill_id ? 'bg-senpai-100 text-senpai-700' : 'bg-gray-100 text-gray-700'
               ]"
             >
-              {{ skill.name }}
+              <button
+                v-if="skill.id !== profile?.primary_skill_id"
+                type="button"
+                class="hover:underline"
+                :disabled="skillBusyId === skill.id"
+                @click="makePrimary(skill.id)"
+              >{{ skill.name }}</button>
+              <span v-else>{{ skill.name }} ★</span>
+              <button
+                type="button"
+                class="text-current opacity-50 hover:opacity-100"
+                :disabled="skillBusyId === skill.id"
+                title="Remove"
+                @click="removeSkill(skill.id)"
+              >
+                <XMarkIcon class="h-3.5 w-3.5" />
+              </button>
             </span>
           </div>
-          <p class="text-sm text-gray-400 mt-2">Skills are set at application and aren't editable here.</p>
+          <p v-else class="text-sm text-gray-400 mb-3">No skills yet — add one below.</p>
+
+          <div class="flex items-center gap-2">
+            <select v-model="addSkillId" class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white">
+              <option value="">Add a skill…</option>
+              <option v-for="s in addableSkills" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
+            </select>
+            <BaseButton variant="outline" :disabled="!addSkillId" :loading="skillBusyId === Number(addSkillId)" @click="addSkill">
+              <PlusIcon class="h-4 w-4" />
+            </BaseButton>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">Click a skill to make it primary. Skills tag your work and unlock matching open tasks.</p>
         </section>
 
         <!-- Building -->

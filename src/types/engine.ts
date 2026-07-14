@@ -57,6 +57,7 @@ export type TaskKind = 'reflection' | 'portfolio' | 'build' | 'publish' | 'resea
 export type TaskTrack = 'induction' | 'personal_dev' | 'building'
 export type HandinType = 'none' | 'link' | 'text' | 'file' | 'external_form' | 'structured_form'
 export type AssignmentStatus = 'assigned' | 'in_progress' | 'submitted' | 'completed' | 'returned'
+export type TaskAudience = 'open' | 'verified' | 'restricted'
 
 export interface Task {
   id: string
@@ -76,6 +77,16 @@ export interface Task {
   available_at?: string | null
   due_at?: string | null
   status: 'draft' | 'published' | 'archived'
+  // Role/claiming layer
+  skill_id?: number | null
+  reviewer_id?: string | null
+  audience: TaskAudience
+  claimable: boolean
+  claim_cap?: number | null
+  circle?: string | null
+  skill_name?: string | null
+  creator_name?: string | null
+  reviewer_name?: string | null
   assignment_count?: number
   completed_count?: number
   assigned_to?: string[]
@@ -85,7 +96,7 @@ export interface TaskAssignment {
   id: string
   task_id: string
   member_id: string
-  assigned_via: 'individual' | 'pod' | 'cohort' | 'global'
+  assigned_via: 'individual' | 'pod' | 'cohort' | 'global' | 'claim'
   status: AssignmentStatus
   link_url?: string | null
   body?: string | null
@@ -242,6 +253,13 @@ export interface CreateTaskPayload {
   available_at?: string
   due_at?: string
   status: 'draft' | 'published' | 'archived'
+  // Role/claiming layer
+  skill_id?: number
+  reviewer_id?: string
+  audience?: TaskAudience
+  claimable?: boolean
+  claim_cap?: number
+  circle?: string
 }
 
 // ============ Programs & Projects (blueprint v3) ============

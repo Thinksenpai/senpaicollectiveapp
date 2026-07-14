@@ -40,7 +40,7 @@ const lastUpdated = 'July 2026'
             a suggestion. If you joined to browse a directory, this isn't that. Take on tasks,
             answer a question in a task thread, propose a project, review a teammate's work.
             Extended inactivity with no participation is grounds for removal (see the Terms,
-            section 8) — not because we're strict for its own sake, but because an inactive
+            section 9) — not because we're strict for its own sake, but because an inactive
             member is taking a seat someone actively building could have.
           </p>
         </section>
@@ -65,6 +65,17 @@ const lastUpdated = 'July 2026'
             private submissions, project details, or conversations outside the platform
             without their permission. If you're unsure whether something's fair game, ask
             first.
+          </p>
+          <p class="mt-3">
+            This applies just as much to the collective's own internal material — unreleased
+            strategy, unpublished projects, admin/platform details — and, where you're working
+            on one, to client engagements: their deliverables, communications, and business
+            details aren't yours to share, publish, or reuse outside that engagement, even
+            after it or your membership ends. This isn't just a community norm — it's a binding
+            part of the
+            <RouterLink to="/terms" class="text-senpai-600 underline hover:text-senpai-700">Terms of Membership</RouterLink>
+            (section 8), and a serious breach — especially one that harms a client or the
+            collective — can mean legal action, not just removal.
           </p>
         </section>
 
@@ -113,7 +124,7 @@ const lastUpdated = 'July 2026'
             serious violation (harassment, dishonesty, leaking confidential work), can lead to
             suspension or removal, exactly as laid out in the
             <RouterLink to="/terms" class="text-senpai-600 underline hover:text-senpai-700">Terms of Membership</RouterLink>,
-            section 8.
+            section 9.
           </p>
         </section>
       </div>
