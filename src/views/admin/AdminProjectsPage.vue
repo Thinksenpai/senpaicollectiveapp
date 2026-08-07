@@ -36,6 +36,12 @@ function flash(msg: string) {
   setTimeout(() => (toast.value = ''), 2500)
 }
 
+function taskCountLabel(projectId: string): string {
+  const tasks = projectTasks.value[projectId]
+  if (!tasks) return 'Tasks'
+  return `${tasks.length} task${tasks.length === 1 ? '' : 's'}`
+}
+
 // Pending approval leads — that's the admin's actual job on this page.
 const activeTab = ref<'proposed' | 'active' | 'shipped' | 'parked'>('proposed')
 const tabs = [
@@ -162,7 +168,7 @@ async function park(p: Project) {
                   @click="toggleTasks(p)"
                 >
                   <ChevronDownIcon class="h-3.5 w-3.5 transition-transform" :class="expandedTasks[p.id] ? 'rotate-180' : ''" />
-                  {{ projectTasks[p.id] ? `${projectTasks[p.id].length} task${projectTasks[p.id].length === 1 ? '' : 's'}` : 'Tasks' }}
+                  {{ taskCountLabel(p.id) }}
                 </button>
                 <div v-if="expandedTasks[p.id]" class="mt-2 pl-1">
                   <p v-if="loadingTasks[p.id]" class="text-xs text-gray-400">Loading…</p>

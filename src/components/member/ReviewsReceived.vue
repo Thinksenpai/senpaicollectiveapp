@@ -47,7 +47,10 @@ const softAverages = computed(() => {
   }
   return (['collaboration', 'communication', 'reliability'] as SoftDimension[])
     .filter((d) => buckets[d]?.length)
-    .map((d) => ({ dimension: d, avg: (buckets[d].reduce((a, b) => a + b, 0) / buckets[d].length).toFixed(1) }))
+    .map((d) => {
+      const scores = buckets[d]!
+      return { dimension: d, avg: (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) }
+    })
 })
 
 async function load() {
