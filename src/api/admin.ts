@@ -10,7 +10,8 @@ import type {
   ApplicationFilters,
   AdminMemberFilters,
   Scout,
-  ScoutRequest
+  ScoutRequest,
+  Activity
 } from '@/types'
 
 export const adminApi = {
@@ -46,6 +47,10 @@ export const adminApi = {
 
   async getMember(id: string): Promise<ApiResponse<{ member: Member; admin_notes: AdminNote[] }>> {
     return apiClient.get(`/admin/members/${id}`)
+  },
+
+  async getMemberActivity(id: string): Promise<ApiResponse<Activity[]>> {
+    return apiClient.get(`/admin/members/${id}/activity`)
   },
 
   async deactivateMember(id: string, reason: string): Promise<ApiResponse> {

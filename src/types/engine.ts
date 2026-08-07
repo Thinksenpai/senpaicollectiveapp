@@ -84,6 +84,7 @@ export interface Task {
   claimable: boolean
   claim_cap?: number | null
   circle?: string | null
+  job_role_id?: number | null
   skill_name?: string | null
   creator_name?: string | null
   reviewer_name?: string | null
@@ -268,11 +269,18 @@ export interface CreateTaskPayload {
 // Induction is the first: finishing its required tasks matriculates you.
 export interface Program {
   id: string
-  cohort_id: string
+  cohort_id?: string | null // null = global/cross-cohort (a circle track)
+  circle?: string | null // "content" / "product" / "growth", set for circle tracks
   name: string
   kind: 'induction' | 'series'
   description?: string | null
   created_at: string
+}
+
+export interface CreateCircleTrackPayload {
+  name: string
+  circle: string
+  description?: string
 }
 
 export type ProjectStatus = 'proposed' | 'active' | 'shipped' | 'parked'
@@ -299,6 +307,8 @@ export interface ProjectMember {
   id: string
   project_id: string
   member_id: string
+  skill_id?: number | null
+  job_role_id?: number | null // the seat's role (blueprint v4) — the tag reviews are scored against
   joined_at: string
   member?: Member
 }
@@ -322,4 +332,147 @@ export interface CreateProjectTaskPayload {
 export interface AssignTaskPayload {
   target_type: 'individual' | 'pod' | 'cohort' | 'global'
   target_id?: string
+}
+
+// ============ Review system (blueprint v4) ============
+// The unit of reputation is the skill, not the role. Mirrors pkg/models/review.go.
+
+export type MemberSkillStatus = 'claimed' | 'nominated' | 'verified' | 'dormant'
+
+export interface MemberSkill {
+  member_id: string
+  skill_id: number
+  is_primary: boolean
+  status: MemberSkillStatus
+  verified_at?: string | null
+  verified_by?: string | null
+  skill_name?: string | null
+}
+
+// A job role is an admin-curated title — a named recipe of skills, earned
+// through reviewed work, never self-assigned.
+export interface JobRole {
+  id: number
+  name: string
+  description?: string | null
+  is_active: boolean
+  created_by: string
+  created_at: string
+  updated_at: string
+  skills?: JobRoleSkill[]
+}
+
+export interface JobRoleSkill {
+  job_role_id: number
+  skill_id: number
+  required: boolean
+  skill_name?: string | null
+}
+
+export interface CreateJobRolePayload {
+  name: string
+  description?: string
+  skills: JobRoleSkillInput[]
+}
+
+export interface JobRoleSkillInput {
+  skill_id: number
+  required: boolean
+}
+
+export type ReviewSourceType = 'task' | 'project'
+export type SoftDimension = 'collaboration' | 'communication' | 'reliability'
+export const ALL_SOFT_DIMENSIONS: SoftDimension[] = ['collaboration', 'communication', 'reliability']
+
+// One person's judgment of another's work on one work unit — the envelope;
+// the actual scores live in skill_scores and soft_scores.
+export interface Review {
+  id: string
+  source_type: ReviewSourceType
+  source_id: string
+  ratee_id: string
+  rater_id: string
+  job_role_id?: number | null
+  weight: number
+  comment?: string | null
+  created_at: string
+  skill_scores?: ReviewSkillScore[]
+  soft_scores?: ReviewSoftScore[]
+  rater_name?: string | null
+  ratee_name?: string | null
+  job_role_name?: string | null
+  work_title?: string | null // the project or task title this review was scored against
+  work_url?: string | null // frontend path to the actual work — /projects/{id} or /tasks/{id}
+}
+
+export interface ReviewSkillScore {
+  review_id: string
+  skill_id: number
+  score: number
+  in_recipe: boolean
+  skill_name?: string | null
+}
+
+export interface ReviewSoftScore {
+  review_id: string
+  dimension: SoftDimension
+  score: number
+}
+
+export interface SubmitReviewPayload {
+  source_type: ReviewSourceType
+  source_id: string
+  ratee_id: string
+  job_role_id?: number
+  comment?: string
+  skill_scores: SkillScoreInput[]
+  soft_scores: SoftScoreInput[]
+}
+
+export interface SkillScoreInput {
+  skill_id: number
+  score: number
+  in_recipe: boolean
+}
+
+export interface SoftScoreInput {
+  dimension: SoftDimension
+  score: number
+}
+
+export interface SkillVerificationSummary {
+  member_id: string
+  skill_id: number
+  contribution_count: number
+  weighted_avg_score: number
+  distinct_raters: number
+  has_verified_rater: boolean
+  meets_threshold: boolean
+}
+
+export type ProjectInviteStatus = 'pending' | 'accepted' | 'declined'
+
+// A lead/creator inviting a specific member to a project seat. Kept separate
+// from ProjectMember — accepting creates the membership row, a decline
+// leaves no debris.
+export interface ProjectInvite {
+  id: string
+  project_id: string
+  member_id: string
+  invited_by: string
+  job_role_id?: number | null
+  note?: string | null
+  status: ProjectInviteStatus
+  created_at: string
+  responded_at?: string | null
+  project_title?: string | null
+  member_name?: string | null
+  inviter_name?: string | null
+  job_role_name?: string | null
+}
+
+export interface CreateProjectInvitePayload {
+  member_id: string
+  job_role_id?: number
+  note?: string
 }

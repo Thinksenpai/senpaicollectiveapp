@@ -43,7 +43,8 @@ const registrationComplete = ref(false)
 
 const form = ref({
   // Step 1: Basic Info
-  full_name: '',
+  first_name: '',
+  last_name: '',
   email: '',
   password: '',
   password_confirm: '',
@@ -141,8 +142,11 @@ function validateStep(step: number): boolean {
   }
 
   if (step === 1) {
-    if (!form.value.full_name || form.value.full_name.length < 2) {
-      errors.value.full_name = 'Full name must be at least 2 characters'
+    if (!form.value.first_name || form.value.first_name.length < 1) {
+      errors.value.first_name = 'First name is required'
+    }
+    if (!form.value.last_name || form.value.last_name.length < 1) {
+      errors.value.last_name = 'Last name is required'
     }
     if (!form.value.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
       errors.value.email = 'Please enter a valid email'
@@ -249,7 +253,9 @@ async function handleSubmit() {
     }))
 
   const result = await authStore.register({
-    full_name: form.value.full_name,
+    full_name: `${form.value.first_name.trim()} ${form.value.last_name.trim()}`.trim(),
+    first_name: form.value.first_name.trim(),
+    last_name: form.value.last_name.trim(),
     email: form.value.email,
     password: form.value.password,
     password_confirm: form.value.password_confirm,
@@ -476,15 +482,26 @@ function removeLink(index: number) {
 
           <!-- Step 1: Basic Info -->
           <div v-if="currentStep === 1" class="space-y-6">
-            <BaseInput
-              v-model="form.full_name"
-              label="Full Name"
-              placeholder="John Doe"
-              :error="errors.full_name"
-              name="name"
-              autocomplete="name"
-              required
-            />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <BaseInput
+                v-model="form.first_name"
+                label="First Name"
+                placeholder="John"
+                :error="errors.first_name"
+                name="given-name"
+                autocomplete="given-name"
+                required
+              />
+              <BaseInput
+                v-model="form.last_name"
+                label="Last Name"
+                placeholder="Doe"
+                :error="errors.last_name"
+                name="family-name"
+                autocomplete="family-name"
+                required
+              />
+            </div>
 
             <BaseInput
               v-model="form.email"

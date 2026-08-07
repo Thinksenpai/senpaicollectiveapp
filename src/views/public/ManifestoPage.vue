@@ -243,8 +243,9 @@ import { vReveal } from '@/composables/useScrollReveal'
               <span class="ml-2 text-sm font-medium text-gray-400">SENPAI</span>
             </a>
           </div>
-          <p class="text-sm">
-            &copy; {{ new Date().getFullYear() }} Senpai Collective. All rights reserved.
+          <p class="text-sm text-center md:text-right">
+            Operated by SENPAI FUTURES LTD (RC 9746107), Abuja, Nigeria.<br class="hidden md:inline" />
+            &copy; {{ new Date().getFullYear() }}
           </p>
         </div>
       </div>

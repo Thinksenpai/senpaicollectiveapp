@@ -9,6 +9,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import ProjectTaskRoster from '@/components/member/ProjectTaskRoster.vue'
 import ActivityFeed from '@/components/common/ActivityFeed.vue'
+import ReviewFormModal from '@/components/reviews/ReviewFormModal.vue'
 import {
   ArrowLeftIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, UserCircleIcon, RocketLaunchIcon
 } from '@heroicons/vue/24/outline'
@@ -137,6 +138,15 @@ async function submit() {
   } finally {
     submitting.value = false
   }
+}
+
+// ---- rate a completed submission (task's named reviewer only) ----
+const canRate = computed(() => !!task.value?.reviewer_id && task.value.reviewer_id === authStore.member?.id)
+const rateModal = ref(false)
+const rateTarget = ref<TaskAssignment | null>(null)
+function openRate(a: TaskAssignment) {
+  rateTarget.value = a
+  rateModal.value = true
 }
 
 async function peerReview(a: TaskAssignment, status: 'completed' | 'returned') {
@@ -319,7 +329,9 @@ function dueTag(d?: string | null) {
               :is-on-team="isOnProjectTeam"
               :current-member-id="authStore.member?.id"
               :reviewing-id="reviewingId"
+              :can-rate="canRate"
               @review="peerReview"
+              @rate="openRate"
             />
           </div>
         </section>
@@ -361,5 +373,17 @@ function dueTag(d?: string | null) {
         </section>
       </div>
     </div>
+
+    <ReviewFormModal
+      v-if="rateTarget"
+      :show="rateModal"
+      source-type="task"
+      :source-id="rateTarget.id"
+      :ratee-id="rateTarget.member_id"
+      :ratee-name="rateTarget.member?.profile?.full_name"
+      :job-role-id="task?.job_role_id"
+      @close="rateModal = false"
+      @submitted="load"
+    />
   </AppLayout>
 </template>

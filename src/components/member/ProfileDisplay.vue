@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import type { Role, Skill } from '@/types'
+import SkillStatusChips from './SkillStatusChips.vue'
+import ReviewsReceived from './ReviewsReceived.vue'
 import {
   UserCircleIcon,
   PencilIcon,
@@ -41,6 +43,7 @@ interface Props {
   uniqueView?: string
   links?: { label: string; url: string }[]
   logisticsLine?: string
+  memberId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -173,6 +176,10 @@ const hasAnyContent = computed(() =>
         </span>
       </div>
     </div>
+
+    <!-- Skill verification -->
+    <SkillStatusChips v-if="memberId" :member-id="memberId" />
+    <ReviewsReceived v-if="memberId" :member-id="memberId" />
 
     <!-- Building, with work status as a quiet contextual line underneath -->
     <div v-if="recentWork || workLine" class="py-6 border-b border-gray-200">

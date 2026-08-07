@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TaskAssignment } from '@/types'
-import { CheckCircleIcon, ArrowUturnLeftIcon } from '@heroicons/vue/24/outline'
+import { CheckCircleIcon, ArrowUturnLeftIcon, StarIcon } from '@heroicons/vue/24/outline'
 
 // Shared "who's on this task, what did they hand in, review it" list — used
 // on the project page (one row per task, showing everyone's submission) and
@@ -12,9 +12,13 @@ interface Props {
   isOnTeam: boolean
   currentMemberId?: string
   reviewingId?: string | null
+  canRate?: boolean // true when the current member is this task's named reviewer
 }
-const props = withDefaults(defineProps<Props>(), { reviewingId: null })
-const emit = defineEmits<{ review: [assignment: TaskAssignment, status: 'completed' | 'returned'] }>()
+const props = withDefaults(defineProps<Props>(), { reviewingId: null, canRate: false })
+const emit = defineEmits<{
+  review: [assignment: TaskAssignment, status: 'completed' | 'returned']
+  rate: [assignment: TaskAssignment]
+}>()
 
 function initials(name: string) {
   const parts = (name || '').trim().split(/\s+/)
@@ -54,6 +58,11 @@ const assignmentCode: Record<string, { label: string; cls: string }> = {
               @click="emit('review', a, 'returned')"
             ><ArrowUturnLeftIcon class="h-3.5 w-3.5" /> Return</button>
           </template>
+          <button
+            v-if="a.status === 'completed' && props.canRate && a.member_id !== props.currentMemberId"
+            class="inline-flex items-center gap-1 text-xs font-medium text-senpai-600 hover:text-senpai-700"
+            @click="emit('rate', a)"
+          ><StarIcon class="h-3.5 w-3.5" /> Rate</button>
           <span class="text-[10px] font-mono font-medium tracking-wide" :class="assignmentCode[a.status]?.cls">{{ assignmentCode[a.status]?.label }}</span>
         </div>
       </div>

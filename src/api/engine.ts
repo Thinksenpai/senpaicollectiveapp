@@ -27,7 +27,8 @@ import type {
   Project,
   ProjectStatus,
   ProposeProjectPayload,
-  CreateProjectTaskPayload
+  CreateProjectTaskPayload,
+  CreateCircleTrackPayload
 } from '@/types'
 
 export const engineApi = {
@@ -53,6 +54,14 @@ export const engineApi = {
   // The open board: published, claimable tasks anyone can pull.
   async getOpenTasks(): Promise<ApiResponse<Task[]>> {
     return apiClient.get('/tasks/open')
+  },
+
+  // Circle tracks — global (cross-cohort) programs, browsable by any member.
+  async listCircleTracks(): Promise<ApiResponse<Program[]>> {
+    return apiClient.get('/circle-tracks')
+  },
+  async getProgram(programId: string): Promise<ApiResponse<{ program: Program; tasks: Task[] }>> {
+    return apiClient.get(`/programs/${programId}`)
   },
 
   async claimTask(taskId: string): Promise<ApiResponse<TaskAssignment>> {
@@ -220,6 +229,9 @@ export const adminEngineApi = {
   updateProgram(programId: string, payload: { name: string; description?: string }): Promise<ApiResponse<Program>> {
     return apiClient.put(`/admin/programs/${programId}`, payload)
   },
+  createCircleTrack(payload: CreateCircleTrackPayload): Promise<ApiResponse<Program>> {
+    return apiClient.post('/admin/circle-tracks', payload)
+  },
   memberRoster(): Promise<ApiResponse<MemberEngineStatus[]>> {
     return apiClient.get('/admin/roster')
   },
@@ -233,9 +245,9 @@ export const adminEngineApi = {
     return apiClient.post(`/admin/memberships/${membershipId}/state`, { state })
   },
 
-  // Tasks
-  listTasks(cohortId: string): Promise<ApiResponse<Task[]>> {
-    return apiClient.get(`/admin/tasks?cohort_id=${cohortId}`)
+  // Tasks — omit cohortId (or pass '') for the global/circle-track task list.
+  listTasks(cohortId?: string): Promise<ApiResponse<Task[]>> {
+    return apiClient.get(cohortId ? `/admin/tasks?cohort_id=${cohortId}` : '/admin/tasks')
   },
   createTask(payload: CreateTaskPayload): Promise<ApiResponse<Task>> {
     return apiClient.post('/admin/tasks', payload)

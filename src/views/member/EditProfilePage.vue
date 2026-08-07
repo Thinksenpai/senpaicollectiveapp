@@ -70,15 +70,18 @@ async function makePrimary(id: number) {
   }
 }
 
-const experienceLevelLabels: Record<string, string> = {
-  none: 'No professional experience',
-  junior: 'Junior (0-2 years)',
-  mid: 'Mid-level (2-5 years)',
-  senior: 'Senior (5+ years)'
-}
+const experienceLevelOptions = [
+  { value: 'none', label: 'No professional experience' },
+  { value: 'junior', label: 'Junior (0-2 years)' },
+  { value: 'mid', label: 'Mid-level (2-5 years)' },
+  { value: 'senior', label: 'Senior (5+ years)' }
+]
 
 const form = ref({
   full_name: '',
+  first_name: '',
+  middle_name: '',
+  last_name: '',
   phone: '',
   city: '',
   country: '',
@@ -99,7 +102,9 @@ const form = ref({
   recent_work: '',
   unique_view: '',
   portfolio_url: '',
-  additional_links: [{ label: '', url: '' }] as { label: string; url: string }[]
+  additional_links: [{ label: '', url: '' }] as { label: string; url: string }[],
+  // Self-described, not verified — same status as self-declared skills.
+  experience_level: '' as string
 })
 
 const timezoneOptions = [
@@ -120,7 +125,8 @@ const schoolStatusOptions = [
   { value: 'undergrad', label: 'Undergrad' },
   { value: 'postgrad', label: 'Postgrad' },
   { value: 'bootcamp', label: 'Bootcamp / self-taught' },
-  { value: 'graduated', label: 'Graduated' }
+  { value: 'graduated', label: 'Graduated' },
+  { value: 'dropout', label: 'Dropped out' }
 ]
 const mbtiOptions = [
   'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
@@ -133,6 +139,19 @@ onMounted(async () => {
   if (profile.value) {
     const p = profile.value
     form.value.full_name = p.full_name || ''
+    // Fallback for any profile that somehow still has parts unset (should be
+    // rare — the backend backfills these — but a blank name field reads as
+    // data loss, so split full_name client-side rather than show empty boxes.
+    if (p.first_name || p.last_name) {
+      form.value.first_name = p.first_name || ''
+      form.value.middle_name = p.middle_name || ''
+      form.value.last_name = p.last_name || ''
+    } else if (p.full_name) {
+      const parts = p.full_name.trim().split(/\s+/)
+      form.value.first_name = parts[0] || ''
+      form.value.last_name = parts.length > 1 ? (parts[parts.length - 1] ?? '') : ''
+      form.value.middle_name = parts.length > 2 ? parts.slice(1, -1).join(' ') : ''
+    }
     form.value.phone = p.phone || ''
     form.value.city = p.city || ''
     form.value.country = p.country || ''
@@ -141,6 +160,7 @@ onMounted(async () => {
     form.value.recent_work = p.recent_work || ''
     form.value.unique_view = p.unique_view || ''
     form.value.portfolio_url = p.portfolio_url || ''
+    form.value.experience_level = p.experience_level || ''
     form.value.additional_links = p.additional_links && p.additional_links.length > 0
       ? p.additional_links.map((link) => ({
           label: typeof link === 'string' ? '' : (link.label || ''),
@@ -173,8 +193,11 @@ onMounted(async () => {
 
 function validate(): boolean {
   errors.value = {}
-  if (!form.value.full_name || form.value.full_name.length < 2) {
-    errors.value.full_name = 'Full name must be at least 2 characters'
+  if (!form.value.first_name || form.value.first_name.length < 1) {
+    errors.value.first_name = 'First name is required'
+  }
+  if (!form.value.last_name || form.value.last_name.length < 1) {
+    errors.value.last_name = 'Last name is required'
   }
   if (!form.value.city || form.value.city.length < 2) {
     errors.value.city = 'City is required'
@@ -220,7 +243,9 @@ async function save() {
       .map((l) => ({ label: l.label.trim() || undefined, url: ensureHttps(l.url) }))
 
     await membersApi.updateMe({
-      full_name: form.value.full_name,
+      first_name: form.value.first_name.trim(),
+      middle_name: form.value.middle_name.trim() || undefined,
+      last_name: form.value.last_name.trim(),
       phone: form.value.phone || undefined,
       city: form.value.city,
       country: form.value.country,
@@ -229,7 +254,8 @@ async function save() {
       unique_view: form.value.unique_view || undefined,
       portfolio_url: form.value.portfolio_url ? ensureHttps(form.value.portfolio_url) : undefined,
       additional_links: additionalLinks.length > 0 ? additionalLinks : undefined,
-      photo_url: form.value.photo_url || undefined
+      photo_url: form.value.photo_url || undefined,
+      experience_level: form.value.experience_level || undefined
     })
 
     const enrichmentPayload: EnrichmentPayload = {
@@ -302,9 +328,10 @@ async function onPhotoSelected(e: Event) {
         {{ error }}
       </BaseAlert>
 
-      <form class="space-y-10" @submit.prevent="save">
-        <!-- Identity -->
+      <form class="space-y-12" @submit.prevent="save">
+        <!-- 1. Photo & basics -->
         <section class="space-y-5">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Photo & basics</h2>
           <div class="flex items-center gap-4">
             <div v-if="form.photo_url" class="h-20 w-20 rounded-full overflow-hidden bg-gray-100 shrink-0">
               <img :src="form.photo_url" :alt="form.full_name" class="h-full w-full object-cover" />
@@ -327,47 +354,46 @@ async function onPhotoSelected(e: Event) {
             </div>
           </div>
 
-          <BaseInput v-model="form.full_name" label="Full name" :error="errors.full_name" required />
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <BaseInput v-model="form.first_name" label="First name" :error="errors.first_name" required />
+            <BaseInput v-model="form.middle_name" label="Middle name (optional)" />
+            <BaseInput v-model="form.last_name" label="Last name" :error="errors.last_name" required />
+          </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <BaseInput v-model="form.city" label="City" :error="errors.city" required />
             <BaseInput v-model="form.country" label="Country" :error="errors.country" required />
           </div>
           <BaseInput v-model="form.phone" label="Phone / WhatsApp" placeholder="+234123456789" />
-
-          <p class="text-sm text-gray-500">
-            Experience level: <span class="text-gray-700">{{ profile?.experience_level ? experienceLevelLabels[profile.experience_level] : 'Not set' }}</span>
-            — set when you applied, not editable here.
-          </p>
         </section>
 
-        <!-- Goal -->
-        <section>
-          <BaseTextarea
-            v-model="form.goal"
-            label="What does success look like for you in the next 1–3 years?"
-            placeholder="Better clients, remote work, starting a company… whatever sovereignty means to you."
-            :rows="3"
-          />
-        </section>
-
-        <!-- About -->
+        <!-- 2. About -->
         <section class="space-y-5">
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">About</h2>
           <BaseTextarea v-model="form.bio" label="Bio" placeholder="Tell us about yourself, your background, and what you're passionate about." :maxlength="500" :rows="4" :error="errors.bio" required />
+          <BaseTextarea v-model="form.unique_view" label="Unique view" placeholder="Share your perspective, philosophy, or approach to creativity and work. What drives you?" :maxlength="1000" :rows="4" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseSelect v-model="form.mbti" :options="mbtiOptions" label="Personality type (MBTI)" placeholder="Select if you know it" />
+            <BaseInput v-model="form.date_of_birth" type="date" label="Date of birth" name="bday" autocomplete="bday" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <BaseInput v-model="form.languages" label="Languages" placeholder="English, Igbo, French" />
+            <BaseInput v-model="form.gender" label="Gender (optional)" placeholder="Self-describe" />
+          </div>
+        </section>
+
+        <!-- 3. Education -->
+        <section class="space-y-5">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Education</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <BaseSelect v-model="form.school_status" :options="schoolStatusOptions" label="School status" placeholder="Select" />
             <BaseInput v-if="showSchoolName" v-model="form.school_name" label="Which school?" placeholder="University of Lagos" />
           </div>
         </section>
 
-        <!-- You -->
+        <!-- 5. Work -->
         <section class="space-y-5">
-          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">You</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <BaseSelect v-model="form.mbti" :options="mbtiOptions" label="Personality type (MBTI)" placeholder="Select if you know it" />
-            <BaseInput v-model="form.date_of_birth" type="date" label="Date of birth" name="bday" autocomplete="bday" />
-          </div>
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Work</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <BaseInput v-model="form.job_title" label="Current role" placeholder="Product Designer" />
             <BaseInput v-model="form.organization" label="Organization" placeholder="Where you work" />
@@ -376,69 +402,73 @@ async function onPhotoSelected(e: Event) {
             <BaseSelect v-model="form.work_status" :options="workStatusOptions" label="Work status" placeholder="Select" />
             <BaseInput v-model="form.weekly_commitment_hours" type="number" label="Hours/week you can commit" placeholder="5" />
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <BaseSelect v-model="form.timezone" :options="timezoneOptions" label="Timezone" placeholder="Select your timezone" />
-            <BaseInput v-model="form.languages" label="Languages" placeholder="English, Igbo, French" />
-          </div>
-          <BaseInput v-model="form.gender" label="Gender (optional)" placeholder="Self-describe" />
-        </section>
-
-        <!-- Skills — editable; adding one unlocks claiming open tasks tagged with it -->
-        <section>
-          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Skills</h2>
-          <div v-if="member?.skills && member.skills.length > 0" class="flex flex-wrap gap-2 mb-3">
-            <span
-              v-for="skill in member.skills"
-              :key="skill.id"
-              :class="[
-                'inline-flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full text-sm font-medium',
-                skill.id === profile?.primary_skill_id ? 'bg-senpai-100 text-senpai-700' : 'bg-gray-100 text-gray-700'
-              ]"
-            >
-              <button
-                v-if="skill.id !== profile?.primary_skill_id"
-                type="button"
-                class="hover:underline"
-                :disabled="skillBusyId === skill.id"
-                @click="makePrimary(skill.id)"
-              >{{ skill.name }}</button>
-              <span v-else>{{ skill.name }} ★</span>
-              <button
-                type="button"
-                class="text-current opacity-50 hover:opacity-100"
-                :disabled="skillBusyId === skill.id"
-                title="Remove"
-                @click="removeSkill(skill.id)"
-              >
-                <XMarkIcon class="h-3.5 w-3.5" />
-              </button>
-            </span>
-          </div>
-          <p v-else class="text-sm text-gray-400 mb-3">No skills yet — add one below.</p>
-
-          <div class="flex items-center gap-2">
-            <select v-model="addSkillId" class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white">
-              <option value="">Add a skill…</option>
-              <option v-for="s in addableSkills" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
-            </select>
-            <BaseButton variant="outline" :disabled="!addSkillId" :loading="skillBusyId === Number(addSkillId)" @click="addSkill">
-              <PlusIcon class="h-4 w-4" />
-            </BaseButton>
-          </div>
-          <p class="text-xs text-gray-400 mt-2">Click a skill to make it primary. Skills tag your work and unlock matching open tasks.</p>
-        </section>
-
-        <!-- Building -->
-        <section>
+          <BaseSelect v-model="form.timezone" :options="timezoneOptions" label="Timezone" placeholder="Select your timezone" />
           <BaseTextarea v-model="form.recent_work" label="Building" placeholder="Tell us about your recent projects, work, or creative endeavors. What are you most proud of?" :maxlength="1000" :rows="4" />
         </section>
 
-        <!-- Unique view -->
-        <section>
-          <BaseTextarea v-model="form.unique_view" label="Unique view" placeholder="Share your perspective, philosophy, or approach to creativity and work. What drives you?" :maxlength="1000" :rows="4" />
+        <!-- 6. Skills & experience — editable; adding a skill unlocks claiming open tasks tagged with it -->
+        <section class="space-y-5">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Skills & experience</h2>
+
+          <BaseSelect v-model="form.experience_level" :options="experienceLevelOptions" label="Experience level" placeholder="Select" />
+          <p class="text-xs text-gray-400 -mt-3">Self-described — not a verified rating.</p>
+
+          <div>
+            <div v-if="member?.skills && member.skills.length > 0" class="flex flex-wrap gap-2 mb-3">
+              <span
+                v-for="skill in member.skills"
+                :key="skill.id"
+                :class="[
+                  'inline-flex items-center gap-1.5 pl-3 pr-2 py-1 rounded-full text-sm font-medium',
+                  skill.id === profile?.primary_skill_id ? 'bg-senpai-100 text-senpai-700' : 'bg-gray-100 text-gray-700'
+                ]"
+              >
+                <button
+                  v-if="skill.id !== profile?.primary_skill_id"
+                  type="button"
+                  class="hover:underline"
+                  :disabled="skillBusyId === skill.id"
+                  @click="makePrimary(skill.id)"
+                >{{ skill.name }}</button>
+                <span v-else>{{ skill.name }} ★</span>
+                <button
+                  type="button"
+                  class="text-current opacity-50 hover:opacity-100"
+                  :disabled="skillBusyId === skill.id"
+                  title="Remove"
+                  @click="removeSkill(skill.id)"
+                >
+                  <XMarkIcon class="h-3.5 w-3.5" />
+                </button>
+              </span>
+            </div>
+            <p v-else class="text-sm text-gray-400 mb-3">No skills yet — add one below.</p>
+
+            <div class="flex items-center gap-2">
+              <select v-model="addSkillId" class="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white">
+                <option value="">Add a skill…</option>
+                <option v-for="s in addableSkills" :key="s.id" :value="String(s.id)">{{ s.name }}</option>
+              </select>
+              <BaseButton variant="outline" :disabled="!addSkillId" :loading="skillBusyId === Number(addSkillId)" @click="addSkill">
+                <PlusIcon class="h-4 w-4" />
+              </BaseButton>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Click a skill to make it primary. Skills tag your work and unlock matching open tasks.</p>
+          </div>
         </section>
 
-        <!-- Links -->
+        <!-- 7. Your goal -->
+        <section class="space-y-3">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Your goal</h2>
+          <BaseTextarea
+            v-model="form.goal"
+            label="What does success look like for you in the next 1–3 years?"
+            placeholder="Better clients, remote work, starting a company… whatever sovereignty means to you."
+            :rows="3"
+          />
+        </section>
+
+        <!-- 8. Links -->
         <section class="space-y-4">
           <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Links</h2>
           <BaseInput v-model="form.portfolio_url" label="Portfolio URL" placeholder="https://yourportfolio.com" :error="errors.portfolio_url" />

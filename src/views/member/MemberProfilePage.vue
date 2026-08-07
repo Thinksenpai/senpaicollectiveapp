@@ -154,6 +154,7 @@ watch(() => route.params.id, (newId, oldId) => {
         :unique-view="member.unique_view"
         :links="allLinks"
         :logistics-line="logisticsLine"
+        :member-id="member?.id"
       />
     </div>
   </AppLayout>

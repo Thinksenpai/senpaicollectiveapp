@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, RouterLink } from 'vue-router'
 import { adminEngineApi, engineApi, skillsApi } from '@/api'
 import type {
   Cohort, Pod, CohortMembership, Task, TaskAssignment,
@@ -70,23 +70,75 @@ async function loadCohorts() {
     selectedCohortId.value = (cohorts.value.find((c) => c.status === 'forming') ?? cohorts.value[0])!.id
   }
 }
+const GLOBAL = '__global__' // sentinel: circle tracks + their tasks (cohort_id IS NULL)
+const isGlobal = computed(() => selectedCohortId.value === GLOBAL)
+
 async function loadTasks() {
   if (!selectedCohortId.value) return
-  const [t, p, m, pr] = await Promise.all([
+  if (isGlobal.value) {
+    const t = await adminEngineApi.listTasks()
+    tasks.value = t.data ?? []
+    pods.value = []
+    members.value = []
+    return
+  }
+  const [t, p, m] = await Promise.all([
     adminEngineApi.listTasks(selectedCohortId.value),
     adminEngineApi.listPods(selectedCohortId.value),
-    adminEngineApi.listCohortMembers(selectedCohortId.value),
-    adminEngineApi.listCohortPrograms(selectedCohortId.value)
+    adminEngineApi.listCohortMembers(selectedCohortId.value)
   ])
   tasks.value = t.data ?? []
   pods.value = p.data ?? []
   members.value = m.data ?? []
-  programs.value = pr.data ?? []
+}
+
+// The task form's "Program" picker and task-row labels need every program
+// that exists — not just the ones for whichever cohort/global view you
+// currently have selected. Loaded once, independent of that toggle.
+async function loadAllPrograms() {
+  const [cohortPrograms, circleTracks] = await Promise.all([
+    Promise.all(cohorts.value.map((c) => adminEngineApi.listCohortPrograms(c.id))),
+    engineApi.listCircleTracks()
+  ])
+  programs.value = [...cohortPrograms.flatMap((r) => r.data ?? []), ...(circleTracks.data ?? [])]
+}
+
+// Deep links from the Programs page: ?program=<id> opens the create-task
+// modal pre-filled for that program (routing to the right cohort/global
+// view first); ?task=<id> opens that task's detail slide-over directly.
+async function handleDeepLinks() {
+  const programId = route.query.program as string | undefined
+  const taskId = route.query.task as string | undefined
+  if (programId) {
+    const res = await engineApi.getProgram(programId)
+    const program = res.data?.program
+    if (program) {
+      selectedCohortId.value = program.cohort_id || GLOBAL
+      await loadTasks()
+      openTaskModal()
+      taskForm.program_id = programId
+    }
+  } else if (taskId) {
+    const res = await engineApi.getTask(taskId)
+    const task = res.data
+    if (task) {
+      selectedCohortId.value = task.cohort_id || GLOBAL
+      await loadTasks()
+      const found = tasks.value.find((t) => t.id === taskId)
+      if (found) openDetail(found)
+    }
+  }
 }
 
 onMounted(async () => {
   try {
     await loadCohorts()
+    await loadAllPrograms()
+    if (route.query.program || route.query.task) {
+      loading.value = false
+      await handleDeepLinks()
+      return
+    }
     await loadTasks()
   } finally {
     loading.value = false
@@ -133,60 +185,6 @@ function programName(id?: string | null) {
   return programs.value.find((p) => p.id === id)?.name
 }
 
-// ---- manage programs (list / add / rename per cohort) ----
-const programsModal = ref(false)
-const programBusy = ref(false)
-const programError = ref('')
-const newProgram = reactive({ name: '', description: '' })
-const editingProgramId = ref<string | null>(null)
-const editProgram = reactive({ name: '', description: '' })
-
-async function addProgram() {
-  programError.value = ''
-  if (!newProgram.name.trim()) {
-    programError.value = 'Give the program a name.'
-    return
-  }
-  programBusy.value = true
-  try {
-    const res = await adminEngineApi.createProgram(selectedCohortId.value, {
-      name: newProgram.name.trim(),
-      description: newProgram.description.trim() || undefined
-    })
-    if (res.status) {
-      newProgram.name = ''
-      newProgram.description = ''
-      programs.value = (await adminEngineApi.listCohortPrograms(selectedCohortId.value)).data ?? []
-      flash('Program created')
-    } else {
-      programError.value = res.message || 'Failed to create program'
-    }
-  } catch (e: unknown) {
-    programError.value = (e as { response?: { data?: { message?: string } } }).response?.data?.message || 'Failed to create program'
-  } finally {
-    programBusy.value = false
-  }
-}
-function startEditProgram(p: Program) {
-  editingProgramId.value = p.id
-  editProgram.name = p.name
-  editProgram.description = p.description || ''
-}
-async function saveProgram() {
-  if (!editingProgramId.value || !editProgram.name.trim()) return
-  programBusy.value = true
-  try {
-    await adminEngineApi.updateProgram(editingProgramId.value, {
-      name: editProgram.name.trim(),
-      description: editProgram.description.trim() || undefined
-    })
-    editingProgramId.value = null
-    programs.value = (await adminEngineApi.listCohortPrograms(selectedCohortId.value)).data ?? []
-    flash('Program updated')
-  } finally {
-    programBusy.value = false
-  }
-}
 // Skills catalog — the role a task exercises (counts toward verification later).
 const skills = ref<Skill[]>([])
 skillsApi.getSkills().then((res) => { skills.value = res.data ?? [] }).catch(() => {})
@@ -280,7 +278,7 @@ async function saveTask() {
       program_id: taskForm.program_id || undefined,
       handin_type: taskForm.handin_type,
       external_url: taskForm.handin_type === 'external_form' ? taskForm.external_url || undefined : undefined,
-      cohort_id: selectedCohortId.value,
+      cohort_id: isGlobal.value ? undefined : selectedCohortId.value,
       is_required: taskForm.is_required,
       show_submissions: true,
       status: taskForm.status,
@@ -502,11 +500,14 @@ async function unassign(a: TaskAssignment) {
         <div class="mb-6 flex items-center gap-3">
           <span class="text-sm text-gray-500">Cohort</span>
           <div class="min-w-[200px]">
-            <BaseSelect v-model="selectedCohortId" :options="cohorts.map((c) => ({ value: c.id, label: c.name }))" />
+            <BaseSelect
+              v-model="selectedCohortId"
+              :options="[...cohorts.map((c) => ({ value: c.id, label: c.name })), { value: GLOBAL, label: 'Circle Tracks (global)' }]"
+            />
           </div>
-          <button class="text-sm font-medium text-senpai-600 hover:text-senpai-700" @click="programsModal = true">
-            Manage programs
-          </button>
+          <RouterLink to="/admin/programs" class="text-sm font-medium text-senpai-600 hover:text-senpai-700">
+            Programs &rarr;
+          </RouterLink>
         </div>
 
         <div v-if="tasks.length" class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -625,7 +626,11 @@ async function unassign(a: TaskAssignment) {
           <BaseSelect
             v-model="assignOnCreate.type"
             label="Assign to (optional)"
-            :options="[
+            :options="isGlobal ? [
+              { value: 'none', label: `Don't assign yet` },
+              { value: 'individual', label: 'One member' },
+              { value: 'global', label: 'Everyone in the collective' }
+            ] : [
               { value: 'none', label: `Don't assign yet` },
               { value: 'cohort', label: 'The whole cohort' },
               { value: 'pod', label: 'A specific pod' },
@@ -641,52 +646,6 @@ async function unassign(a: TaskAssignment) {
         <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="taskModal = false">Cancel</button>
         <BaseButton :loading="savingTask" @click="saveTask">{{ editingTaskId ? 'Save changes' : 'Create task' }}</BaseButton>
       </template>
-    </BaseModal>
-
-    <!-- Manage programs modal -->
-    <BaseModal
-      :show="programsModal"
-      title="Programs"
-      subtitle="Ordered task series for this cohort. Induction is built in — add your own series alongside it."
-      @close="programsModal = false"
-    >
-      <div class="space-y-4">
-        <BaseAlert v-if="programError" type="error">{{ programError }}</BaseAlert>
-
-        <ul v-if="programs.length" class="divide-y divide-gray-100 border border-gray-200 rounded-xl">
-          <li v-for="p in programs" :key="p.id" class="px-4 py-3">
-            <template v-if="editingProgramId === p.id">
-              <div class="space-y-2">
-                <BaseInput v-model="editProgram.name" label="Name" />
-                <BaseInput v-model="editProgram.description" label="Description (optional)" />
-                <div class="flex items-center gap-3">
-                  <BaseButton size="sm" :loading="programBusy" @click="saveProgram">Save</BaseButton>
-                  <button class="text-sm text-gray-500 hover:text-gray-700" @click="editingProgramId = null">Cancel</button>
-                </div>
-              </div>
-            </template>
-            <template v-else>
-              <div class="flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="font-medium text-gray-900 flex items-center gap-2">
-                    {{ p.name }}
-                    <span v-if="p.kind === 'induction'" class="text-[10px] font-mono uppercase tracking-wide text-senpai-600">Gates matriculation</span>
-                  </p>
-                  <p v-if="p.description" class="text-sm text-gray-500 truncate">{{ p.description }}</p>
-                </div>
-                <button class="text-sm font-medium text-senpai-600 hover:text-senpai-700 shrink-0" @click="startEditProgram(p)">Edit</button>
-              </div>
-            </template>
-          </li>
-        </ul>
-
-        <div class="pt-4 border-t border-gray-100 space-y-3">
-          <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400">// New program</p>
-          <BaseInput v-model="newProgram.name" label="Name" placeholder="Writing Series" />
-          <BaseInput v-model="newProgram.description" label="Description (optional)" placeholder="What this series builds toward" />
-          <BaseButton :loading="programBusy" @click="addProgram">Add program</BaseButton>
-        </div>
-      </div>
     </BaseModal>
 
     <!-- Assign modal -->

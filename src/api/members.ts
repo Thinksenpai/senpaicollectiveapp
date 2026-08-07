@@ -15,6 +15,9 @@ export const membersApi = {
 
   async updateMe(data: Partial<{
     full_name: string
+    first_name: string
+    last_name: string
+    middle_name: string
     phone: string
     city: string
     country: string
@@ -24,6 +27,8 @@ export const membersApi = {
     portfolio_url: string
     additional_links: { label?: string; url: string }[]
     photo_url: string
+    // Self-described, not verified — same status as self-declared skills.
+    experience_level: string
   }>): Promise<ApiResponse> {
     return apiClient.put('/members/me', data)
   },

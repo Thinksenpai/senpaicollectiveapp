@@ -40,7 +40,7 @@ const lastUpdated = 'July 2026'
             a suggestion. If you joined to browse a directory, this isn't that. Take on tasks,
             answer a question in a task thread, propose a project, review a teammate's work.
             Extended inactivity with no participation is grounds for removal (see the Terms,
-            section 9) — not because we're strict for its own sake, but because an inactive
+            section 11) — not because we're strict for its own sake, but because an inactive
             member is taking a seat someone actively building could have.
           </p>
         </section>
@@ -114,6 +114,64 @@ const lastUpdated = 'July 2026'
             That trust is sustained by consistent work, not bursts of it. Membership isn't a
             badge you earned once; it's a record you keep adding to.
           </p>
+
+          <h3 class="text-base font-semibold text-gray-900 mt-6">Why this one matters more here</h3>
+          <p class="mt-2">
+            There's a specific weight to this worth naming plainly. Nigerian builders are
+            turned away every day by platforms and clients who never look at the individual;
+            the assumption arrives before you do. Much of why Senpai exists is to break that.
+            A client who cannot cheaply verify a stranger can verify an institution that
+            stakes its own name on that person. That is the whole mechanism, and it works
+            exactly as long as it is earned.
+          </p>
+          <p class="mt-3">
+            So a member who disappears mid-project, goes silent on a client, or takes money
+            for work they don't deliver isn't only losing one engagement. They are confirming
+            the assumption, and handing the next hundred people the same closed door. This is
+            the one thing we will not be relaxed about.
+          </p>
+
+          <h3 class="text-base font-semibold text-gray-900 mt-6">What this asks of you, concretely</h3>
+          <ul class="mt-2 list-disc pl-6 space-y-2">
+            <li>
+              <strong>Never go silent.</strong> If you're late, stuck, overwhelmed, or your
+              situation has changed, say so early. A missed deadline that was flagged is a
+              normal problem. A missed deadline nobody was warned about is a broken client.
+            </li>
+            <li>
+              <strong>Don't accept work you can't deliver.</strong> Turning something down
+              costs the collective nothing. Taking it and failing costs everyone.
+            </li>
+            <li>
+              <strong>Escalate rather than improvise.</strong> If a client asks for something
+              outside the agreed scope, changes the brief, or something goes wrong, bring it
+              to the collective. Don't renegotiate on your own and don't absorb it silently.
+            </li>
+            <li>
+              <strong>Speak for yourself, not for Senpai.</strong> Say you're a member, put
+              it in your bio, be proud of it. But don't negotiate, commit, quote prices, or
+              approach anyone <em>on behalf of</em> the collective unless you hold the role
+              that carries that authority.
+            </li>
+            <li>
+              <strong>Bring clients to the collective, not around it.</strong> If work comes
+              to you because of Senpai, it belongs in front of Senpai. This is covered in the
+              <RouterLink to="/terms" class="text-senpai-600 underline hover:text-senpai-700">Terms</RouterLink>
+              (section 9) because it matters that much.
+            </li>
+            <li>
+              <strong>What you publish is the collective's face.</strong> Members are
+              encouraged to build their own public brands, and that's the point. Just
+              remember that anything you put out with Senpai attached to it is read as
+              Senpai.
+            </li>
+          </ul>
+
+          <p class="mt-4">
+            None of this restricts work you do outside the collective. Take other clients,
+            keep your job, run your own thing. The obligation is about what you do under this
+            name, not about owning your time.
+          </p>
         </section>
 
         <section>
@@ -124,7 +182,7 @@ const lastUpdated = 'July 2026'
             serious violation (harassment, dishonesty, leaking confidential work), can lead to
             suspension or removal, exactly as laid out in the
             <RouterLink to="/terms" class="text-senpai-600 underline hover:text-senpai-700">Terms of Membership</RouterLink>,
-            section 9.
+            section 11.
           </p>
         </section>
       </div>

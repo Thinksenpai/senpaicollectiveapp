@@ -51,6 +51,9 @@ export interface Role {
 export interface MemberProfile {
   member_id: string
   full_name: string
+  first_name?: string
+  last_name?: string
+  middle_name?: string
   phone?: string
   city: string
   country: string
@@ -231,6 +234,8 @@ export interface LoginResponse {
 
 export interface RegisterData {
   full_name: string
+  first_name?: string
+  last_name?: string
   email: string
   password: string
   password_confirm: string

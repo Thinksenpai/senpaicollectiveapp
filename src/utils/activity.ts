@@ -36,6 +36,18 @@ export function activityVerbPhrase(a: Activity): string {
       return by ? `Removed from the team by ${by} —` : 'Removed from the team —'
     }
     case 'project_shipped': return 'Shipped'
+    case 'review_submitted': {
+      const ratee = meta(a, 'ratee')
+      const role = meta(a, 'role')
+      const base = ratee ? `Reviewed ${ratee}` : 'Reviewed a teammate'
+      return role ? `${base} as ${role} on` : `${base} on`
+    }
+    case 'review_received': {
+      const rater = meta(a, 'rater')
+      const role = meta(a, 'role')
+      const base = rater ? `Reviewed by ${rater}` : 'Received a review'
+      return role ? `${base} — as ${role} on` : `${base} on`
+    }
     default: return a.verb.replace(/_/g, ' ')
   }
 }

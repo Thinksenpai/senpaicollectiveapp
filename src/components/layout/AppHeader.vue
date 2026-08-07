@@ -25,7 +25,8 @@ import {
   ClipboardDocumentListIcon,
   ChartBarSquareIcon,
   SparklesIcon,
-  RocketLaunchIcon
+  RocketLaunchIcon,
+  EnvelopeIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -189,6 +190,15 @@ function handleLogout() {
                     >
                       <SparklesIcon class="h-5 w-5 mr-2 text-gray-400" />
                       Scout Guide
+                    </RouterLink>
+                  </MenuItem>
+                  <MenuItem v-if="authStore.isApproved" v-slot="{ active }">
+                    <RouterLink
+                      to="/invites"
+                      :class="[active ? 'bg-gray-100' : '', 'flex items-center px-4 py-2 text-sm text-gray-700']"
+                    >
+                      <EnvelopeIcon class="h-5 w-5 mr-2 text-gray-400" />
+                      My Invites
                     </RouterLink>
                   </MenuItem>
                   <MenuItem v-slot="{ active }">

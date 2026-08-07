@@ -60,6 +60,9 @@ const statusDot: Record<AssignmentStatus, string> = {
         </div>
         <div class="flex items-center gap-4 shrink-0">
           <p v-if="!loading && tasks.length" class="text-xs font-mono text-gray-400">{{ openCount }} OPEN · {{ completed.length }} DONE</p>
+          <RouterLink to="/programs" class="text-xs font-semibold text-senpai-600 hover:text-senpai-700">
+            Programs &rarr;
+          </RouterLink>
           <RouterLink to="/tasks/open" class="text-xs font-semibold text-senpai-600 hover:text-senpai-700">
             Open board &rarr;
           </RouterLink>

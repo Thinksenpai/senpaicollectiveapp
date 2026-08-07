@@ -250,8 +250,9 @@ async function join(p: Project) {
           Your proposal goes to an admin for approval. Once it's live, any member can join your team until it's full.
         </p>
         <p class="text-xs text-gray-500">
-          Projects run through Senpai Collective, venture-studio style — your team gets full public credit, and if it
-          grows into a real venture, equity and co-ownership come with it. See the
+          Senpai Collective retains the IP for projects built on this platform. In return, your team gets real
+          experience and public credit for the work. Paid projects are a separate, explicit arrangement, not the
+          default. See the
           <RouterLink to="/terms" target="_blank" class="text-senpai-600 hover:underline">Terms</RouterLink> for details.
         </p>
       </div>

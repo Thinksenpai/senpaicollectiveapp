@@ -2,14 +2,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAdminStore } from '@/stores/admin'
-import { adminEngineApi, engineApi } from '@/api'
-import type { MemberEngineStatus, MemberEnrichment } from '@/types'
+import { adminEngineApi, engineApi, adminApi } from '@/api'
+import type { MemberEngineStatus, MemberEnrichment, Activity } from '@/types'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
 import ProfileDisplay from '@/components/member/ProfileDisplay.vue'
+import ActivityFeed from '@/components/common/ActivityFeed.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import {
   ExclamationTriangleIcon,
@@ -83,9 +84,19 @@ async function loadEnrichment() {
   }
 }
 
+const activity = ref<Activity[]>([])
+async function loadActivity() {
+  try {
+    const res = await adminApi.getMemberActivity(route.params.id as string)
+    activity.value = res.data ?? []
+  } catch {
+    activity.value = []
+  }
+}
+
 onMounted(async () => {
   loading.value = true
-  await Promise.all([adminStore.fetchMember(route.params.id as string), loadRoster(), loadEnrichment()])
+  await Promise.all([adminStore.fetchMember(route.params.id as string), loadRoster(), loadEnrichment(), loadActivity()])
   loading.value = false
 })
 
@@ -340,7 +351,14 @@ function lastActive(iso?: string | null) {
                 :unique-view="adminStore.currentMember.member.profile?.unique_view"
                 :links="profileLinks"
                 :logistics-line="logisticsLine"
+                :member-id="adminStore.currentMember.member.id"
               />
+            </div>
+
+            <!-- Activity — what this member has actually done on the platform -->
+            <div class="bg-white rounded-2xl border border-gray-200 p-6">
+              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Activity</p>
+              <ActivityFeed :activities="activity" empty-text="No recorded activity yet." />
             </div>
 
             <!-- Cover Letter (if provided) — application-review context, not part of the profile itself -->
@@ -425,35 +443,13 @@ function lastActive(iso?: string | null) {
               </dl>
             </div>
 
-            <div class="bg-white rounded-2xl border border-gray-200 p-5">
-              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Actions</p>
-
-              <div v-if="adminStore.currentMember.member.status === 'pending'" class="flex flex-col gap-2">
-                <BaseButton class="w-full" :loading="approving" @click="handleApprove">Approve application</BaseButton>
-                <BaseButton class="w-full" variant="danger" :loading="declining" @click="handleDecline">
-                  <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
-                  Decline application
-                </BaseButton>
-              </div>
-
-              <div v-else-if="adminStore.currentMember.member.status === 'approved'" class="flex flex-col gap-2">
-                <BaseButton class="w-full" variant="danger" @click="showDeactivateModal = true">
-                  <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
-                  Deactivate Member
-                </BaseButton>
-              </div>
-
-              <div v-else-if="adminStore.currentMember.member.status === 'deactivated'" class="flex flex-col gap-2">
-                <BaseButton class="w-full" :loading="reactivating" @click="handleReactivate">Reactivate member</BaseButton>
-              </div>
-
-              <p v-else class="text-sm text-gray-500">No actions available for a declined application.</p>
-            </div>
-
             <!-- Roles & Permissions — every grant/revoke shortcut lives here, one
                  place, instead of scattered one-off buttons. Admin itself isn't
                  toggleable from this panel — that's seed/support-only, not a
-                 click away from an accidental self-demotion. -->
+                 click away from an accidental self-demotion. Placed above
+                 Actions: granting/revoking is the routine admin task here,
+                 deactivation is the rare, destructive one — it shouldn't be
+                 the first thing in the sidebar. -->
             <div v-if="adminStore.currentMember.member.status === 'approved'" class="bg-white rounded-2xl border border-gray-200 p-5">
               <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Roles &amp; Permissions</p>
 
@@ -482,6 +478,31 @@ function lastActive(iso?: string | null) {
                 </div>
               </div>
               <p class="text-xs text-gray-400 mt-3">Community Lead can review and accept membership applications — nothing else.</p>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-gray-200 p-5">
+              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Actions</p>
+
+              <div v-if="adminStore.currentMember.member.status === 'pending'" class="flex flex-col gap-2">
+                <BaseButton class="w-full" :loading="approving" @click="handleApprove">Approve application</BaseButton>
+                <BaseButton class="w-full" variant="danger" :loading="declining" @click="handleDecline">
+                  <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
+                  Decline application
+                </BaseButton>
+              </div>
+
+              <div v-else-if="adminStore.currentMember.member.status === 'approved'" class="flex flex-col gap-2">
+                <BaseButton class="w-full" variant="danger" @click="showDeactivateModal = true">
+                  <ExclamationTriangleIcon class="h-5 w-5 mr-2" />
+                  Deactivate Member
+                </BaseButton>
+              </div>
+
+              <div v-else-if="adminStore.currentMember.member.status === 'deactivated'" class="flex flex-col gap-2">
+                <BaseButton class="w-full" :loading="reactivating" @click="handleReactivate">Reactivate member</BaseButton>
+              </div>
+
+              <p v-else class="text-sm text-gray-500">No actions available for a declined application.</p>
             </div>
           </div>
         </div>

@@ -65,6 +65,15 @@ const router = createRouter({
       }
     },
     {
+      path: '/pool',
+      name: 'pool',
+      component: () => import('@/views/public/PoolPage.vue'),
+      meta: {
+        title: 'The Collective Pool | Senpai Collective',
+        description: 'How members earn real ownership in everything the Senpai Collective builds.'
+      }
+    },
+    {
       path: '/guidelines',
       name: 'guidelines',
       component: () => import('@/views/public/GuidelinesPage.vue'),
@@ -168,6 +177,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/programs',
+      name: 'programs',
+      component: () => import('@/views/member/ProgramsPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/programs/:id',
+      name: 'program-detail',
+      component: () => import('@/views/member/ProgramDetailPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/tasks/:id',
       name: 'my-task-detail',
       component: () => import('@/views/member/MemberTaskDetailPage.vue'),
@@ -250,6 +271,12 @@ const router = createRouter({
       component: () => import('@/views/member/SettingsPage.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/invites',
+      name: 'my-invites',
+      component: () => import('@/views/member/MyInvitesPage.vue'),
+      meta: { requiresAuth: true, requiresApproved: true, title: 'My Invites | Senpai Collective' }
+    },
 
     // Scout routes
     {
@@ -309,6 +336,12 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true, title: 'Tasks | Admin' }
     },
     {
+      path: '/admin/programs',
+      name: 'admin-programs',
+      component: () => import('@/views/admin/AdminProgramsPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Programs | Admin' }
+    },
+    {
       path: '/admin/projects',
       name: 'admin-projects',
       component: () => import('@/views/admin/AdminProjectsPage.vue'),
@@ -319,6 +352,18 @@ const router = createRouter({
       name: 'admin-scouts',
       component: () => import('@/views/admin/AdminScoutsPage.vue'),
       meta: { requiresAuth: true, requiresAdmin: true, title: 'Scouts | Admin' }
+    },
+    {
+      path: '/admin/job-roles',
+      name: 'admin-job-roles',
+      component: () => import('@/views/admin/AdminJobRolesPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Job Roles | Admin' }
+    },
+    {
+      path: '/admin/skill-verification',
+      name: 'admin-skill-verification',
+      component: () => import('@/views/admin/AdminSkillVerificationPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Skill Verification | Admin' }
     },
     {
       path: '/admin/analytics',

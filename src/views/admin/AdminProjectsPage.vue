@@ -2,15 +2,34 @@
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { engineApi, adminEngineApi } from '@/api'
-import type { Project, ProjectStatus } from '@/types'
+import type { Project, ProjectStatus, Task } from '@/types'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import { RocketLaunchIcon, LinkIcon } from '@heroicons/vue/24/outline'
+import { RocketLaunchIcon, LinkIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 
 const loading = ref(true)
 const projects = ref<Project[]>([])
 const busyId = ref<string | null>(null)
 const toast = ref('')
+
+// Tasks aren't on the list payload — admins had no way to see a project's
+// work without clicking through to the member-facing page. Loaded once per
+// project, lazily, and shown as an expandable list on the card itself.
+const projectTasks = ref<Record<string, Task[]>>({})
+const loadingTasks = ref<Record<string, boolean>>({})
+const expandedTasks = ref<Record<string, boolean>>({})
+async function toggleTasks(p: Project) {
+  expandedTasks.value[p.id] = !expandedTasks.value[p.id]
+  if (expandedTasks.value[p.id] && !projectTasks.value[p.id]) {
+    loadingTasks.value[p.id] = true
+    try {
+      const res = await engineApi.getProject(p.id)
+      projectTasks.value[p.id] = res.data?.tasks ?? []
+    } finally {
+      loadingTasks.value[p.id] = false
+    }
+  }
+}
 
 function flash(msg: string) {
   toast.value = msg
@@ -136,6 +155,26 @@ async function park(p: Project) {
                     rel="noopener noreferrer"
                     class="inline-flex items-center gap-1 text-xs text-senpai-600 hover:text-senpai-700"
                   ><LinkIcon class="h-3.5 w-3.5" /> outcome</a>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 mt-2"
+                  @click="toggleTasks(p)"
+                >
+                  <ChevronDownIcon class="h-3.5 w-3.5 transition-transform" :class="expandedTasks[p.id] ? 'rotate-180' : ''" />
+                  {{ projectTasks[p.id] ? `${projectTasks[p.id].length} task${projectTasks[p.id].length === 1 ? '' : 's'}` : 'Tasks' }}
+                </button>
+                <div v-if="expandedTasks[p.id]" class="mt-2 pl-1">
+                  <p v-if="loadingTasks[p.id]" class="text-xs text-gray-400">Loading…</p>
+                  <p v-else-if="!projectTasks[p.id]?.length" class="text-xs text-gray-400">No tasks yet.</p>
+                  <ul v-else class="space-y-1">
+                    <li v-for="t in projectTasks[p.id]" :key="t.id">
+                      <RouterLink :to="`/admin/tasks?task=${t.id}`" class="text-xs text-senpai-600 hover:text-senpai-700 hover:underline">
+                        {{ t.title }}
+                      </RouterLink>
+                      <span class="text-xs text-gray-400"> · {{ t.completed_count ?? 0 }}/{{ t.assignment_count ?? 0 }} done</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
               <div class="flex items-center gap-3 shrink-0 text-sm">

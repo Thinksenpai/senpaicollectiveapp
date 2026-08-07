@@ -39,7 +39,10 @@ const allTabs = [
   { name: 'Members', href: '/admin/members' },
   { name: 'Cohorts', href: '/admin/cohorts' },
   { name: 'Tasks', href: '/admin/tasks' },
+  { name: 'Programs', href: '/admin/programs' },
   { name: 'Projects', href: '/admin/projects' },
+  { name: 'Job Roles', href: '/admin/job-roles' },
+  { name: 'Skill Verification', href: '/admin/skill-verification' },
   { name: 'Scouts', href: '/admin/scouts' },
   { name: 'Jobs', href: '/admin/jobs' },
   { name: 'Analytics', href: '/admin/analytics' }

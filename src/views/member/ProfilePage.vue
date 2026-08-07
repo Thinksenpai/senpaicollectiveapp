@@ -141,6 +141,7 @@ const allLinks = computed(() => {
         :unique-view="profile?.unique_view"
         :links="allLinks"
         :logistics-line="logisticsLine"
+        :member-id="member?.id"
       />
 
       <div v-if="activity.length" class="max-w-2xl mx-auto mt-8">

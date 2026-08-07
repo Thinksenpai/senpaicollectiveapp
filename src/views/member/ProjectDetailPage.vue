@@ -3,7 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { engineApi, membersApi, skillsApi } from '@/api'
-import type { Project, Task, ProjectStatus, TaskAssignment, TaskKind, HandinType, Activity, Skill } from '@/types'
+import type { Project, ProjectMember, Task, ProjectStatus, TaskAssignment, TaskKind, HandinType, Activity, Skill, JobRole, ProjectInvite } from '@/types'
+import ReviewFormModal from '@/components/reviews/ReviewFormModal.vue'
+import { reviewsApi } from '@/api'
 import ActivityFeed from '@/components/common/ActivityFeed.vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -13,7 +15,7 @@ import BaseTextarea from '@/components/common/BaseTextarea.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
-import { ArrowLeftIcon, LinkIcon, RocketLaunchIcon, PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ArrowLeftIcon, LinkIcon, RocketLaunchIcon, PlusIcon, XMarkIcon, EnvelopeIcon } from '@heroicons/vue/24/outline'
 import ProjectTaskRoster from '@/components/member/ProjectTaskRoster.vue'
 
 const route = useRoute()
@@ -37,6 +39,7 @@ function flash(msg: string) {
 
 const roster = ref<TaskAssignment[]>([])
 const activity = ref<Activity[]>([])
+const pendingInvites = ref<ProjectInvite[]>([])
 
 async function load() {
   const res = await engineApi.getProject(route.params.id as string)
@@ -54,6 +57,15 @@ async function load() {
     activity.value = act.data ?? []
   } catch {
     activity.value = []
+  }
+  // Pending invites are only visible to whoever can send them.
+  if (project.value && (isCreator.value || authStore.isAdmin)) {
+    try {
+      const inv = await reviewsApi.getProjectInvites(project.value.id)
+      pendingInvites.value = (inv.data || []).filter((i) => i.status === 'pending')
+    } catch {
+      pendingInvites.value = []
+    }
   }
 }
 
@@ -208,6 +220,72 @@ async function removeMember(memberId: string, name: string) {
   }
 }
 
+// ---- invite a specific member to a seat, with a role attached, instead of
+// adding them directly — they get a real choice to accept or decline. ----
+const inviteModal = ref(false)
+const inviteSearch = ref('')
+const inviteResults = ref<{ id: string; full_name: string; photo_url?: string }[]>([])
+const searchingInvitees = ref(false)
+const invitee = ref<{ id: string; full_name: string } | null>(null)
+const inviteJobRoleId = ref<number | null>(null)
+const inviteNote = ref('')
+const inviting = ref(false)
+const jobRoles = ref<JobRole[]>([])
+let inviteSearchTimeout: ReturnType<typeof setTimeout>
+function openInvite() {
+  inviteSearch.value = ''
+  inviteResults.value = []
+  invitee.value = null
+  inviteJobRoleId.value = null
+  inviteNote.value = ''
+  inviteModal.value = true
+  if (!jobRoles.value.length) reviewsApi.listJobRoles().then((res) => { jobRoles.value = res.data || [] })
+}
+async function searchInvitees() {
+  if (!inviteSearch.value.trim()) { inviteResults.value = []; return }
+  searchingInvitees.value = true
+  try {
+    const res = await membersApi.getMembers({ search: inviteSearch.value.trim(), limit: 8 })
+    const onTeamIds = new Set((project.value?.team || []).map((t) => t.member_id))
+    const alreadyInvitedIds = new Set(pendingInvites.value.map((i) => i.member_id))
+    inviteResults.value = (res.data || [])
+      .filter((m) => !onTeamIds.has(m.id) && !alreadyInvitedIds.has(m.id))
+      .map((m) => {
+        const raw = m as any
+        return { id: raw.id, full_name: raw.full_name || raw.profile?.full_name || '', photo_url: raw.photo_url || raw.profile?.photo_url }
+      })
+  } finally {
+    searchingInvitees.value = false
+  }
+}
+function onInviteSearchInput() {
+  clearTimeout(inviteSearchTimeout)
+  inviteSearchTimeout = setTimeout(searchInvitees, 300)
+}
+function pickInvitee(m: { id: string; full_name: string }) {
+  invitee.value = m
+  inviteResults.value = []
+  inviteSearch.value = m.full_name
+}
+async function sendInvite() {
+  if (!invitee.value) return
+  inviting.value = true
+  try {
+    const res = await reviewsApi.inviteToProject(project.value!.id, {
+      member_id: invitee.value.id,
+      job_role_id: inviteJobRoleId.value ?? undefined,
+      note: inviteNote.value.trim() || undefined
+    })
+    flash(res.status ? `Invite sent to ${invitee.value.full_name}` : res.message || 'Failed to send invite')
+    if (res.status) inviteModal.value = false
+    await load()
+  } catch (e: any) {
+    flash(e.response?.data?.message || 'Failed to send invite')
+  } finally {
+    inviting.value = false
+  }
+}
+
 // ---- peer tasks: teammates create, assign, and review each other's work ----
 const addTaskModal = ref(false)
 const addingTask = ref(false)
@@ -276,6 +354,14 @@ async function peerReview(a: TaskAssignment, status: 'completed' | 'returned') {
   } finally {
     reviewingId.value = null
   }
+}
+
+// ---- rate a teammate once the project has shipped ----
+const rateModal = ref(false)
+const rateTarget = ref<ProjectMember | null>(null)
+function openRateTeammate(tm: ProjectMember) {
+  rateTarget.value = tm
+  rateModal.value = true
 }
 
 // ---- ship ----
@@ -421,6 +507,11 @@ async function ship() {
                   <p v-if="tm.member_id === project.created_by" class="text-[10px] font-mono text-senpai-600">CREATOR</p>
                 </div>
                 <button
+                  v-if="project.status === 'shipped' && isOnTeam && tm.member_id !== authStore.member?.id"
+                  class="text-[10px] font-mono font-medium text-senpai-600 hover:text-senpai-700 shrink-0"
+                  @click="openRateTeammate(tm)"
+                >RATE</button>
+                <button
                   v-if="canManage && tm.member_id !== project.created_by"
                   class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                   title="Remove from team"
@@ -428,11 +519,24 @@ async function ship() {
                 ><XMarkIcon class="h-4 w-4" /></button>
               </li>
             </ul>
-            <button
-              v-if="canManage && project.status === 'active' && project.team_count < project.team_cap"
-              class="mt-3 w-full inline-flex items-center justify-center gap-1 text-sm font-medium text-senpai-600 hover:text-senpai-700 border border-dashed border-senpai-200 rounded-lg py-2"
-              @click="openAddMember"
-            ><PlusIcon class="h-4 w-4" /> Add a member</button>
+            <div v-if="canManage && project.status === 'active' && project.team_count < project.team_cap" class="mt-3 flex gap-2">
+              <button
+                class="flex-1 inline-flex items-center justify-center gap-1 text-sm font-medium text-senpai-600 hover:text-senpai-700 border border-dashed border-senpai-200 rounded-lg py-2"
+                @click="openAddMember"
+              ><PlusIcon class="h-4 w-4" /> Add</button>
+              <button
+                class="flex-1 inline-flex items-center justify-center gap-1 text-sm font-medium text-senpai-600 hover:text-senpai-700 border border-dashed border-senpai-200 rounded-lg py-2"
+                @click="openInvite"
+              ><EnvelopeIcon class="h-4 w-4" /> Invite</button>
+            </div>
+
+            <div v-if="pendingInvites.length" class="mt-4 pt-4 border-t border-gray-100 space-y-2">
+              <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400">// Pending invites</p>
+              <div v-for="i in pendingInvites" :key="i.id" class="text-xs text-gray-500 flex items-center justify-between gap-2">
+                <span class="truncate">{{ i.member_name || 'A member' }}<span v-if="i.job_role_name"> · {{ i.job_role_name }}</span></span>
+                <span class="text-gray-300 font-mono shrink-0">SENT</span>
+              </div>
+            </div>
           </div>
 
           <!-- Activity — what happened on this project, not just what happened to me. -->
@@ -507,6 +611,33 @@ async function ship() {
       </template>
     </BaseModal>
 
+    <!-- Invite modal (creator/admin) -->
+    <BaseModal :show="inviteModal" title="Invite a teammate" subtitle="They'll see this in their invites and can accept or decline." @close="inviteModal = false">
+      <div class="space-y-3">
+        <div class="relative">
+          <BaseInput v-model="inviteSearch" label="Search members" placeholder="Search by name…" @input="onInviteSearchInput" />
+          <ul v-if="inviteResults.length" class="absolute z-10 mt-1 w-full divide-y divide-gray-100 border border-gray-200 rounded-xl bg-white shadow-lg max-h-48 overflow-auto">
+            <li v-for="m in inviteResults" :key="m.id" class="px-3 py-2 flex items-center gap-2.5 cursor-pointer hover:bg-gray-50" @click="pickInvitee(m)">
+              <span class="h-7 w-7 rounded-full overflow-hidden shrink-0 bg-gray-100">
+                <img v-if="m.photo_url" :src="m.photo_url" :alt="m.full_name" class="h-full w-full object-cover" />
+                <span v-else class="h-full w-full flex items-center justify-center text-[9px] font-medium text-gray-500">{{ initials(m.full_name) }}</span>
+              </span>
+              <span class="text-sm text-gray-800 truncate">{{ m.full_name }}</span>
+            </li>
+          </ul>
+          <p v-else-if="searchingInvitees" class="text-sm text-gray-400 mt-1">Searching…</p>
+        </div>
+        <template v-if="invitee">
+          <BaseSelect v-model="inviteJobRoleId" :options="jobRoles.map((r) => ({ value: r.id, label: r.name }))" label="Role (optional)" placeholder="No specific role" />
+          <BaseTextarea v-model="inviteNote" label="Note (optional)" :rows="2" placeholder="Why you're pulling them in…" />
+        </template>
+      </div>
+      <template #footer>
+        <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="inviteModal = false">Cancel</button>
+        <BaseButton :loading="inviting" :disabled="!invitee" @click="sendInvite">Send invite</BaseButton>
+      </template>
+    </BaseModal>
+
     <!-- Add task modal (teammates only) -->
     <BaseModal
       :show="addTaskModal"
@@ -560,6 +691,18 @@ async function ship() {
         <BaseButton :loading="shipping" @click="ship">Ship it</BaseButton>
       </template>
     </BaseModal>
+
+    <ReviewFormModal
+      v-if="rateTarget"
+      :show="rateModal"
+      source-type="project"
+      :source-id="project!.id"
+      :ratee-id="rateTarget.member_id"
+      :ratee-name="rateTarget.member?.profile?.full_name"
+      :job-role-id="rateTarget.job_role_id"
+      @close="rateModal = false"
+      @submitted="() => flash('Review submitted')"
+    />
 
     <transition enter-from-class="opacity-0 translate-y-2" enter-active-class="transition duration-200" leave-active-class="transition duration-200" leave-to-class="opacity-0 translate-y-2">
       <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-4 py-2 rounded-full shadow-lg z-50">{{ toast }}</div>
