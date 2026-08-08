@@ -28,9 +28,9 @@ const lastUpdated = 'August 2026'
           <h2 class="text-xl font-semibold text-gray-900">1. Who controls your data</h2>
           <p>
             Senpai Collective is the community; it is operated by
-            <strong>Senpai Futures Ltd</strong> (RC 9746107),
+            <strong>SENPAI FUTURES LTD</strong> (RC 9746107),
             a company incorporated in Nigeria with its registered office in the Federal Capital
-            Territory, Abuja. Senpai Futures Ltd is the <strong>data controller</strong> for the
+            Territory, Abuja. SENPAI FUTURES LTD is the <strong>data controller</strong> for the
             personal data described in this policy, and is responsible for how it is handled.
             This policy is written to meet our obligations under the Nigeria Data Protection
             Act 2023 (NDPA).

@@ -29,16 +29,16 @@ const lastUpdated = 'August 2026'
           <p>
             <strong>Senpai Collective</strong> is the community: the members, the pods, the
             standards, and the work built here. It is operated by
-            <strong>Senpai Futures Ltd</strong> (RC 9746107),
+            <strong>SENPAI FUTURES LTD</strong> (RC 9746107),
             a company incorporated in Nigeria with its registered office in the Federal Capital
-            Territory, Abuja. Senpai Futures Ltd is the legal entity behind the collective: it
+            Territory, Abuja. SENPAI FUTURES LTD is the legal entity behind the collective: it
             operates this platform, signs client contracts, holds the collective's intellectual
             property, and is the party you are contracting with under these terms.
           </p>
           <p class="mt-3">
             In these terms, <strong>"we", "us", and "the collective"</strong> mean Senpai
             Collective, the community you are joining. Where these terms create a legal right
-            or obligation, it is held by <strong>Senpai Futures Ltd</strong>, which is named
+            or obligation, it is held by <strong>SENPAI FUTURES LTD</strong>, which is named
             expressly at each of those points. These terms govern your application for, and
             participation in, membership.
           </p>
@@ -128,10 +128,10 @@ const lastUpdated = 'August 2026'
           <p class="mt-2">
             Intellectual property created in a Collective Project (code, designs, brand, and
             any resulting product) is assigned to and belongs to
-            <strong>Senpai Futures Ltd</strong>. Where you are staffed on a client engagement,
-            the work you produce is likewise created for Senpai Futures Ltd, which contracts
+            <strong>SENPAI FUTURES LTD</strong>. Where you are staffed on a client engagement,
+            the work you produce is likewise created for SENPAI FUTURES LTD, which contracts
             with the client and passes the work on under that client agreement. In both cases
-            you assign that intellectual property to Senpai Futures Ltd as it is created, and
+            you assign that intellectual property to SENPAI FUTURES LTD as it is created, and
             agree to sign any further document reasonably needed to record the assignment. You
             are paid for client engagements on the terms agreed with you before the work
             starts.
@@ -169,7 +169,7 @@ const lastUpdated = 'August 2026'
           <h3 class="text-base font-semibold text-gray-900 mt-6">7.4 Who owns a Member Project while it's being built</h3>
           <p class="mt-2">
             While a Member Project is being built on the platform, the intellectual property in
-            it is held by <strong>Senpai Futures Ltd</strong>, and you assign it to us as it is
+            it is held by <strong>SENPAI FUTURES LTD</strong>, and you assign it to us as it is
             created. This is deliberate and temporary: a project with several contributors,
             some of whom may join or leave, needs a single accountable owner while it is in
             progress, or it cannot be defended, licensed, or shipped.
@@ -192,7 +192,7 @@ const lastUpdated = 'August 2026'
             capital where warranted.
           </p>
           <p class="mt-3">
-            On spinout, Senpai Futures Ltd <strong>transfers the intellectual property into
+            On spinout, SENPAI FUTURES LTD <strong>transfers the intellectual property into
             the new company</strong>, so the company genuinely owns what it was built on, and
             a <strong>Shareholders' Agreement</strong> is executed setting out shares, vesting,
             and governance. Our continuing interest is then held as equity, not as retained
@@ -200,7 +200,7 @@ const lastUpdated = 'August 2026'
           </p>
           <ul class="mt-3 list-disc pl-6 space-y-2">
             <li>
-              <strong>Senpai Futures Ltd takes between 20% and 40% of the company's equity</strong>,
+              <strong>SENPAI FUTURES LTD takes between 20% and 40% of the company's equity</strong>,
               assessed at spinout against what the collective actually put into the project.
               A fifth of that stake flows into the Collective Pool (7.8), so part of what
               Senpai holds in every company is held for the members who built the collective
@@ -254,7 +254,7 @@ const lastUpdated = 'August 2026'
           <p class="mt-3">
             Any intellectual property you bring into a project from outside the collective
             (prior work, your own tools, libraries, presets, or components) also remains yours
-            but by using it in the work, you grant Senpai Futures Ltd, its clients, and any
+            but by using it in the work, you grant SENPAI FUTURES LTD, its clients, and any
             venture it spins out a perpetual, royalty-free licence to keep using it as part of
             whatever was delivered.
           </p>
@@ -268,8 +268,8 @@ const lastUpdated = 'August 2026'
           </p>
           <p class="mt-3">
             The Pool is a defined share of the <strong>whole collective enterprise</strong>:
-            both the equity Senpai Futures Ltd holds in its Portfolio Companies
-            <em>and</em> the value of Senpai Futures Ltd itself. Members earn into it by
+            both the equity SENPAI FUTURES LTD holds in its Portfolio Companies
+            <em>and</em> the value of SENPAI FUTURES LTD itself. Members earn into it by
             contributing to the collective. You are not being given a stake in one project;
             you are being given a stake in everything the collective builds.
           </p>
@@ -289,14 +289,14 @@ const lastUpdated = 'August 2026'
               register, so nothing here requires filings or paperwork from you. What stands
               behind them is real: actual equity in real companies. Units carry the economic
               upside of that equity, and when value is realised they are paid as if they were
-              shares, but they do not make you a registered shareholder of Senpai Futures Ltd
+              shares, but they do not make you a registered shareholder of SENPAI FUTURES LTD
               or of any Portfolio Company, and carry no voting or governance rights.
             </li>
             <li>
               <strong>They pay out when the collective actually realises value</strong>:
-              when Senpai Futures Ltd distributes profits, when a Portfolio Company is sold or
-              pays dividends, when Senpai sells part of a stake, or on a sale of Senpai Futures
-              Ltd itself. They do not pay out on anything merely being <em>valued</em> at a
+              when SENPAI FUTURES LTD distributes profits, when a Portfolio Company is sold or
+              pays dividends, when Senpai sells part of a stake, or on a sale of SENPAI FUTURES
+              LTD itself. They do not pay out on anything merely being <em>valued</em> at a
               number, and there is no guarantee that any payout ever occurs.
             </li>
             <li>
@@ -332,14 +332,14 @@ const lastUpdated = 'August 2026'
             information you access through the platform, is shared with you only to
             participate in the collective. It is confidential and is not to be shared, posted,
             copied, or disclosed outside the collective, in whole or in part, without prior
-            written approval from Senpai Futures Ltd.
+            written approval from SENPAI FUTURES LTD.
           </p>
           <p class="mt-3">
             <strong>Client information</strong>, meaning anything you learn or are given access to
             while working on a client engagement through the platform, including deliverables,
             communications, data, and business details, belongs to that confidentiality
             relationship, not to you individually. It may not be shared, published, retained,
-            or reused outside that engagement without the client's and Senpai Futures Ltd's
+            or reused outside that engagement without the client's and SENPAI FUTURES LTD's
             written consent, even after the project ends or your membership ends. This is
             separate from, and in addition to, the public project credit described in section
             7: being named as a contributor does not give you the right to disclose
@@ -348,7 +348,7 @@ const lastUpdated = 'August 2026'
           <p class="mt-3">
             Breaching this section is treated as a serious violation: it can result in
             immediate suspension or removal from the collective, and, where it causes harm to
-            Senpai Futures Ltd, a client, or another member, including reputational or
+            SENPAI FUTURES LTD, a client, or another member, including reputational or
             financial harm, <strong>we may pursue legal action</strong>, including claims for
             damages and injunctive relief to stop further disclosure. This obligation survives
             the end of your membership: leaving the collective does not release you from it.
@@ -377,8 +377,8 @@ const lastUpdated = 'August 2026'
             expressly carries that authority, you must not negotiate or agree terms, quote
             prices, sign or commit to anything, make representations or guarantees, or
             approach any client, partner, or public body <strong>on behalf of</strong> Senpai
-            Collective or Senpai Futures Ltd. Any agreement purportedly made on the
-            collective's behalf without that authority does not bind Senpai Futures Ltd.
+            Collective or SENPAI FUTURES LTD. Any agreement purportedly made on the
+            collective's behalf without that authority does not bind SENPAI FUTURES LTD.
           </p>
 
           <h3 class="text-base font-semibold text-gray-900 mt-6">9.2 Client work comes through the collective</h3>
@@ -404,7 +404,7 @@ const lastUpdated = 'August 2026'
             experience or contribution to obtain work, or any dishonest or fraudulent dealing
             with a client, partner, or member, is treated as a <strong>serious breach of these
             terms</strong>. It is grounds for immediate removal, and where it causes loss or
-            reputational harm to Senpai Futures Ltd, a client, or another member, we may
+            reputational harm to SENPAI FUTURES LTD, a client, or another member, we may
             pursue the remedies in section 8.
           </p>
 
@@ -482,7 +482,7 @@ const lastUpdated = 'August 2026'
           <h2 class="text-xl font-semibold text-gray-900">11. Ending membership</h2>
           <p>
             You may leave at any time by contacting us. <strong>Membership is a privilege, not
-            a right.</strong> Senpai Futures Ltd may suspend, deactivate, or revoke a
+            a right.</strong> SENPAI FUTURES LTD may suspend, deactivate, or revoke a
             membership at our discretion, including but not limited to breach of these terms,
             the code of conduct, or the community's standards, or extended inactivity. Ending
             your membership does not change the ownership of any Project you contributed to
@@ -495,7 +495,7 @@ const lastUpdated = 'August 2026'
           <h2 class="text-xl font-semibold text-gray-900">12. Membership is not employment</h2>
           <p>
             Membership of the collective does not create an employment relationship, a
-            partnership, or an agency relationship between you and Senpai Futures Ltd. Where
+            partnership, or an agency relationship between you and SENPAI FUTURES LTD. Where
             you are staffed on a paid client engagement, the basis of that engagement, whether
             as an employee, a contractor, or otherwise, will be set out in a separate written
             agreement signed before the work begins, and that agreement governs how you are

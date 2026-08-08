@@ -236,17 +236,16 @@ import { vReveal } from '@/composables/useScrollReveal'
     <footer class="bg-gray-900 text-gray-400 py-8 border-t border-gray-800">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row justify-between items-center">
-          <div class="flex items-center mb-4 md:mb-0">
+          <p class="text-sm text-center md:text-left mb-4 md:mb-0">
+            Operated by SENPAI FUTURES LTD (RC 9746107). &copy; {{ new Date().getFullYear() }}
+          </p>
+          <div class="flex items-center">
             <a href="https://www.thinksenpai.com/" target="_blank" rel="noopener noreferrer" class="flex items-center hover:opacity-80 transition-opacity">
               <span class="text-sm text-gray-500">An extension of</span>
               <img src="/senpai.svg" alt="Senpai" class="h-6 w-auto ml-2" />
               <span class="ml-2 text-sm font-medium text-gray-400">SENPAI</span>
             </a>
           </div>
-          <p class="text-sm text-center md:text-right">
-            Operated by SENPAI FUTURES LTD (RC 9746107), Abuja, Nigeria.<br class="hidden md:inline" />
-            &copy; {{ new Date().getFullYear() }}
-          </p>
         </div>
       </div>
     </footer>

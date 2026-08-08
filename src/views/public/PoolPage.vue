@@ -49,8 +49,8 @@ const lastUpdated = 'July 2026'
           </p>
           <p class="mt-3">
             The Collective Pool is <strong>20% of the whole collective enterprise</strong>:
-            both the equity Senpai Futures Ltd holds in its Portfolio Companies, and the value
-            of Senpai Futures Ltd itself. You are not being given a stake in one project. You
+            both the equity SENPAI FUTURES LTD holds in its Portfolio Companies, and the value
+            of SENPAI FUTURES LTD itself. You are not being given a stake in one project. You
             are being given a stake in everything the collective builds.
           </p>
           <p class="mt-3">
@@ -205,7 +205,7 @@ const lastUpdated = 'July 2026'
           </div>
           <p class="mt-4">
             Forfeited units return to the Pool and are redistributed through future issuance.
-            They do not revert to Senpai Futures Ltd. What the members create stays with the
+            They do not revert to SENPAI FUTURES LTD. What the members create stays with the
             members.
           </p>
           <p class="mt-3">
@@ -218,9 +218,9 @@ const lastUpdated = 'July 2026'
           <h2 class="text-xl font-semibold text-gray-900">6. How and when it pays</h2>
           <p>
             Units pay out only when the collective <strong>realises value in cash</strong>:
-            when Senpai Futures Ltd distributes profits, when a Portfolio Company is sold or
-            pays dividends, when Senpai sells down part of a stake, or on a sale of Senpai
-            Futures Ltd itself.
+            when SENPAI FUTURES LTD distributes profits, when a Portfolio Company is sold or
+            pays dividends, when Senpai sells down part of a stake, or on a sale of SENPAI
+            FUTURES LTD itself.
           </p>
           <p class="mt-3">
             On a realisation event, the Pool's 20% of the net proceeds, after tax, transaction
@@ -247,7 +247,7 @@ const lastUpdated = 'July 2026'
           </p>
           <p class="mt-3">
             To every member, at least annually: how many Portfolio Companies exist and what
-            stage they are at, <strong>Senpai Futures Ltd's actual revenue and profit</strong>,
+            stage they are at, <strong>SENPAI FUTURES LTD's actual revenue and profit</strong>,
             total realised to date and total distributed to the Pool, and total units
             outstanding.
           </p>
