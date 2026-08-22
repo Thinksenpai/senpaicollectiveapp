@@ -119,7 +119,7 @@ const { y: scrollY } = useWindowScroll()
 
       <div class="max-w-4xl mx-auto text-center">
         <p v-reveal.now="160" class="mt-8 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-          Senpai Collective is an elite community of creatives building the future of Africa through culture, technology, business, art, and systems. This is not a network. It's a movement.
+          Senpai Collective is an elite community of creatives building the future of Africa through culture, technology, business, art, and systems. Your skills are verified against real work, reviewed by the people who built it with you. Not a portfolio. A record.
         </p>
         <!-- Apply CTA -->
         <div v-reveal.now="240" class="mt-10">
@@ -131,7 +131,7 @@ const { y: scrollY } = useWindowScroll()
             >
               Apply Now
             </RouterLink>
-            <p class="text-gray-500 text-sm mt-3">Applications are open. Not everyone gets in — and that's the point.</p>
+            <p class="text-gray-500 text-sm mt-3">Applications are open for our founding cohort. Not everyone gets in — and that's the point.</p>
           </div>
 
           <!-- Manifesto Link -->
@@ -454,9 +454,9 @@ const { y: scrollY } = useWindowScroll()
               03
             </div>
             <div>
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Build Your Profile</h3>
+              <h3 class="text-xl font-bold text-gray-900 mb-2">Get Verified</h3>
               <p class="text-gray-600">
-                Showcase your work, skills, and what you're building. This is how opportunities find you and how collaborators discover you.
+                Claim your skills, then prove them. Every task and project you ship is reviewed by the people who worked alongside you. Verified skills are earned through real work, never self-assigned.
               </p>
             </div>
           </div>
@@ -468,7 +468,7 @@ const { y: scrollY } = useWindowScroll()
             <div>
               <h3 class="text-xl font-bold text-gray-900 mb-2">Build With Others</h3>
               <p class="text-gray-600">
-                Collaborate on projects. Join build challenges. Ship real work with other members. The collective grows stronger when we build together.
+                Collaborate on projects. Join build challenges. Ship real work with other members. Every shipped project adds to your record.
               </p>
             </div>
           </div>
@@ -526,7 +526,7 @@ const { y: scrollY } = useWindowScroll()
           </div>
 
           <!-- People -->
-          <div v-reveal="200" class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-12 py-10">
+          <div v-reveal="200" class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-12 py-10 border-b border-gray-200">
             <h3 class="text-3xl font-black uppercase tracking-tight text-gray-900">People</h3>
             <div>
               <p class="text-gray-900 font-semibold mb-2">
@@ -537,10 +537,23 @@ const { y: scrollY } = useWindowScroll()
               </p>
             </div>
           </div>
+
+          <!-- Proof -->
+          <div v-reveal="300" class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-4 md:gap-12 py-10">
+            <h3 class="text-3xl font-black uppercase tracking-tight text-gray-900">Proof</h3>
+            <div>
+              <p class="text-gray-900 font-semibold mb-2">
+                Anyone can claim a skill. Almost nobody can prove one.
+              </p>
+              <p class="text-gray-600">
+                A verified record of what you've actually built, reviewed by the people accountable for the work. The thing that gets you priced on your skill instead of your postcode.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <p v-reveal="300" class="mt-10 text-xl font-bold text-gray-900 max-w-2xl">
-          Not more content. Not another course. Real access. Real structure. Real people.
+        <p v-reveal="400" class="mt-10 text-xl font-bold text-gray-900 max-w-2xl">
+          Not more content. Not another course. Real access. Real structure. Real people. Real proof.
         </p>
       </div>
     </section>
