@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
+  ArrowPathRoundedSquareIcon,
   RocketLaunchIcon,
   UsersIcon,
   Bars3Icon,
@@ -103,6 +104,10 @@ function handleLogout() {
             Your Profile
           </RouterLink>
           <template v-if="authStore.isApproved">
+            <RouterLink to="/circles" class="flex items-center px-4 py-3 text-sm text-gray-700" @click="closeMore">
+              <ArrowPathRoundedSquareIcon class="h-5 w-5 mr-3 text-gray-400" />
+              Circles
+            </RouterLink>
             <RouterLink to="/jobs" class="flex items-center px-4 py-3 text-sm text-gray-700" @click="closeMore">
               <BriefcaseIcon class="h-5 w-5 mr-3 text-gray-400" />
               Jobs

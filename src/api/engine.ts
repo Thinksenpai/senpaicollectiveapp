@@ -21,14 +21,20 @@ import type {
   AssignTaskPayload,
   MemberEngineStatus,
   TaskComment,
+  TaskSubmission,
   AssignmentComment,
-  TaskPeerStatus,
   Program,
   Project,
   ProjectStatus,
   ProposeProjectPayload,
   CreateProjectTaskPayload,
-  CreateCircleTrackPayload
+  CreateCircleTrackPayload,
+  Circle,
+  CircleMetric,
+  CircleSeat,
+  LogCadencePayload,
+  ReportMetricPayload,
+  GrantSeatPayload
 } from '@/types'
 
 export const engineApi = {
@@ -64,6 +70,28 @@ export const engineApi = {
     return apiClient.get(`/programs/${programId}`)
   },
 
+  // Circles — the standing machines. Reads are open to any member: the
+  // charter, the seats and the cadence are meant to be visible.
+  async listCircles(): Promise<ApiResponse<Circle[]>> {
+    return apiClient.get('/circles')
+  },
+  async getCircle(slug: string): Promise<ApiResponse<Circle>> {
+    return apiClient.get(`/circles/${slug}`)
+  },
+  async getCircleTasks(slug: string): Promise<ApiResponse<Task[]>> {
+    return apiClient.get(`/circles/${slug}/tasks`)
+  },
+  async getCircleMetrics(slug: string): Promise<ApiResponse<CircleMetric[]>> {
+    return apiClient.get(`/circles/${slug}/metrics`)
+  },
+  // Seat holders (or admins) log the circle's own cadence and metrics.
+  async logCadence(slug: string, payload: LogCadencePayload): Promise<ApiResponse<null>> {
+    return apiClient.post(`/circles/${slug}/cadence`, payload)
+  },
+  async reportCircleMetric(slug: string, payload: ReportMetricPayload): Promise<ApiResponse<null>> {
+    return apiClient.post(`/circles/${slug}/metrics`, payload)
+  },
+
   async claimTask(taskId: string): Promise<ApiResponse<TaskAssignment>> {
     return apiClient.post(`/tasks/${taskId}/claim`)
   },
@@ -72,7 +100,7 @@ export const engineApi = {
     return apiClient.post(`/tasks/${taskId}/start`)
   },
 
-  async getTaskPeers(taskId: string): Promise<ApiResponse<TaskPeerStatus[]>> {
+  async getTaskPeers(taskId: string): Promise<ApiResponse<TaskAssignment[]>> {
     return apiClient.get(`/tasks/${taskId}/peers`)
   },
 
@@ -116,6 +144,12 @@ export const engineApi = {
   },
   async postTaskComment(taskId: string, body: string): Promise<ApiResponse<TaskComment>> {
     return apiClient.post(`/tasks/${taskId}/comments`, { body })
+  },
+
+  // Every attempt on an assignment, oldest first — the member, the task's
+  // named reviewer and admins can read it.
+  async getSubmissionHistory(assignmentId: string): Promise<ApiResponse<TaskSubmission[]>> {
+    return apiClient.get(`/assignments/${assignmentId}/submissions`)
   },
 
   // Assignment comments (private thread on one member's submission)
@@ -232,6 +266,18 @@ export const adminEngineApi = {
   createCircleTrack(payload: CreateCircleTrackPayload): Promise<ApiResponse<Program>> {
     return apiClient.post('/admin/circle-tracks', payload)
   },
+
+  // Circles (admin): the charter, status, and seats. Seats are granted while
+  // the collective seeds its first circles; entry becomes earned later.
+  updateCircle(slug: string, payload: Partial<Circle>): Promise<ApiResponse<Circle>> {
+    return apiClient.put(`/admin/circles/${slug}`, payload)
+  },
+  grantCircleSeat(slug: string, payload: GrantSeatPayload): Promise<ApiResponse<CircleSeat>> {
+    return apiClient.post(`/admin/circles/${slug}/seats`, payload)
+  },
+  endCircleSeat(slug: string, seatId: string, endedNote?: string): Promise<ApiResponse<null>> {
+    return apiClient.post(`/admin/circles/${slug}/seats/${seatId}/end`, { ended_note: endedNote })
+  },
   memberRoster(): Promise<ApiResponse<MemberEngineStatus[]>> {
     return apiClient.get('/admin/roster')
   },
@@ -246,7 +292,10 @@ export const adminEngineApi = {
   },
 
   // Tasks — omit cohortId (or pass '') for the global/circle-track task list.
+  // No cohortId → the cohort-less (circle/global) tasks. 'all' → everything,
+  // which is the only view that shows circle work created inside a cohort.
   listTasks(cohortId?: string): Promise<ApiResponse<Task[]>> {
+    if (cohortId === 'all') return apiClient.get('/admin/tasks?scope=all')
     return apiClient.get(cohortId ? `/admin/tasks?cohort_id=${cohortId}` : '/admin/tasks')
   },
   createTask(payload: CreateTaskPayload): Promise<ApiResponse<Task>> {

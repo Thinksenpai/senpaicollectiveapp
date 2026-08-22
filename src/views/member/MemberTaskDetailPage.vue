@@ -3,15 +3,16 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { engineApi } from '@/api'
-import type { Task, TaskAssignment, TaskComment, AssignmentComment, TaskPeerStatus, Project, Activity } from '@/types'
+import type { Task, TaskAssignment, TaskComment, AssignmentComment, Project, Activity, TaskSubmission } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import ProjectTaskRoster from '@/components/member/ProjectTaskRoster.vue'
+import SubmissionHistory from '@/components/member/SubmissionHistory.vue'
 import ActivityFeed from '@/components/common/ActivityFeed.vue'
 import ReviewFormModal from '@/components/reviews/ReviewFormModal.vue'
 import {
-  ArrowLeftIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, UserCircleIcon, RocketLaunchIcon
+  ArrowLeftIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, RocketLaunchIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
@@ -21,12 +22,13 @@ const taskId = computed(() => route.params.id as string)
 const loading = ref(true)
 const task = ref<Task | null>(null)
 const assignment = ref<TaskAssignment | null>(null) // my own assignment, if any
-const peers = ref<TaskPeerStatus[]>([]) // program/cohort tasks only — status, no submissions
+const peers = ref<TaskAssignment[]>([]) // non-project tasks — everyone on the task, hand-ins included
 const projectRoster = ref<TaskAssignment[]>([]) // project tasks only — everyone, with submissions
 const project = ref<Project | null>(null)
 const taskComments = ref<TaskComment[]>([])
 const assignmentComments = ref<AssignmentComment[]>([])
 const activity = ref<Activity[]>([])
+const myHistory = ref<TaskSubmission[]>([]) // every attempt I've made on this task
 
 const draft = reactive({ link: '', body: '' })
 const resubmitting = ref(false)
@@ -82,18 +84,20 @@ async function load() {
     } else if (task.value) {
       // Program/cohort task — the lighter "who else, what status" view (no submissions).
       const peerRes = await engineApi.getTaskPeers(taskId.value)
-      peers.value = (peerRes.data ?? []).filter((p) => !p.is_self)
+      peers.value = (peerRes.data ?? []).filter((p) => p.member_id !== authStore.member?.id)
     }
 
     if (assignment.value) {
       draft.link = assignment.value.link_url ?? ''
       draft.body = assignment.value.body ?? ''
-      const [tc, ac] = await Promise.all([
+      const [tc, ac, hist] = await Promise.all([
         engineApi.getTaskComments(taskId.value),
-        engineApi.getAssignmentComments(assignment.value.id)
+        engineApi.getAssignmentComments(assignment.value.id),
+        engineApi.getSubmissionHistory(assignment.value.id)
       ])
       taskComments.value = tc.data ?? []
       assignmentComments.value = ac.data ?? []
+      myHistory.value = hist.data ?? []
     } else if (!isProjectTask.value) {
       // Non-project tasks are private 1:1 with admins — no assignment, nothing to show.
       taskComments.value = []
@@ -195,14 +199,6 @@ function authorName(c: TaskComment | AssignmentComment) {
   return c.member?.profile?.full_name || c.member?.email || 'Member'
 }
 
-const peerStyles: Record<string, string> = {
-  assigned: 'bg-gray-100 text-gray-600',
-  in_progress: 'bg-amber-100 text-amber-800',
-  submitted: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  returned: 'bg-red-100 text-red-800'
-}
-
 const statusLabel: Record<string, string> = {
   assigned: 'OPEN', in_progress: 'IN_PROGRESS', submitted: 'IN_REVIEW', completed: 'DONE', returned: 'RETURNED'
 }
@@ -294,6 +290,14 @@ function dueTag(d?: string | null) {
             <p v-if="assignment.body" class="text-sm text-gray-700 whitespace-pre-wrap">{{ assignment.body }}</p>
             <button v-if="assignment.status !== 'completed'" class="mt-2 text-xs text-gray-500 hover:text-gray-800 font-medium" @click="resubmitting = true">Resubmit</button>
           </div>
+
+          <!-- Earlier attempts. Resubmitting replaces the hand-in above, so
+               without this the work you were asked to change disappears the
+               moment you change it — along with the note asking for it. -->
+          <div v-if="myHistory.length > 1" class="mt-3">
+            <p class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-2">// Earlier attempts</p>
+            <SubmissionHistory :submissions="myHistory" hide-latest />
+          </div>
           <template v-else-if="assignment.status !== 'completed'">
             <textarea v-if="assignment.task?.handin_type === 'text'" v-model="draft.body" rows="3" placeholder="Write your response…" class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-senpai-500" />
             <a v-else-if="assignment.task?.handin_type === 'external_form' && assignment.task?.external_url" :href="assignment.task.external_url" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-sm text-senpai-600 font-medium mb-2">Open the form <ArrowTopRightOnSquareIcon class="h-4 w-4" /></a>
@@ -336,14 +340,22 @@ function dueTag(d?: string | null) {
           </div>
         </section>
 
-        <!-- Who else is working on this (program/cohort tasks only) -->
+        <!-- Who else is working on this (non-project tasks) — the same roster
+             the project view uses, minus the review controls: seeing each
+             other's work is the point, reviewing it is the reviewer's job. -->
         <section v-if="!isProjectTask && peers.length">
           <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Who else is working on this</h2>
-          <div class="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
-            <div v-for="p in peers" :key="p.member_id" class="flex items-center justify-between px-4 py-2.5">
-              <span class="text-sm text-gray-800 flex items-center gap-2"><UserCircleIcon class="h-4 w-4 text-gray-300" /> {{ p.member_name }}</span>
-              <span class="text-xs px-2 py-0.5 rounded-full capitalize" :class="peerStyles[p.status]">{{ p.status.replace('_', ' ') }}</span>
-            </div>
+          <p v-if="!task?.show_submissions" class="text-xs text-gray-400 mb-3">
+            Hand-ins on this task stay private to each member and their reviewer.
+          </p>
+          <div class="bg-white rounded-2xl border border-gray-200">
+            <ProjectTaskRoster
+              :assignments="peers"
+              :is-on-team="false"
+              :current-member-id="authStore.member?.id"
+              :can-rate="canRate"
+              @rate="openRate"
+            />
           </div>
         </section>
 

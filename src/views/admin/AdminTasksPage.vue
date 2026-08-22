@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
-import { adminEngineApi, engineApi, skillsApi } from '@/api'
+import { useAuthStore } from '@/stores/auth'
+import { adminEngineApi, adminApi, engineApi, skillsApi } from '@/api'
 import type {
-  Cohort, Pod, CohortMembership, Task, TaskAssignment,
+  Cohort, Pod, CohortMembership, Task, TaskAssignment, Member,
   CreateTaskPayload, TaskKind, HandinType, Program,
-  TaskComment, AssignmentComment, AssignmentStatus, Skill
+  TaskComment, AssignmentComment, AssignmentStatus, Skill, Circle, TaskSubmission
 } from '@/types'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
@@ -15,12 +16,15 @@ import BaseSelect from '@/components/common/BaseSelect.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
+import SubmissionHistory from '@/components/member/SubmissionHistory.vue'
+import ReviewFormModal from '@/components/reviews/ReviewFormModal.vue'
 import {
   PlusIcon, CheckCircleIcon, XMarkIcon, ChatBubbleLeftIcon,
-  CalendarIcon, ArrowUturnLeftIcon, PencilIcon, TrashIcon, XCircleIcon
+  CalendarIcon, ArrowUturnLeftIcon, PencilIcon, TrashIcon, XCircleIcon, StarIcon
 } from '@heroicons/vue/24/outline'
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 const loading = ref(true)
 const cohorts = ref<Cohort[]>([])
@@ -48,6 +52,16 @@ function formatDate(d?: string | null) {
   if (!d) return null
   return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
+// How much of the open board this task still has free. Deliberately separate
+// from the progress bar: slots taken and work completed are different numbers,
+// and reading one as the other makes a half-claimed task look finished.
+// Counts claims only — being handed the task by an admin doesn't use up a
+// slot on the open board.
+function slotsLabel(t: Task): string {
+  const taken = t.claim_count ?? 0
+  if (!t.claim_cap) return `${taken} claimed`
+  return taken >= t.claim_cap ? 'full' : `${taken}/${t.claim_cap} claimed`
+}
 function isOverdue(t: Task) {
   return !!t.due_at && new Date(t.due_at) < new Date() && (t.completed_count ?? 0) < (t.assignment_count ?? 0)
 }
@@ -66,17 +80,20 @@ async function loadCohorts() {
   cohorts.value = res.data ?? []
   const fromQuery = route.query.cohort as string | undefined
   if (fromQuery && cohorts.value.some((c) => c.id === fromQuery)) selectedCohortId.value = fromQuery
-  else if (!selectedCohortId.value && cohorts.value.length) {
-    selectedCohortId.value = (cohorts.value.find((c) => c.status === 'forming') ?? cohorts.value[0])!.id
-  }
 }
-const GLOBAL = '__global__' // sentinel: circle tracks + their tasks (cohort_id IS NULL)
+// Scope sentinels. ALL is the default and the only honest view: a circle task
+// created while a cohort was selected carries that cohort_id, so it is absent
+// from GLOBAL and buried in the cohort — which is how open work went missing.
+const ALL = '__all__'
+const GLOBAL = '__global__' // circle tracks + their tasks (cohort_id IS NULL)
+const isAll = computed(() => selectedCohortId.value === ALL)
 const isGlobal = computed(() => selectedCohortId.value === GLOBAL)
+const inCohortView = computed(() => !isAll.value && !isGlobal.value)
 
 async function loadTasks() {
   if (!selectedCohortId.value) return
-  if (isGlobal.value) {
-    const t = await adminEngineApi.listTasks()
+  if (!inCohortView.value) {
+    const t = await adminEngineApi.listTasks(isAll.value ? 'all' : undefined)
     tasks.value = t.data ?? []
     pods.value = []
     members.value = []
@@ -92,6 +109,26 @@ async function loadTasks() {
   members.value = m.data ?? []
 }
 
+function cohortName(id?: string | null) {
+  return id ? cohorts.value.find((c) => c.id === id)?.name : null
+}
+
+// Where a task lives, for the scope column in the all-tasks view.
+function taskHome(t: Task): string {
+  if (t.project_id) return 'Project'
+  return cohortName(t.cohort_id) ?? 'Collective-wide'
+}
+
+// Assigning needs people. In a cohort view that's the cohort's roster; outside
+// one there is no roster, so fall back to every approved member rather than
+// showing an empty picker (which is what the global view used to do).
+const allMembers = ref<Member[]>([])
+const memberOptions = computed(() =>
+  inCohortView.value
+    ? members.value.map((m) => ({ value: m.member_id, label: memberName(m) }))
+    : allMembers.value.map((m) => ({ value: m.id, label: m.profile?.full_name || m.email }))
+)
+
 // The task form's "Program" picker and task-row labels need every program
 // that exists — not just the ones for whichever cohort/global view you
 // currently have selected. Loaded once, independent of that toggle.
@@ -103,47 +140,57 @@ async function loadAllPrograms() {
   programs.value = [...cohortPrograms.flatMap((r) => r.data ?? []), ...(circleTracks.data ?? [])]
 }
 
+async function loadCircles() {
+  const res = await engineApi.listCircles()
+  circles.value = res.data ?? []
+}
+
 // Deep links from the Programs page: ?program=<id> opens the create-task
 // modal pre-filled for that program (routing to the right cohort/global
 // view first); ?task=<id> opens that task's detail slide-over directly.
 async function handleDeepLinks() {
   const programId = route.query.program as string | undefined
   const taskId = route.query.task as string | undefined
+  // Both land in the all-tasks view: it is the one scope guaranteed to
+  // contain the target, whatever cohort it does or doesn't belong to.
   if (programId) {
     const res = await engineApi.getProgram(programId)
     const program = res.data?.program
     if (program) {
-      selectedCohortId.value = program.cohort_id || GLOBAL
+      selectedCohortId.value = ALL
       await loadTasks()
       openTaskModal()
       taskForm.program_id = programId
+      taskForm.cohort_id = program.cohort_id || ''
     }
   } else if (taskId) {
-    const res = await engineApi.getTask(taskId)
-    const task = res.data
-    if (task) {
-      selectedCohortId.value = task.cohort_id || GLOBAL
-      await loadTasks()
-      const found = tasks.value.find((t) => t.id === taskId)
-      if (found) openDetail(found)
-    }
+    selectedCohortId.value = ALL
+    await loadTasks()
+    const found = tasks.value.find((t) => t.id === taskId)
+    if (found) openDetail(found)
   }
 }
 
 onMounted(async () => {
   try {
     await loadCohorts()
-    await loadAllPrograms()
+    await Promise.all([loadAllPrograms(), loadCircles(), loadAllMembers()])
     if (route.query.program || route.query.task) {
       loading.value = false
       await handleDeepLinks()
       return
     }
+    if (!selectedCohortId.value) selectedCohortId.value = ALL
     await loadTasks()
   } finally {
     loading.value = false
   }
 })
+
+async function loadAllMembers() {
+  const res = await adminApi.getMembers({ status: 'approved', limit: 500 })
+  allMembers.value = res.data ?? []
+}
 watch(selectedCohortId, async (id, old) => {
   if (id && id !== old) {
     loading.value = true
@@ -164,9 +211,12 @@ const editingTaskId = ref<string | null>(null)
 const editingTaskSlug = ref('')
 const taskForm = reactive({
   title: '', description: '',
+  // Explicit, not inherited from whichever scope happens to be selected —
+  // silently stamping the current cohort is what hid circle tasks.
+  cohort_id: '',
   program_id: '', kind: 'custom' as TaskKind,
   handin_type: 'link' as HandinType, external_url: '',
-  is_required: false, status: 'published' as 'draft' | 'published',
+  is_required: false, show_submissions: true, status: 'published' as 'draft' | 'published',
   due_at: '', available_at: '',
   // Role/claiming layer
   skill_id: '' as string, circle: '', reviewer_id: '' as string,
@@ -192,12 +242,17 @@ const skillOptions = computed(() => [
   { value: '', label: 'None — no role tag' },
   ...skills.value.map((s) => ({ value: String(s.id), label: s.name }))
 ])
-const circleOptions = [
+// Circles come from the circles table rather than a hardcoded list: a new
+// circle then appears here on its own, and the slug can never be mistyped
+// into existence (migration 023 made task.circle_id a real foreign key).
+const circles = ref<Circle[]>([])
+const circleOptions = computed(() => [
   { value: '', label: 'None' },
-  { value: 'content', label: 'Content' },
-  { value: 'product', label: 'Product' },
-  { value: 'growth', label: 'Growth' }
-]
+  ...circles.value.map((c) => ({
+    value: c.slug,
+    label: c.status === 'active' ? c.name : `${c.name} (${c.status})`
+  }))
+])
 
 const kindOptions = ['reflection', 'portfolio', 'build', 'publish', 'research', 'custom'].map((k) => ({ value: k, label: (k[0] ?? '').toUpperCase() + k.slice(1) }))
 const handinOptions = [
@@ -214,11 +269,13 @@ function openTaskModal() {
   editingTaskId.value = null
   taskForm.title = ''
   taskForm.description = ''
+  taskForm.cohort_id = inCohortView.value ? selectedCohortId.value : ''
   taskForm.program_id = ''
   taskForm.kind = 'custom'
   taskForm.handin_type = 'link'
   taskForm.external_url = ''
   taskForm.is_required = false
+  taskForm.show_submissions = true
   taskForm.status = 'published'
   taskForm.due_at = ''
   taskForm.available_at = ''
@@ -239,11 +296,13 @@ function openEditTaskModal(t: Task) {
   editingTaskSlug.value = t.slug
   taskForm.title = t.title
   taskForm.description = t.description
+  taskForm.cohort_id = t.cohort_id || ''
   taskForm.program_id = t.program_id || ''
   taskForm.kind = t.kind
   taskForm.handin_type = t.handin_type
   taskForm.external_url = t.external_url || ''
   taskForm.is_required = t.is_required
+  taskForm.show_submissions = t.show_submissions
   taskForm.status = t.status === 'archived' ? 'draft' : t.status
   taskForm.due_at = t.due_at ? t.due_at.slice(0, 10) : ''
   taskForm.available_at = t.available_at ? t.available_at.slice(0, 10) : ''
@@ -278,9 +337,9 @@ async function saveTask() {
       program_id: taskForm.program_id || undefined,
       handin_type: taskForm.handin_type,
       external_url: taskForm.handin_type === 'external_form' ? taskForm.external_url || undefined : undefined,
-      cohort_id: isGlobal.value ? undefined : selectedCohortId.value,
+      cohort_id: taskForm.cohort_id || undefined,
       is_required: taskForm.is_required,
-      show_submissions: true,
+      show_submissions: taskForm.show_submissions,
       status: taskForm.status,
       due_at: taskForm.due_at ? new Date(taskForm.due_at).toISOString() : undefined,
       available_at: taskForm.available_at ? new Date(taskForm.available_at).toISOString() : undefined,
@@ -301,7 +360,7 @@ async function saveTask() {
       if (assignOnCreate.type !== 'none' && created.data) {
         const assignPayload =
           assignOnCreate.type === 'cohort'
-            ? { target_type: 'cohort' as const, target_id: selectedCohortId.value }
+            ? { target_type: 'cohort' as const, target_id: taskForm.cohort_id }
             : assignOnCreate.type === 'global'
               ? { target_type: 'global' as const }
               : { target_type: assignOnCreate.type, target_id: assignOnCreate.id }
@@ -325,16 +384,27 @@ async function saveTask() {
 const assignTask = ref<Task | null>(null)
 const assigning = ref(false)
 const assignForm = reactive({ type: 'cohort', id: '' })
-function openAssign(t: Task) {
-  assignForm.type = 'cohort'
+async function openAssign(t: Task) {
+  // "The whole cohort" only means something for a task that has one.
+  assignForm.type = t.cohort_id ? 'cohort' : 'individual'
   assignForm.id = ''
   assignTask.value = t
+  // Outside a cohort view the pod list isn't loaded — fetch this task's own.
+  if (t.cohort_id && !inCohortView.value) {
+    pods.value = (await adminEngineApi.listPods(t.cohort_id)).data ?? []
+  }
 }
+const assignTargetOptions = computed(() => [
+  ...(assignTask.value?.cohort_id ? [{ value: 'cohort', label: `The whole cohort — ${cohortName(assignTask.value.cohort_id) ?? ''}` }] : []),
+  ...(assignTask.value?.cohort_id ? [{ value: 'pod', label: 'A specific pod' }] : []),
+  { value: 'individual', label: 'One member' },
+  { value: 'global', label: 'Everyone in the collective' }
+])
 async function doAssign() {
   if (!assignTask.value) return
   const payload =
     assignForm.type === 'cohort'
-      ? { target_type: 'cohort' as const, target_id: selectedCohortId.value }
+      ? { target_type: 'cohort' as const, target_id: assignTask.value.cohort_id ?? '' }
       : assignForm.type === 'global'
         ? { target_type: 'global' as const }
         : { target_type: assignForm.type as 'pod' | 'individual', target_id: assignForm.id }
@@ -424,6 +494,27 @@ async function toggleAssignment(a: TaskAssignment) {
     const res = await engineApi.getAssignmentComments(a.id)
     assignmentComments[a.id] = res.data ?? []
   }
+  await loadHistory(a.id)
+}
+
+// Reviewing is restricted to the task's named reviewer, not admins generally —
+// the backend enforces the same rule, so showing the button to anyone else
+// would only produce a rejection.
+const canRateDetail = computed(() =>
+  !!detailTask.value?.reviewer_id && detailTask.value.reviewer_id === authStore.member?.id
+)
+const rateModal = ref(false)
+const rateTarget = ref<TaskAssignment | null>(null)
+function openRate(a: TaskAssignment) {
+  rateTarget.value = a
+  rateModal.value = true
+}
+
+// Earlier attempts, so a reviewer can see whether a resubmission actually
+// addressed what they returned it for.
+const submissionHistory = reactive<Record<string, TaskSubmission[]>>({})
+async function loadHistory(assignmentId: string) {
+  submissionHistory[assignmentId] = (await engineApi.getSubmissionHistory(assignmentId)).data ?? []
 }
 async function postAssignmentComment(a: TaskAssignment) {
   const body = (newAssignmentComment[a.id] || '').trim()
@@ -496,13 +587,17 @@ async function unassign(a: TaskAssignment) {
       <div v-if="loading" class="flex justify-center py-24"><LoadingSpinner size="lg" /></div>
 
       <template v-else>
-        <!-- cohort selector -->
-        <div class="mb-6 flex items-center gap-3">
-          <span class="text-sm text-gray-500">Cohort</span>
-          <div class="min-w-[200px]">
+        <!-- scope selector -->
+        <div class="mb-6 flex items-center gap-3 flex-wrap">
+          <span class="text-sm text-gray-500">Showing</span>
+          <div class="min-w-[220px]">
             <BaseSelect
               v-model="selectedCohortId"
-              :options="[...cohorts.map((c) => ({ value: c.id, label: c.name })), { value: GLOBAL, label: 'Circle Tracks (global)' }]"
+              :options="[
+                { value: ALL, label: 'All tasks' },
+                ...cohorts.map((c) => ({ value: c.id, label: c.name })),
+                { value: GLOBAL, label: 'Collective-wide only (no cohort)' }
+              ]"
             />
           </div>
           <RouterLink to="/admin/programs" class="text-sm font-medium text-senpai-600 hover:text-senpai-700">
@@ -516,6 +611,7 @@ async function unassign(a: TaskAssignment) {
             <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide text-left">
               <tr>
                 <th class="px-5 py-2.5 font-medium">Task</th>
+                <th v-if="isAll" class="px-5 py-2.5 font-medium">Where</th>
                 <th class="px-5 py-2.5 font-medium">Assigned to</th>
                 <th class="px-5 py-2.5 font-medium">Due</th>
                 <th class="px-5 py-2.5 font-medium">Progress</th>
@@ -525,11 +621,21 @@ async function unassign(a: TaskAssignment) {
             <tbody class="divide-y divide-gray-100">
               <tr v-for="t in tasks" :key="t.id" class="hover:bg-gray-50 cursor-pointer" @click="openDetail(t)">
                 <td class="px-5 py-3">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <span class="font-medium text-gray-900">{{ t.title }}</span>
                     <span v-if="t.is_required" class="text-[11px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 shrink-0">Required</span>
+                    <!-- Open-board state: without this an admin can't tell a
+                         claimable task from a directly assigned one. -->
+                    <span v-if="t.claimable" class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-gray-900 text-white shrink-0">
+                      Open · {{ slotsLabel(t) }}
+                    </span>
+                    <span v-if="t.circle" class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 shrink-0">{{ t.circle }}</span>
+                    <span v-if="t.skill_name" class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-senpai-50 text-senpai-700 shrink-0">{{ t.skill_name }}</span>
                   </div>
                   <p class="text-xs text-gray-400 mt-0.5 capitalize">{{ programName(t.program_id) ? programName(t.program_id) + ' · ' : '' }}{{ t.kind }} · {{ t.handin_type.replace('_', ' ') }}</p>
+                </td>
+                <td v-if="isAll" class="px-5 py-3">
+                  <span class="text-xs text-gray-500">{{ taskHome(t) }}</span>
                 </td>
                 <td class="px-5 py-3" @click.stop>
                   <div v-if="t.assigned_to?.length" class="flex flex-wrap gap-1 max-w-[220px]">
@@ -570,7 +676,7 @@ async function unassign(a: TaskAssignment) {
           </div>
         </div>
         <div v-else class="bg-white rounded-2xl border border-gray-200 p-10 text-center">
-          <p class="text-gray-500 text-sm">No tasks for this cohort yet.</p>
+          <p class="text-gray-500 text-sm">{{ isAll ? 'No tasks yet.' : 'No tasks in this scope yet.' }}</p>
           <BaseButton class="mt-4" @click="openTaskModal">Create the first task</BaseButton>
         </div>
       </template>
@@ -587,6 +693,11 @@ async function unassign(a: TaskAssignment) {
         <BaseAlert v-if="taskFormError" type="error">{{ taskFormError }}</BaseAlert>
         <BaseInput v-model="taskForm.title" label="Title" placeholder="Upgrade your portfolio" :error="taskFormErrors.title" required />
         <BaseTextarea v-model="taskForm.description" label="Description" :rows="3" placeholder="What should they do, and what does done look like?" :error="taskFormErrors.description" required />
+        <BaseSelect
+          v-model="taskForm.cohort_id"
+          :options="[{ value: '', label: 'No cohort — collective-wide (circle work, open board)' }, ...cohorts.map((c) => ({ value: c.id, label: c.name }))]"
+          label="Belongs to"
+        />
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <BaseSelect v-model="taskForm.program_id" :options="programOptions" label="Program" />
           <BaseSelect v-model="taskForm.kind" :options="kindOptions" label="Kind" />
@@ -601,6 +712,15 @@ async function unassign(a: TaskAssignment) {
           <input type="checkbox" v-model="taskForm.is_required" class="rounded border-gray-300 text-senpai-600 focus:ring-senpai-500" />
           Required to complete induction
         </label>
+        <label class="flex items-start gap-2 text-sm text-gray-700">
+          <input type="checkbox" v-model="taskForm.show_submissions" class="mt-0.5 rounded border-gray-300 text-senpai-600 focus:ring-senpai-500" />
+          <span>
+            Everyone on this task can see each other's hand-ins
+            <span class="block text-xs text-gray-400">
+              On by default. Turn off for work where seeing the other answers first would spoil it — hand-ins then stay between each member and their reviewer.
+            </span>
+          </span>
+        </label>
 
         <!-- Role/claiming layer: the skill this work exercises + the open board -->
         <div class="pt-4 border-t border-gray-100 space-y-3">
@@ -610,7 +730,7 @@ async function unassign(a: TaskAssignment) {
           </div>
           <BaseSelect
             v-model="taskForm.reviewer_id"
-            :options="[{ value: '', label: 'You (default)' }, ...members.map((m) => ({ value: m.member_id, label: memberName(m) }))]"
+            :options="[{ value: '', label: 'You (default)' }, ...memberOptions]"
             label="Reviewer — who reviews the submission"
           />
           <div class="flex items-center gap-4">
@@ -626,20 +746,18 @@ async function unassign(a: TaskAssignment) {
           <BaseSelect
             v-model="assignOnCreate.type"
             label="Assign to (optional)"
-            :options="isGlobal ? [
-              { value: 'none', label: `Don't assign yet` },
-              { value: 'individual', label: 'One member' },
-              { value: 'global', label: 'Everyone in the collective' }
-            ] : [
-              { value: 'none', label: `Don't assign yet` },
-              { value: 'cohort', label: 'The whole cohort' },
-              { value: 'pod', label: 'A specific pod' },
+            :options="[
+              { value: 'none', label: taskForm.claimable ? `Don't assign — let members claim it` : `Don't assign yet` },
+              ...(taskForm.cohort_id ? [
+                { value: 'cohort', label: 'The whole cohort' },
+                { value: 'pod', label: 'A specific pod' }
+              ] : []),
               { value: 'individual', label: 'One member' },
               { value: 'global', label: 'Everyone in the collective' }
             ]"
           />
           <BaseSelect v-if="assignOnCreate.type === 'pod'" v-model="assignOnCreate.id" :options="pods.map((p) => ({ value: p.id, label: p.name }))" label="Pod" placeholder="Select a pod" />
-          <BaseSelect v-if="assignOnCreate.type === 'individual'" v-model="assignOnCreate.id" :options="members.map((m) => ({ value: m.member_id, label: memberName(m) }))" label="Member" placeholder="Select a member" />
+          <BaseSelect v-if="assignOnCreate.type === 'individual'" v-model="assignOnCreate.id" :options="memberOptions" label="Member" placeholder="Select a member" />
         </div>
       </div>
       <template #footer>
@@ -651,18 +769,9 @@ async function unassign(a: TaskAssignment) {
     <!-- Assign modal -->
     <BaseModal :show="!!assignTask" :title="`Assign · ${assignTask?.title ?? ''}`" subtitle="Who should get this task?" @close="assignTask = null">
       <div class="space-y-4">
-        <BaseSelect
-          v-model="assignForm.type"
-          :options="[
-            { value: 'cohort', label: 'The whole cohort' },
-            { value: 'pod', label: 'A specific pod' },
-            { value: 'individual', label: 'One member' },
-            { value: 'global', label: 'Everyone in the collective' }
-          ]"
-          label="Target"
-        />
+        <BaseSelect v-model="assignForm.type" :options="assignTargetOptions" label="Target" />
         <BaseSelect v-if="assignForm.type === 'pod'" v-model="assignForm.id" :options="pods.map((p) => ({ value: p.id, label: p.name }))" label="Pod" placeholder="Select a pod" />
-        <BaseSelect v-if="assignForm.type === 'individual'" v-model="assignForm.id" :options="members.map((m) => ({ value: m.member_id, label: memberName(m) }))" label="Member" placeholder="Select a member" />
+        <BaseSelect v-if="assignForm.type === 'individual'" v-model="assignForm.id" :options="memberOptions" label="Member" placeholder="Select a member" />
       </div>
       <template #footer>
         <button class="px-4 py-2 text-sm text-gray-600 hover:text-gray-900" @click="assignTask = null">Cancel</button>
@@ -711,10 +820,92 @@ async function unassign(a: TaskAssignment) {
               </div>
             </section>
 
+            <!-- How this task is set up. All of this was already stored and
+                 none of it was shown, so an open task with a role requirement
+                 looked identical to an ordinary assigned one. -->
+            <section>
+              <h3 class="text-sm font-semibold text-gray-900 mb-3">Setup</h3>
+              <!-- gap-px over a grey background draws the hairlines. Always an
+                   even number of cells, so the last row never leaves a gap. -->
+              <dl class="grid grid-cols-2 gap-px bg-gray-200 border border-gray-200 rounded-xl overflow-hidden">
+                <div class="bg-white px-4 py-3">
+                  <dt class="text-[10px] font-mono uppercase tracking-widest text-gray-400">Open board</dt>
+                  <dd v-if="detailTask.claimable" class="mt-1.5">
+                    <div v-if="detailTask.claim_cap" class="flex items-center gap-2">
+                      <div class="flex gap-1">
+                        <span
+                          v-for="i in detailTask.claim_cap"
+                          :key="i"
+                          class="h-1.5 w-5 rounded-full"
+                          :class="i <= (detailTask.claim_count ?? 0) ? 'bg-gray-900' : 'bg-gray-200'"
+                        />
+                      </div>
+                      <span class="text-sm text-gray-900">{{ detailTask.claim_count ?? 0 }}/{{ detailTask.claim_cap }}</span>
+                    </div>
+                    <p v-else class="text-sm text-gray-900">
+                      {{ detailTask.claim_count ?? 0 }} claimed <span class="text-gray-400">· no limit</span>
+                    </p>
+                    <p class="text-xs text-gray-400 mt-0.5">Members claim this themselves</p>
+                  </dd>
+                  <dd v-else class="mt-1.5 text-sm text-gray-500">Not on the open board</dd>
+                </div>
+
+                <div class="bg-white px-4 py-3">
+                  <dt class="text-[10px] font-mono uppercase tracking-widest text-gray-400">Role required</dt>
+                  <dd v-if="detailTask.skill_name" class="mt-1.5">
+                    <span class="inline-block text-xs font-medium px-2 py-0.5 rounded bg-senpai-50 text-senpai-700">{{ detailTask.skill_name }}</span>
+                    <p class="text-xs text-gray-400 mt-1">Counts toward verifying this skill</p>
+                  </dd>
+                  <dd v-else class="mt-1.5 text-sm text-gray-500">None — anyone can take it</dd>
+                </div>
+
+                <div class="bg-white px-4 py-3">
+                  <dt class="text-[10px] font-mono uppercase tracking-widest text-gray-400">Circle</dt>
+                  <dd v-if="detailTask.circle" class="mt-1.5">
+                    <span class="inline-block text-xs font-medium px-2 py-0.5 rounded bg-gray-100 text-gray-700 capitalize">{{ detailTask.circle }}</span>
+                  </dd>
+                  <dd v-else class="mt-1.5 text-sm text-gray-500">None</dd>
+                </div>
+
+                <div class="bg-white px-4 py-3">
+                  <dt class="text-[10px] font-mono uppercase tracking-widest text-gray-400">Reviewer</dt>
+                  <dd v-if="detailTask.reviewer_name" class="mt-1.5 text-sm text-gray-900">
+                    {{ detailTask.reviewer_name }}
+                    <p class="text-xs text-gray-400 mt-0.5">Only they can rate the finished work</p>
+                  </dd>
+                  <dd v-else class="mt-1.5 text-sm text-amber-600">
+                    Unnamed
+                    <p class="text-xs text-amber-500 mt-0.5">Nobody can rate this work</p>
+                  </dd>
+                </div>
+
+                <div class="bg-white px-4 py-3">
+                  <dt class="text-[10px] font-mono uppercase tracking-widest text-gray-400">Belongs to</dt>
+                  <dd class="mt-1.5 text-sm text-gray-900">
+                    {{ taskHome(detailTask) }}
+                    <p v-if="programName(detailTask.program_id)" class="text-xs text-gray-400 mt-0.5">{{ programName(detailTask.program_id) }}</p>
+                  </dd>
+                </div>
+
+                <div class="bg-white px-4 py-3">
+                  <dt class="text-[10px] font-mono uppercase tracking-widest text-gray-400">Hand-ins</dt>
+                  <dd class="mt-1.5 text-sm text-gray-900">
+                    {{ detailTask.show_submissions ? 'Shared' : 'Private' }}
+                    <p class="text-xs text-gray-400 mt-0.5">
+                      {{ detailTask.show_submissions ? 'Everyone on the task sees each other\'s' : 'Between each member and their reviewer' }}
+                    </p>
+                  </dd>
+                </div>
+              </dl>
+            </section>
+
             <!-- roster -->
             <section>
-              <h3 class="text-sm font-semibold text-gray-900 mb-3">Roster</h3>
-              <p v-if="!rosterRows.length" class="text-sm text-gray-500 py-2">No one assigned yet.</p>
+              <h3 class="text-sm font-semibold text-gray-900 mb-1">Roster</h3>
+              <p class="text-xs text-gray-400 mb-3">Open a row to see what they handed in and review it.</p>
+              <p v-if="!rosterRows.length" class="text-sm text-gray-500 py-2">
+                {{ detailTask.claimable ? 'Nobody has claimed this yet.' : 'No one assigned yet.' }}
+              </p>
               <div v-else class="border border-gray-200 rounded-xl divide-y divide-gray-100">
                 <div v-for="a in rosterRows" :key="a.id">
                   <div class="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50" @click="toggleAssignment(a)">
@@ -728,6 +919,11 @@ async function unassign(a: TaskAssignment) {
                       </span>
                       <CheckCircleIcon v-if="a.status === 'completed'" class="h-4 w-4 text-green-500 shrink-0" />
                       <span class="truncate">{{ assigneeName(a.member, a.member_id) }}</span>
+                      <!-- Who came to the work themselves vs who was sent it. -->
+                      <span
+                        v-if="a.assigned_via === 'claim'"
+                        class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-gray-900 text-white shrink-0"
+                      >Claimed</span>
                     </span>
                     <div class="flex items-center gap-2 shrink-0">
                       <span class="text-xs px-2 py-0.5 rounded-full capitalize" :class="assignmentStyles[a.status]">{{ a.status.replace('_', ' ') }}</span>
@@ -747,12 +943,44 @@ async function unassign(a: TaskAssignment) {
                     </div>
                     <p v-else class="text-xs text-gray-400 italic">No submission yet.</p>
 
+                    <div v-if="(submissionHistory[a.id]?.length ?? 0) > 1">
+                      <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Earlier attempts</p>
+                      <SubmissionHistory :submissions="submissionHistory[a.id] ?? []" hide-latest />
+                    </div>
+
                     <div v-if="a.status === 'submitted'" class="flex items-center gap-2">
                       <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 disabled:opacity-50" :disabled="reviewingId === a.id" @click="review(a, 'completed')">
                         <CheckCircleIcon class="h-3.5 w-3.5" /> Approve
                       </button>
                       <button class="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 disabled:opacity-50" :disabled="reviewingId === a.id" @click="review(a, 'returned')">
                         <ArrowUturnLeftIcon class="h-3.5 w-3.5" /> Return for changes
+                      </button>
+                    </div>
+
+                    <!-- Approving says the work is done; only a review scores it,
+                         and only a review builds the member's record. The two used
+                         to live on different screens, so approved work routinely
+                         counted for nothing. -->
+                    <div
+                      v-if="a.status === 'completed'"
+                      class="flex items-start gap-2 rounded-lg border border-senpai-200 bg-senpai-50 px-3 py-2"
+                    >
+                      <div class="min-w-0 flex-1">
+                        <p class="text-xs font-medium text-senpai-800">Score this work</p>
+                        <p v-if="canRateDetail" class="text-[11px] text-senpai-700 mt-0.5">
+                          Approving marked it done. Only a review counts it toward
+                          {{ detailTask?.skill_name ? `verifying ${detailTask.skill_name}` : 'their record' }}.
+                        </p>
+                        <p v-else class="text-[11px] text-senpai-700 mt-0.5">
+                          Only {{ detailTask?.reviewer_name || 'the named reviewer' }} can review this work.
+                        </p>
+                      </div>
+                      <button
+                        v-if="canRateDetail"
+                        class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg bg-senpai-600 text-white font-medium hover:bg-senpai-700"
+                        @click="openRate(a)"
+                      >
+                        <StarIcon class="h-3.5 w-3.5" /> Review
                       </button>
                     </div>
 
@@ -806,6 +1034,20 @@ async function unassign(a: TaskAssignment) {
         </div>
       </div>
     </transition>
+
+    <ReviewFormModal
+      v-if="rateTarget"
+      :show="rateModal"
+      source-type="task"
+      :source-id="rateTarget.id"
+      :ratee-id="rateTarget.member_id"
+      :ratee-name="assigneeName(rateTarget.member, rateTarget.member_id)"
+      :job-role-id="detailTask?.job_role_id"
+      :fallback-skill-id="detailTask?.skill_id"
+      :fallback-skill-name="detailTask?.skill_name"
+      @close="rateModal = false"
+      @submitted="flash('Review submitted')"
+    />
 
     <transition enter-from-class="opacity-0 translate-y-2" enter-active-class="transition duration-200" leave-active-class="transition duration-200" leave-to-class="opacity-0 translate-y-2">
       <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-4 py-2 rounded-full shadow-lg z-50">{{ toast }}</div>

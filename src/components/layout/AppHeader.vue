@@ -23,6 +23,7 @@ import {
   HomeIcon,
   DocumentTextIcon,
   ClipboardDocumentListIcon,
+  ArrowPathRoundedSquareIcon,
   ChartBarSquareIcon,
   SparklesIcon,
   RocketLaunchIcon,
@@ -36,6 +37,7 @@ const navigation = ref([
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, requiresAuth: true },
   { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Projects', href: '/projects', icon: RocketLaunchIcon, requiresAuth: true, requiresApproved: true },
+  { name: 'Circles', href: '/circles', icon: ArrowPathRoundedSquareIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Directory', href: '/members', icon: UsersIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Jobs', href: '/jobs', icon: BriefcaseIcon, requiresAuth: true, requiresApproved: true }
 ])

@@ -195,6 +195,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/circles',
+      name: 'circles',
+      component: () => import('@/views/member/CirclesPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/circles/:slug',
+      name: 'circle-detail',
+      component: () => import('@/views/member/CircleDetailPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/projects',
       name: 'projects',
       component: () => import('@/views/member/ProjectsPage.vue'),
@@ -340,6 +352,12 @@ const router = createRouter({
       name: 'admin-programs',
       component: () => import('@/views/admin/AdminProgramsPage.vue'),
       meta: { requiresAuth: true, requiresAdmin: true, title: 'Programs | Admin' }
+    },
+    {
+      path: '/admin/circles',
+      name: 'admin-circles',
+      component: () => import('@/views/admin/AdminCirclesPage.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true, title: 'Circles | Admin' }
     },
     {
       path: '/admin/projects',

@@ -36,11 +36,27 @@ const lastUpdated = 'August 2026'
             property, and is the party you are contracting with under these terms.
           </p>
           <p class="mt-3">
+            <strong>"Senpai"</strong> is the brand and the wider organisation built around it:
+            SENPAI FUTURES LTD, the Senpai Collective, Senpai Studio, and the programmes,
+            products and companies operated under the Senpai name. Where these terms say
+            "Senpai" without more, they mean that organisation acting through
+            <strong>SENPAI FUTURES LTD</strong>, which is the only entity in it capable of
+            holding a legal right or owing you an obligation.
+          </p>
+          <p class="mt-3">
             In these terms, <strong>"we", "us", and "the collective"</strong> mean Senpai
             Collective, the community you are joining. Where these terms create a legal right
             or obligation, it is held by <strong>SENPAI FUTURES LTD</strong>, which is named
             expressly at each of those points. These terms govern your application for, and
             participation in, membership.
+          </p>
+          <p class="mt-3">
+            <strong>How to read "may" and "will".</strong> Where these terms say Senpai
+            <strong>may</strong> do something, that describes something Senpai is permitted to
+            do at its discretion. It is not a promise that it will happen, and nothing in these
+            terms should be relied on as a commitment to opportunity, work, payment, equity, or
+            a spinout unless the terms expressly say Senpai <strong>will</strong> do it. Where
+            we do commit, we say so plainly.
           </p>
         </section>
 
@@ -110,7 +126,11 @@ const lastUpdated = 'August 2026'
           <p class="mt-2">
             <strong>Collective Projects</strong> are initiated by Senpai: internal products,
             civic redesigns, the platform itself, and client engagements. The idea and the
-            brief are ours; you join to build, and you're paid, rated, and credited for it.
+            brief are ours; you join to build, and you're rated and credited for it. How you
+            are compensated depends on which kind it is:
+            <strong>client engagements are paid work</strong>, at a rate agreed with you
+            before you start; <strong>the collective's own internal projects are not paid in
+            money</strong>, and earn Collective Pool units instead (7.8). Neither earns both.
           </p>
           <p class="mt-3">
             <strong>Member Projects</strong> start with a member's own idea, brought onto the
@@ -182,14 +202,59 @@ const lastUpdated = 'August 2026'
             that record.
           </p>
 
+          <h3 class="text-base font-semibold text-gray-900 mt-6">7.4a If we do nothing with it, you can take it back</h3>
+          <p class="mt-2">
+            Holding the intellectual property is only justified while we are actually doing
+            something with the project. Most Member Projects will never be spun out, and it
+            would not be right for an idea you brought to sit with us permanently because we
+            decided not to act on it.
+          </p>
+          <p class="mt-3">
+            So: where a Member Project has been <strong>dormant for twelve months</strong>,
+            meaning it has shipped or stalled and Senpai is neither actively developing it nor
+            has decided to spin it out, <strong>the member who originated it may ask for the
+            intellectual property back, and we will transfer it</strong>. This is a commitment,
+            not a discretion. We will not withhold it to keep an option open, and we will not
+            charge you for it.
+          </p>
+          <p class="mt-3">
+            <strong>It does not come back to you alone, and this matters.</strong> If other
+            members built it with you, the work is theirs as much as the idea was yours, and we
+            will not hand it to one person to walk away with. The intellectual property is
+            transferred to <strong>the founding team together</strong>, divided on exactly the
+            basis it would have been on a spinout under 7.5: the founder's allocation to you as
+            the originator, and the rest by each person's recorded contribution. If you were
+            genuinely the only contributor, that same calculation gives you all of it. Where the
+            team wants to hold it through a company, we will transfer it into one.
+          </p>
+          <p class="mt-3">
+            <strong>Senpai takes no equity in it.</strong> We passed on the project, so we are
+            not paid for it. What we keep is narrow: a perpetual, royalty-free licence to
+            <strong>show and describe</strong> the work in our portfolio and case studies, which
+            does not restrict what you do with it, and ownership of any general-purpose
+            component we contributed, licensed back to you perpetually and royalty-free so that
+            what you take actually runs.
+          </p>
+          <p class="mt-3">
+            Two things have to be settled first. Any contributor who is owed payment or credit
+            for work on the project is settled before transfer, and where the project carries
+            obligations to a client or a third party, those transfer with it.
+          </p>
+          <p class="mt-3">
+            Pool units already earned for the work are unaffected. Everyone keeps them,
+            including you.
+          </p>
+
           <h3 class="text-base font-semibold text-gray-900 mt-6">7.5 If a project is spun out into a Portfolio Company</h3>
           <p class="mt-2">
-            <strong>Spinning a project out is Senpai's decision, and it is not automatic.</strong>
-            Most Member Projects will remain projects. Where Senpai decides a project should
-            become its own operating company, it is incorporated as a
-            <strong>Senpai Portfolio Company</strong>, and from that point it receives the
+            <strong>Spinning a project out is entirely Senpai's decision, and it is not
+            automatic.</strong> Most projects will never be spun out, and nothing in these terms
+            obliges Senpai to spin out any project or entitles you to have a project you worked
+            on considered for spinout. Where Senpai does decide a project should become its own
+            operating company, it is incorporated as a
+            <strong>Senpai Portfolio Company</strong>, and may from that point receive the
             collective's continued support: staffing, brand, client and partner access, and
-            capital where warranted.
+            capital where warranted. The extent of that support is decided case by case.
           </p>
           <p class="mt-3">
             On spinout, SENPAI FUTURES LTD <strong>transfers the intellectual property into
@@ -202,15 +267,39 @@ const lastUpdated = 'August 2026'
             <li>
               <strong>SENPAI FUTURES LTD takes between 20% and 40% of the company's equity</strong>,
               assessed at spinout against what the collective actually put into the project.
-              A fifth of that stake flows into the Collective Pool (7.8), so part of what
-              Senpai holds in every company is held for the members who built the collective
-              that made the company possible.
+              <strong>A portion of that stake is allocated to the Collective Pool (7.8)</strong>,
+              so part of what Senpai holds in every company is held for the members who built
+              the collective that made the company possible. The proportion is set out in the
+              Collective Pool Policy and is the same for every Portfolio Company at the time
+              of spinout.
             </li>
             <li>
               <strong>The founding team holds the rest.</strong> Every member of the founding
               team receives equity; this is not discretionary. How it is divided among the
               team reflects each person's contribution as recorded on the platform, agreed
               with the team before spinout.
+            </li>
+            <li>
+              <strong>The member who originated the idea receives a founder's allocation</strong>,
+              set aside from the founding team's share before contribution is counted, and then
+              they share in the rest on the same contribution basis as everyone else. This is
+              deliberate. Execution is most of the value and the split reflects that, but an
+              idea someone chose to bring here rather than build elsewhere is worth something on
+              its own, and if origination earned nothing extra, nobody would bring their best
+              work. The size of the allocation is set out in the
+              <RouterLink to="/pool" class="text-senpai-600 underline hover:text-senpai-700">Collective Pool policy</RouterLink>
+              and is the same for every project.
+            </li>
+            <li>
+              <strong>Originating does not, by itself, keep you in the founding team.</strong>
+              The allocation vests on the same terms as everyone else's equity under 7.6, and
+              <strong>vesting only runs while you are actually on the project team</strong>. It
+              is not a clock that keeps ticking after you have stopped taking part. If you bring
+              an idea and step away, vesting stops when you do, and you keep what had vested by
+              then. If you step away before the one-year cliff, or never take a seat on the
+              project at all, <strong>nothing vests and the allocation is not paid</strong>.
+              Bringing the idea earns the allocation; staying is what turns it into something
+              you own.
             </li>
             <li>
               Senpai keeps a perpetual, royalty-free licence to display, describe, and
@@ -282,6 +371,15 @@ const lastUpdated = 'August 2026'
               project seats, and reviewed work recorded on the platform. The same ledger that
               verifies your roles allocates your units, so it is the record that decides, not
               a negotiation.
+            </li>
+            <li>
+              <strong>The collective's own work is what earns units.</strong> Paid client
+              engagements are compensated in cash at the agreed rate and do not earn units;
+              you are already being paid for that work. Units exist for the work with no
+              invoice attached: the platform, the internal products, the research, the civic
+              projects and the standards. That work is generally unpaid, and ownership is how
+              you are paid for it. A Collective Project may cover direct costs of execution
+              where the work requires it, but a fee is not the point of it.
             </li>
             <li>
               <strong>Units are virtual shares, backed by real equity.</strong> The Pool is
@@ -504,17 +602,75 @@ const lastUpdated = 'August 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">13. Governing law</h2>
+          <h2 class="text-xl font-semibold text-gray-900">13. When there is a disagreement</h2>
           <p>
-            These terms are governed by the laws of the Federal Republic of Nigeria. Disputes
-            arising from them are subject to the jurisdiction of the Nigerian courts. We would
-            far rather resolve anything directly with you first, so reach out before it gets
-            that far.
+            Most of what is worth arguing about here comes down to the same thing: what the
+            record says you did. Contribution decides units, equity, and credit, so a dispute
+            about contribution is a dispute about money. It is better to have a process for
+            that written down before anyone needs it than to invent one in the middle of a
+            disagreement.
+          </p>
+
+          <h3 class="text-base font-semibold text-gray-900 mt-6">13.1 Raise it early, and in writing</h3>
+          <p class="mt-2">
+            Raise it first with your project lead or the circle running the work, within
+            <strong>30 days</strong> of the decision or record you are disputing. Most
+            disagreements are a mistake in the record or a misunderstanding about scope, and
+            they are cheap to fix at this stage and expensive later.
+          </p>
+
+          <h3 class="text-base font-semibold text-gray-900 mt-6">13.2 Escalation to SENPAI FUTURES LTD</h3>
+          <p class="mt-2">
+            If that does not resolve it, escalate in writing to SENPAI FUTURES LTD. We will
+            look at the platform record and anything you and the other people involved want to
+            put in front of us, and we will <strong>give you a decision in writing, with
+            reasons</strong>, normally within 30 days. Whoever decides it will not be a person
+            with a direct stake in the outcome, where that is possible.
+          </p>
+
+          <h3 class="text-base font-semibold text-gray-900 mt-6">13.3 Disputes about removal</h3>
+          <p class="mt-2">
+            Removal is the most serious thing that can happen to a member: it withdraws your
+            credential under 10.4 and forfeits unvested units. So before a removal under 9.3
+            takes effect, other than where there is a risk of immediate harm to a client, a
+            member, or the collective, <strong>we will tell you what the allegation is and give
+            you a fair opportunity to respond</strong>. If you are removed, you may ask us to
+            review it once, in writing, within 30 days.
+          </p>
+
+          <h3 class="text-base font-semibold text-gray-900 mt-6">13.4 Mediation before court</h3>
+          <p class="mt-2">
+            If a dispute survives all of that, both sides agree to attempt
+            <strong>mediation in Abuja</strong>, with a mediator agreed between us, before
+            starting court proceedings. Costs of the mediator are shared equally. Neither side
+            has to settle, and this does not stop either of us going to court afterwards, or
+            seeking an urgent injunction where one is genuinely needed.
+          </p>
+
+          <h3 class="text-base font-semibold text-gray-900 mt-6">13.5 Being honest about the imbalance</h3>
+          <p class="mt-2">
+            For most of this, Senpai is deciding a matter it is also a party to. We would
+            rather name that than pretend otherwise. What we can commit to is the part that
+            makes it survivable: <strong>the record is the evidence</strong> and it is visible
+            to you, <strong>you get reasons in writing</strong>, and nothing here removes your
+            right to take a matter to court. Where a dispute is about money above a level we
+            cannot fairly judge ourselves, we will agree to an independent third party
+            deciding it.
           </p>
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">14. Changes to these terms</h2>
+          <h2 class="text-xl font-semibold text-gray-900">14. Governing law</h2>
+          <p>
+            These terms are governed by the laws of the Federal Republic of Nigeria. Disputes
+            arising from them are subject to the jurisdiction of the Nigerian courts, subject
+            to section 13. We would far rather resolve anything directly with you first, so
+            reach out before it gets that far.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold text-gray-900">15. Changes to these terms</h2>
           <p>
             We may update these terms as the community evolves. We'll make the current
             version available here, and material changes will be communicated to members.
@@ -522,7 +678,7 @@ const lastUpdated = 'August 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">15. Contact</h2>
+          <h2 class="text-xl font-semibold text-gray-900">16. Contact</h2>
           <p>
             Questions about these terms? Reach us at
             <a href="mailto:senpaicollective@gmail.com" class="text-senpai-600 underline hover:text-senpai-700">senpaicollective@gmail.com</a>.

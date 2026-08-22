@@ -53,13 +53,13 @@ const filtered = computed(() =>
 
 function slotsLabel(t: Task): string {
   if (!t.claim_cap) return ''
-  const taken = t.assignment_count ?? 0
+  const taken = t.claim_count ?? 0
   const left = Math.max(t.claim_cap - taken, 0)
   return left === 0 ? 'FULL' : `${left} SLOT${left === 1 ? '' : 'S'} LEFT`
 }
 
 function isFull(t: Task): boolean {
-  return !!t.claim_cap && (t.assignment_count ?? 0) >= t.claim_cap
+  return !!t.claim_cap && (t.claim_count ?? 0) >= t.claim_cap
 }
 
 async function claim(t: Task) {

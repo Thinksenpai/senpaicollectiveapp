@@ -180,9 +180,53 @@ const lastUpdated = 'July 2026'
             Most of the time, a quiet word from an admin is enough — nobody's perfect and this
             isn't about policing tone. But a pattern of ignoring these guidelines, or a single
             serious violation (harassment, dishonesty, leaking confidential work), can lead to
-            suspension or removal, exactly as laid out in the
+            suspension or removal, as laid out in the
             <RouterLink to="/terms" class="text-senpai-600 underline hover:text-senpai-700">Terms of Membership</RouterLink>,
-            section 11.
+            sections 9 and 11.
+          </p>
+          <p class="mt-3">
+            Removal is serious. It withdraws the credential you built here and forfeits any
+            unvested units you hold, so it is not something we do casually or quietly.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold text-gray-900">And if you think we've got it wrong</h2>
+          <p>
+            The standard runs both ways. Enforcing it on you without giving you a way to
+            answer would make it something done to members rather than something members are
+            part of, so section 13 of the
+            <RouterLink to="/terms" class="text-senpai-600 underline hover:text-senpai-700">Terms of Membership</RouterLink>
+            sets out what you're entitled to. In short:
+          </p>
+          <ul class="mt-3 list-disc pl-6 space-y-2">
+            <li>
+              <strong>You can dispute the record.</strong> Contribution decides your units,
+              your equity and your credit, so if the record of what you did is wrong, raise it
+              with your project lead or circle within 30 days. Most of these are honest
+              mistakes and cheap to fix early.
+            </li>
+            <li>
+              <strong>You get a decision in writing, with reasons.</strong> If it isn't
+              resolved at that level, escalate it. Whoever decides it won't be someone with a
+              direct stake in the outcome, wherever that's possible.
+            </li>
+            <li>
+              <strong>Before you're removed, you get to answer.</strong> Except where there's
+              a risk of immediate harm, we will tell you what the allegation is and give you a
+              fair opportunity to respond before removal takes effect. If you are removed, you
+              can ask us to review it once.
+            </li>
+            <li>
+              <strong>Mediation before anyone goes to court.</strong> If it gets that far, both
+              sides try mediation in Abuja first.
+            </li>
+          </ul>
+          <p class="mt-3">
+            We'd also rather name the obvious: in most of these, Senpai is deciding something
+            it is also a party to. What we can commit to is the part that makes that
+            survivable — the record is the evidence and you can see it, you get reasons in
+            writing, and nothing here takes away your right to go to court.
           </p>
         </section>
       </div>

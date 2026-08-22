@@ -19,6 +19,11 @@ interface Props {
   rateeId: string
   rateeName?: string
   jobRoleId?: number | null
+  // A task is tagged with a single skill rather than a job role, so there is
+  // no recipe to walk. Scored the same way and counted the same way —
+  // verification aggregates every skill score regardless of in_recipe.
+  fallbackSkillId?: number | null
+  fallbackSkillName?: string | null
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{ close: []; submitted: [] }>()
@@ -40,7 +45,21 @@ const error = ref('')
 async function loadRecipe() {
   recipeSkills.value = []
   for (const k of Object.keys(skillScores)) delete skillScores[Number(k)]
-  if (!props.jobRoleId) return
+
+  if (!props.jobRoleId) {
+    // No seat recipe — score the one skill the work was tagged with, if any.
+    if (props.fallbackSkillId) {
+      recipeSkills.value = [{
+        job_role_id: 0,
+        skill_id: props.fallbackSkillId,
+        required: true,
+        skill_name: props.fallbackSkillName ?? undefined
+      }]
+      skillScores[props.fallbackSkillId] = 4
+    }
+    return
+  }
+
   loadingRecipe.value = true
   try {
     const res = await reviewsApi.getJobRole(props.jobRoleId)
@@ -51,7 +70,10 @@ async function loadRecipe() {
   }
 }
 
-watch(() => [props.show, props.jobRoleId], ([show]) => {
+// immediate: the parent renders this with v-if and sets show=true in the same
+// tick, so the component is created already open. Without it the first open
+// never loads anything to score.
+watch(() => [props.show, props.jobRoleId, props.fallbackSkillId], ([show]) => {
   if (show) {
     comment.value = ''
     softScores.collaboration = 4
@@ -60,12 +82,12 @@ watch(() => [props.show, props.jobRoleId], ([show]) => {
     error.value = ''
     loadRecipe()
   }
-})
+}, { immediate: true })
 
 async function submit() {
   error.value = ''
   if (!recipeSkills.value.length) {
-    error.value = "This seat isn't tagged with a job role, so there's nothing to score yet."
+    error.value = "This work isn't tagged with a role or skill, so there's nothing to score yet."
     return
   }
   submitting.value = true
@@ -76,7 +98,9 @@ async function submit() {
       ratee_id: props.rateeId,
       job_role_id: props.jobRoleId ?? undefined,
       comment: comment.value.trim() || undefined,
-      skill_scores: recipeSkills.value.map((s) => ({ skill_id: s.skill_id, score: skillScores[s.skill_id] ?? 4, in_recipe: true })),
+      // in_recipe is only meaningful when there IS a recipe. A task's skill tag
+      // isn't part of one, and verification counts it either way.
+      skill_scores: recipeSkills.value.map((s) => ({ skill_id: s.skill_id, score: skillScores[s.skill_id] ?? 4, in_recipe: !!props.jobRoleId })),
       soft_scores: softDimensions.map((d) => ({ dimension: d.key, score: softScores[d.key] }))
     })
     if (res.status) {
@@ -102,7 +126,8 @@ async function submit() {
 
       <template v-else>
         <div v-if="!recipeSkills.length" class="text-sm text-gray-500">
-          This seat isn't tagged with a job role, so there's nothing to score yet.
+          This work isn't tagged with a role or skill, so there's nothing to score yet.
+          Tag the task with a role and the score will count toward verifying it.
         </div>
 
         <div v-else class="space-y-4">

@@ -83,13 +83,15 @@ export interface Task {
   audience: TaskAudience
   claimable: boolean
   claim_cap?: number | null
-  circle?: string | null
+  circle?: string | null // slug; kept in sync with circle_id server-side
+  circle_id?: string | null
   job_role_id?: number | null
   skill_name?: string | null
   creator_name?: string | null
   reviewer_name?: string | null
   assignment_count?: number
   completed_count?: number
+  claim_count?: number // self-claimed only — what claim_cap governs
   assigned_to?: string[]
 }
 
@@ -109,11 +111,21 @@ export interface TaskAssignment {
   member?: Member
 }
 
-export interface TaskPeerStatus {
-  member_id: string
-  member_name: string
-  status: AssignmentStatus
-  is_self: boolean
+// One attempt at a task. The assignment carries the latest inline; this is the
+// trail behind it, so returning work no longer erases what was returned.
+export interface TaskSubmission {
+  id: string
+  assignment_id: string
+  attempt: number
+  link_url?: string | null
+  body?: string | null
+  file_url?: string | null
+  submitted_at: string
+  outcome?: 'completed' | 'returned' | null // null while still in review
+  review_note?: string | null
+  reviewed_by?: string | null
+  reviewed_at?: string | null
+  reviewer_name?: string | null
 }
 
 export interface TaskComment {
@@ -475,4 +487,88 @@ export interface CreateProjectInvitePayload {
   member_id: string
   job_role_id?: number
   note?: string
+}
+
+// ============ Circles (standing machines) ============
+
+// A circle is a capped crew running a standing machine, with a charter, a
+// cadence and metrics it exists to move. Distinct from a pod (belonging),
+// a role (capability) and a project team (one outcome, then dissolved).
+//
+// Before the circles migration this was only a free-text label on tasks,
+// which meant a circle existed only while it had open tasks.
+export type CircleStatus = 'proposed' | 'active' | 'dormant' | 'closed'
+
+export type CadenceKind = 'call_held' | 'tasks_published' | 'metrics_reported'
+
+// Computed on read, never stored — the mechanism behind "a circle missing
+// its cadence is a visible fact, not a private suspicion".
+export interface CadenceHealth {
+  last_call_held?: string | null
+  last_tasks_published?: string | null
+  last_metrics_report?: string | null
+  on_cadence: boolean
+  days_since_call?: number | null
+}
+
+export interface CircleSeat {
+  id: string
+  circle_id: string
+  member_id: string
+  term_start: string
+  term_end?: string | null // null = currently held
+  is_lead: boolean
+  ended_note?: string | null
+  member_name?: string | null
+  avatar_url?: string | null
+  circle_slug?: string | null
+  circle_name?: string | null
+}
+
+export interface Circle {
+  id: string
+  slug: string
+  name: string
+  tagline?: string | null
+  status: CircleStatus
+  charter_md?: string | null
+  cadence_note?: string | null
+  seat_cap?: number | null
+  lead_id?: string | null
+  activated_at?: string | null
+  lead_name?: string | null
+  seat_count: number
+  open_tasks: number
+  seats?: CircleSeat[]
+  cadence?: CadenceHealth | null
+}
+
+export interface CircleMetric {
+  id: string
+  circle_id: string
+  period_start: string
+  metric_key: string
+  metric_label: string
+  value: number
+  target?: number | null
+  reported_by?: string | null
+}
+
+export interface LogCadencePayload {
+  kind: CadenceKind
+  note?: string
+}
+
+export interface ReportMetricPayload {
+  period_start: string
+  metric_key: string
+  metric_label: string
+  value: number
+  target?: number
+}
+
+export interface GrantSeatPayload {
+  member_id: string
+  term_start?: string
+  is_lead?: boolean
 }

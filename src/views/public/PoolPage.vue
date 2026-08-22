@@ -2,7 +2,7 @@
 import { RouterLink } from 'vue-router'
 
 // NOTE: Starter copy. Review with counsel before relying on it legally.
-const lastUpdated = 'July 2026'
+const lastUpdated = 'August 2026'
 </script>
 
 <template>
@@ -29,7 +29,7 @@ const lastUpdated = 'July 2026'
         The way units are earned, the weights, and the schedules will be revised as we learn what
         actually works for the community. What will never change is that
         <strong>units you have already earned stay yours</strong>: no revision resets your
-        balance or rewrites work you have already done. See section 8.
+        balance or rewrites work you have already done. See section 9.
       </div>
 
       <p class="mt-6 text-gray-700 leading-relaxed">
@@ -215,7 +215,86 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">6. How and when it pays</h2>
+          <h2 class="text-xl font-semibold text-gray-900">6. If you brought the idea</h2>
+          <p>
+            This one is not about units. It is about equity in a company, and it applies where
+            a <strong>Member Project</strong> you originated is spun out into a Portfolio
+            Company under section 7.5 of the
+            <RouterLink to="/terms" class="text-senpai-600 underline hover:text-senpai-700">Terms of Membership</RouterLink>.
+            Those terms point here for the number, so here it is.
+          </p>
+          <p class="mt-3">
+            <strong>The founder's allocation is 12% of the founding team's share</strong>,
+            reserved for the member who originated the idea and taken off the top before
+            contribution is counted. Note the base: it is 12% of what the founding team holds,
+            not 12% of the company.
+          </p>
+          <p class="mt-3">
+            You are paid twice, for two different things. The allocation is for having brought
+            the idea. Then you share in everything left on exactly the same recorded
+            contribution basis as everyone else on the team. Here is how that lands on a
+            spinout where Senpai takes 30%, leaving the founding team 70%, across four people
+            where the team lead did 40% of the work and the originator 20%:
+          </p>
+          <div class="mt-4 overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-300 text-left">
+                  <th class="py-2 pr-4 font-semibold text-gray-900">Person</th>
+                  <th class="py-2 pr-4 font-semibold text-gray-900">Allocation</th>
+                  <th class="py-2 pr-4 font-semibold text-gray-900">Contribution</th>
+                  <th class="py-2 font-semibold text-gray-900">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-gray-200">
+                  <td class="py-2 pr-4">Originator</td>
+                  <td class="py-2 pr-4">8.4%</td>
+                  <td class="py-2 pr-4">12.3%</td>
+                  <td class="py-2 font-semibold">20.7%</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                  <td class="py-2 pr-4">Team lead</td>
+                  <td class="py-2 pr-4">&mdash;</td>
+                  <td class="py-2 pr-4">24.6%</td>
+                  <td class="py-2 font-semibold">24.6%</td>
+                </tr>
+                <tr class="border-b border-gray-200">
+                  <td class="py-2 pr-4">Contributor</td>
+                  <td class="py-2 pr-4">&mdash;</td>
+                  <td class="py-2 pr-4">12.3%</td>
+                  <td class="py-2 font-semibold">12.3%</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4">Contributor</td>
+                  <td class="py-2 pr-4">&mdash;</td>
+                  <td class="py-2 pr-4">12.3%</td>
+                  <td class="py-2 font-semibold">12.3%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-4">
+            The balance is deliberate. The team lead who did double the work still comes out
+            ahead of the originator, because execution is most of the value and pretending
+            otherwise would be dishonest. But the originator ends up well ahead of contributors
+            who did the same amount of work as them, because bringing the idea here rather than
+            building it elsewhere is worth something too.
+          </p>
+          <p class="mt-3">
+            The allocation <strong>vests on the same terms as everyone else's equity</strong>.
+            Bringing an idea and then stepping away from the work keeps you the vested part and
+            no more. Bringing the idea earns the allocation; staying earns the rest.
+          </p>
+          <p class="mt-3">
+            The same 12% applies where a dormant project is handed back to its founding team
+            under section 7.4a of the Terms. In that case Senpai takes no equity at all, so the
+            team divides the whole of it.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-semibold text-gray-900">7. How and when it pays</h2>
           <p>
             Units pay out only when the collective <strong>realises value in cash</strong>:
             when SENPAI FUTURES LTD distributes profits, when a Portfolio Company is sold or
@@ -238,7 +317,7 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">7. What you can see</h2>
+          <h2 class="text-xl font-semibold text-gray-900">8. What you can see</h2>
           <p>
             Because units have no published price, we publish the things that actually
             determine what the Pool will one day be worth. On your own dashboard: units issued
@@ -262,7 +341,7 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">8. Changes to this policy</h2>
+          <h2 class="text-xl font-semibold text-gray-900">9. Changes to this policy</h2>
           <p>
             The Pool is early and experimental. The points, the weights, the issuance size, and
             the schedules will be revised as the collective learns what works, and members will
@@ -291,7 +370,7 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">9. Tax</h2>
+          <h2 class="text-xl font-semibold text-gray-900">10. Tax</h2>
           <p>
             A payout is income to you, and you are responsible for your own tax position.
             Senpai will withhold and remit whatever is legally required. How a payout is
@@ -302,7 +381,7 @@ const lastUpdated = 'July 2026'
         </section>
 
         <section>
-          <h2 class="text-xl font-semibold text-gray-900">10. Questions</h2>
+          <h2 class="text-xl font-semibold text-gray-900">11. Questions</h2>
           <p>
             Ask. Reach us at
             <a href="mailto:senpaicollective@gmail.com" class="text-senpai-600 underline hover:text-senpai-700">senpaicollective@gmail.com</a>,
