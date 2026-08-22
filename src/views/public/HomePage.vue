@@ -319,9 +319,9 @@ const { y: scrollY } = useWindowScroll()
 
           <div v-reveal="160" class="flex-1 py-8 md:px-8 first:md:pl-0 last:md:pr-0">
             <span class="block text-sm font-mono text-gray-400 mb-2">03</span>
-            <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-3">Growth</h3>
+            <h3 class="text-2xl font-black uppercase tracking-tight text-gray-900 mb-3">Proof</h3>
             <p class="text-gray-600">
-              Skills, mentorship, accountability. We don't just connect you — we transform you. And we expect you to transform others.
+              Skills sharpened on real work — and a verified record of it, reviewed by the people who built alongside you. You don't just grow here. You can prove it.
             </p>
           </div>
         </div>
