@@ -339,6 +339,9 @@ export interface CreateProjectTaskPayload {
   handin_type: HandinType
   due_at?: string
   assignee_ids?: string[]
+  // Required server-side: untagged work can't count toward verification.
+  skill_id?: number
+  job_role_id?: number
 }
 
 export interface AssignTaskPayload {

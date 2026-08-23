@@ -291,6 +291,7 @@ const addTaskModal = ref(false)
 const addingTask = ref(false)
 const addTaskError = ref('')
 const taskForm = ref({
+  skill_id: '' as string,
   title: '',
   description: '',
   kind: 'build' as TaskKind,
@@ -306,7 +307,7 @@ const handinOptions = [
   { value: 'file', label: 'A file' }
 ]
 function openAddTask() {
-  taskForm.value = { title: '', description: '', kind: 'build', handin_type: 'link', due_at: '', assignee_ids: [] }
+  taskForm.value = { skill_id: '', title: '', description: '', kind: 'build', handin_type: 'link', due_at: '', assignee_ids: [] }
   addTaskError.value = ''
   addTaskModal.value = true
 }
@@ -319,11 +320,15 @@ async function submitAddTask() {
   addTaskError.value = ''
   if (!taskForm.value.title.trim()) { addTaskError.value = 'Give the task a title.'; return }
   if (!taskForm.value.description.trim()) { addTaskError.value = 'Say what done looks like.'; return }
+  // Untagged work can never count toward anyone's verification, so the tag is
+  // required here the same way it is server-side.
+  if (!taskForm.value.skill_id) { addTaskError.value = 'Pick the skill this task exercises — untagged work can\'t count toward verification.'; return }
   addingTask.value = true
   try {
     const res = await engineApi.createProjectTask(project.value!.id, {
       title: taskForm.value.title,
       description: taskForm.value.description,
+      skill_id: Number(taskForm.value.skill_id),
       kind: taskForm.value.kind,
       handin_type: taskForm.value.handin_type,
       due_at: taskForm.value.due_at ? new Date(taskForm.value.due_at).toISOString() : undefined,
@@ -655,6 +660,15 @@ async function ship() {
         </div>
         <BaseInput v-model="taskForm.due_at" type="date" label="Due date (optional)" />
         <div>
+          <BaseSelect
+            v-model="taskForm.skill_id"
+            :options="allSkills.map((sk) => ({ value: String(sk.id), label: sk.name }))"
+            label="Skill this task exercises"
+            placeholder="Pick a skill"
+            required
+          />
+          <p class="text-xs text-gray-400 -mt-2 mb-2">Reviews on this task count toward the assignee's verification in this skill.</p>
+
           <p class="text-sm font-medium text-gray-700 mb-2">Assign to <span class="text-gray-400 font-normal">(nobody selected = the whole team)</span></p>
           <div class="space-y-2">
             <label v-for="tm in project?.team" :key="tm.member_id" class="flex items-center gap-2.5 cursor-pointer">
