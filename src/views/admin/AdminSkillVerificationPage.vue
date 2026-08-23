@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useReviewsStore } from '@/stores/reviews'
 import { useSkillsStore } from '@/stores/skills'
-import { membersApi } from '@/api'
+import { membersApi, reviewsApi } from '@/api'
+import type { WorkLeakage } from '@/types'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import BaseSelect from '@/components/common/BaseSelect.vue'
@@ -96,9 +98,31 @@ async function seedVerify() {
   }
 }
 
+// Leakage: completed work that produced no skill score. Surfaced here rather
+// than in a report because it is fixable while the work is still recent —
+// discovered at cohort end, the verification is already lost.
+const leakage = ref<WorkLeakage | null>(null)
+const reasonLabel: Record<string, string> = {
+  untagged: 'No skill or role tag — cannot verify anything',
+  no_reviewer: 'No named reviewer',
+  awaiting_review: 'Awaiting its review'
+}
+const reasonStyle: Record<string, string> = {
+  untagged: 'bg-red-50 text-red-700',
+  no_reviewer: 'bg-amber-50 text-amber-700',
+  awaiting_review: 'bg-gray-100 text-gray-600'
+}
+async function loadLeakage() {
+  try {
+    leakage.value = (await reviewsApi.getWorkLeakage()).data ?? null
+  } catch {
+    leakage.value = null
+  }
+}
+
 onMounted(async () => {
   try {
-    await Promise.all([reviewsStore.fetchNominatedSkills(), skillsStore.fetchSkills()])
+    await Promise.all([reviewsStore.fetchNominatedSkills(), skillsStore.fetchSkills(), loadLeakage()])
     await hydrateMemberNames()
   } finally {
     loading.value = false
@@ -139,6 +163,40 @@ onMounted(async () => {
             >
               Confirm verified
             </BaseButton>
+          </div>
+        </div>
+
+        <div v-if="leakage" class="border-t border-gray-200 pt-8 mb-10">
+          <div class="flex items-baseline justify-between gap-3 mb-1">
+            <h2 class="text-lg font-bold text-gray-900">Work not converted to record</h2>
+            <span class="text-sm font-mono" :class="leakage.conversion_rate >= 80 ? 'text-senpai-600' : 'text-amber-600'">
+              {{ leakage.conversion_rate.toFixed(0) }}% converted
+            </span>
+          </div>
+          <p class="text-sm text-gray-500 mb-4 max-w-md">
+            {{ leakage.converted }} of {{ leakage.total_completed }} completed hand-ins produced a skill score.
+            Everything below is effort that never became verification — fixable now, lost once the cohort closes.
+          </p>
+
+          <div v-if="!leakage.items.length" class="border border-dashed border-gray-300 rounded-xl p-8 text-center">
+            <p class="text-sm text-gray-500">Nothing leaking. Every completed hand-in produced a score.</p>
+          </div>
+
+          <div v-else class="border border-gray-200 divide-y divide-gray-100 rounded-xl overflow-hidden">
+            <RouterLink
+              v-for="i in leakage.items"
+              :key="i.assignment_id"
+              :to="`/admin/tasks?task=${i.task_id}`"
+              class="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+            >
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ i.task_title }}</p>
+                <p class="text-xs text-gray-500">{{ i.member_name || 'A member' }}</p>
+              </div>
+              <span :class="['text-[11px] px-2 py-0.5 rounded-full shrink-0', reasonStyle[i.reason]]">
+                {{ reasonLabel[i.reason] }}
+              </span>
+            </RouterLink>
           </div>
         </div>
 

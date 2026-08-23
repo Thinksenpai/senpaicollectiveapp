@@ -351,6 +351,8 @@ export interface AssignTaskPayload {
 
 export type MemberSkillStatus = 'claimed' | 'nominated' | 'verified' | 'dormant'
 
+export type VerificationSource = 'reviewed' | 'seeded'
+
 export interface MemberSkill {
   member_id: string
   skill_id: number
@@ -358,7 +360,10 @@ export interface MemberSkill {
   status: MemberSkillStatus
   verified_at?: string | null
   verified_by?: string | null
+  verification_source?: VerificationSource | null
   skill_name?: string | null
+  // Hydrated for skills not yet verified — how far off this skill is.
+  progress?: SkillVerificationSummary | null
 }
 
 // A job role is an admin-curated title — a named recipe of skills, earned
@@ -453,6 +458,9 @@ export interface SoftScoreInput {
 }
 
 export interface SkillVerificationSummary {
+  required_contributions: number
+  required_raters: number
+  required_avg_score: number
   member_id: string
   skill_id: number
   contribution_count: number
@@ -571,4 +579,22 @@ export interface GrantSeatPayload {
   member_id: string
   term_start?: string
   is_lead?: boolean
+}
+
+// Completed work that produced no skill score — effort that never became record.
+export interface WorkLeakageItem {
+  assignment_id: string
+  task_id: string
+  task_title: string
+  member_id: string
+  member_name: string
+  reason: 'untagged' | 'no_reviewer' | 'awaiting_review'
+  completed_at?: string | null
+}
+
+export interface WorkLeakage {
+  total_completed: number
+  converted: number
+  conversion_rate: number
+  items: WorkLeakageItem[]
 }

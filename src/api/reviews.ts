@@ -4,6 +4,7 @@ import type {
   JobRole,
   CreateJobRolePayload,
   MemberSkill,
+  WorkLeakage,
   Review,
   SubmitReviewPayload,
   ProjectInvite,
@@ -66,6 +67,10 @@ export const reviewsApi = {
 
   async listNominatedSkills(): Promise<ApiResponse<MemberSkill[]>> {
     return apiClient.get('/admin/skills/nominated')
+  },
+
+  async getWorkLeakage(): Promise<ApiResponse<WorkLeakage>> {
+    return apiClient.get('/admin/work-leakage')
   },
 
   async confirmSkillVerification(memberId: string, skillId: number): Promise<ApiResponse> {

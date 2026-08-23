@@ -38,16 +38,30 @@ watch(() => props.memberId, load, { immediate: true })
 
 <template>
   <div v-if="!loading && skills.length" class="py-6 border-b border-gray-200">
-    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Skill verification</h2>
-    <div class="flex flex-wrap gap-2">
-      <span
-        v-for="s in skills"
-        :key="s.skill_id"
-        :class="['inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium', statusStyle[s.status]]"
-      >
-        {{ s.skill_name }}
-        <span class="text-xs opacity-75">· {{ s.status }}</span>
-      </span>
+    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">Skill verification</h2>
+    <p class="text-xs text-gray-400 mb-3">Verified skills are earned through reviewed work — never self-assigned.</p>
+
+    <div class="space-y-2">
+      <div v-for="s in skills" :key="s.skill_id" class="flex flex-wrap items-center gap-2">
+        <span :class="['inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium', statusStyle[s.status]]">
+          {{ s.skill_name }}
+          <span class="text-xs opacity-75">· {{ s.status }}</span>
+        </span>
+
+        <!-- Progress is only meaningful before verification. Showing how far off
+             a skill is turns verification from an opaque event into something
+             a member can actually chase. -->
+        <span v-if="s.progress && s.status !== 'verified'" class="text-xs text-gray-500 font-mono">
+          {{ s.progress.contribution_count }}/{{ s.progress.required_contributions }} reviewed
+          · {{ s.progress.distinct_raters }}/{{ s.progress.required_raters }} raters
+          <template v-if="s.progress.contribution_count > 0">
+            · avg {{ s.progress.weighted_avg_score.toFixed(1) }}/{{ s.progress.required_avg_score }}
+          </template>
+          <span v-if="!s.progress.has_verified_rater && s.progress.contribution_count > 0" class="text-amber-600">
+            · needs a verified reviewer
+          </span>
+        </span>
+      </div>
     </div>
   </div>
 </template>
