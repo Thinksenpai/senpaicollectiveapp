@@ -472,7 +472,7 @@ function removeLink(index: number) {
 
             <!-- Footer -->
             <div class="text-center pt-4 border-t border-gray-200">
-              <a href="https://www.thinksenpai.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 text-sm text-gray-500 hover:opacity-80 transition-opacity">
+              <a href="https://senpaifutures.com/" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-2 text-sm text-gray-500 hover:opacity-80 transition-opacity">
                 <span>An extension of</span>
                 <img src="/senpai.svg" alt="Senpai" class="h-5 w-auto" />
                 <span class="font-medium text-gray-700">SENPAI</span>

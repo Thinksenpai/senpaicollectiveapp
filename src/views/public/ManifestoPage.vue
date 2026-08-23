@@ -240,10 +240,11 @@ import { vReveal } from '@/composables/useScrollReveal'
             Operated by SENPAI FUTURES LTD (RC 9746107). &copy; {{ new Date().getFullYear() }}
           </p>
           <div class="flex items-center">
-            <a href="https://www.thinksenpai.com/" target="_blank" rel="noopener noreferrer" class="flex items-center hover:opacity-80 transition-opacity">
-              <span class="text-sm text-gray-500">An extension of</span>
-              <img src="/senpai.svg" alt="Senpai" class="h-6 w-auto ml-2" />
-              <span class="ml-2 text-sm font-medium text-gray-400">SENPAI</span>
+            <a href="https://senpaifutures.com/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <span class="grid place-items-center w-9 h-9 bg-white shrink-0">
+                <img src="/senpai.svg" alt="Senpai" class="h-5 w-auto" />
+              </span>
+              <span class="text-sm text-gray-400">senpaifutures.com</span>
             </a>
           </div>
         </div>

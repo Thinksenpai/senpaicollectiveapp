@@ -88,7 +88,7 @@ const { y: scrollY } = useWindowScroll()
           <div class="flex items-center justify-center gap-2 text-sm text-gray-500">
             <span class="font-medium tracking-wide uppercase">Senpai Collective</span>
             <span class="text-gray-300">·</span>
-            <a href="https://www.thinksenpai.com/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 hover:opacity-80 transition-opacity">
+            <a href="https://senpaifutures.com/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 hover:opacity-80 transition-opacity">
               Powered by
               <img src="/senpai.svg" alt="Senpai" class="h-4 w-auto" />
             </a>
@@ -810,10 +810,11 @@ const { y: scrollY } = useWindowScroll()
           <p class="text-sm text-center md:text-left mb-4 md:mb-0">
             Operated by SENPAI FUTURES LTD (RC 9746107). &copy; {{ new Date().getFullYear() }}
           </p>
-          <a href="https://www.thinksenpai.com/" target="_blank" rel="noopener noreferrer" class="flex items-center hover:opacity-80 transition-opacity">
-            <span class="text-sm text-gray-500">An extension of</span>
-            <img src="/senpai.svg" alt="Senpai" class="h-6 w-auto ml-2" />
-            <span class="ml-2 text-sm font-medium text-gray-400">SENPAI</span>
+          <a href="https://senpaifutures.com/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <span class="grid place-items-center w-9 h-9 bg-white shrink-0">
+              <img src="/senpai.svg" alt="Senpai" class="h-5 w-auto" />
+            </span>
+            <span class="text-sm text-gray-400">senpaifutures.com</span>
           </a>
         </div>
       </div>
