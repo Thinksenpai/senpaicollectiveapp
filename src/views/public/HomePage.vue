@@ -798,7 +798,7 @@ const { y: scrollY } = useWindowScroll()
         </div>
 
         <p class="mt-6 text-gray-500 text-sm">
-          Applications are open. Not everyone gets in, and that's the point.
+          Applications are open for our founding cohort. Not everyone gets in — and that's the point.
         </p>
       </div>
     </section>
