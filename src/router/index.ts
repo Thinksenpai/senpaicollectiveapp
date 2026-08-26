@@ -284,6 +284,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/baseline',
+      name: 'baseline',
+      component: () => import('@/views/member/BaselinePage.vue'),
+      meta: { requiresAuth: true, requiresApproved: true, title: 'Where you\'re starting from | Senpai Collective' }
+    },
+    {
       path: '/invites',
       name: 'my-invites',
       component: () => import('@/views/member/MyInvitesPage.vue'),

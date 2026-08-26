@@ -601,3 +601,49 @@ export interface WorkLeakage {
   conversion_rate: number
   items: WorkLeakageItem[]
 }
+
+// ---- Baseline capture (IMPACT_TRACKING.md §3) ----
+// Snapshots, not a profile: intake must land before induction, and each
+// re-ask is a new row so the comparison is a diff.
+export type BaselineKind = 'intake' | 'cohort_end' | 'month_6' | 'month_12'
+
+export interface MemberBaseline {
+  id: string
+  member_id: string
+  cohort_id?: string | null
+  kind: BaselineKind
+  monthly_income?: number | null
+  income_currency?: string | null
+  employment_status?: 'employed' | 'freelance' | 'both' | 'neither' | 'student' | null
+  ever_paid_foreign_currency?: boolean | null
+  rate_amount?: number | null
+  rate_currency?: string | null
+  rate_unit?: 'hour' | 'day' | 'project' | null
+  client_geography?: 'local' | 'diaspora' | 'global' | 'mixed' | 'none' | null
+  how_they_find_work?: string | null
+  has_ownership_stake?: boolean | null
+  ownership_detail?: string | null
+  platform_rejected?: boolean | null
+  platform_rejected_detail?: string | null
+  client_withdrew_after_location?: boolean | null
+  obscures_location?: boolean | null
+  portfolio_url?: string | null
+  portfolio_note?: string | null
+  hours_per_week?: number | null
+  goal_in_own_words?: string | null
+  consent_anonymised: boolean
+  consent_named_story: boolean
+  captured_at: string
+  member_name?: string | null
+}
+
+export type SubmitBaselinePayload = Partial<Omit<MemberBaseline,
+  'id' | 'member_id' | 'cohort_id' | 'captured_at' | 'member_name'>>
+
+export interface BaselineCoverage {
+  cohort_id?: string | null
+  members: number
+  captured: number
+  percentage: number
+  missing: { id: string; email: string; profile?: { full_name: string } }[]
+}
