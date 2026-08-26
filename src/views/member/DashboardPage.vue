@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useMembersStore } from '@/stores/members'
 import { useJobsStore } from '@/stores/jobs'
-import { engineApi } from '@/api'
+import { engineApi, baselinesApi } from '@/api'
 import type { MemberDashboard, TaskAssignment, MemberEnrichment, AssignmentComment } from '@/types'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import WelcomeModal from '@/components/member/WelcomeModal.vue'
@@ -22,6 +22,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   IdentificationIcon,
+  ChartBarIcon,
   LockClosedIcon,
   ChatBubbleLeftRightIcon,
   ArrowTopRightOnSquareIcon
@@ -70,6 +71,12 @@ const assignmentComments = reactive<Record<string, AssignmentComment[]>>({})
 const loadingComments = reactive<Record<string, boolean>>({})
 const newComment = reactive<Record<string, string>>({})
 
+// Baseline: only capturable before induction, so prompt while it still can be.
+const baselineCaptured = ref<boolean | null>(null)
+const needsBaseline = computed(() =>
+  baselineCaptured.value === false && !!engine.value?.membership && !inducted.value
+)
+
 const needsTerms = computed(() => !!engine.value && !engine.value.guidelines_accepted)
 const enrichmentComplete = computed(() => !!engine.value?.enrichment_complete)
 const senpai = computed(() => engine.value?.senpai_id ?? null)
@@ -88,6 +95,11 @@ async function loadEngine() {
     engine.value = data
   } catch {
     engine.value = null
+  }
+  try {
+    baselineCaptured.value = !!(await baselinesApi.getMyBaseline('intake')).data
+  } catch {
+    baselineCaptured.value = null // unknown: don't nag on a failed lookup
   }
 }
 
@@ -399,6 +411,23 @@ function commentTimeAgo(d: string) {
               </div>
             </div>
           </div>
+
+          <!-- Baseline prompt. Ordered above the profile prompt because this one
+               expires: once induction starts the "before" cannot be recovered. -->
+          <RouterLink
+            v-if="needsBaseline"
+            to="/baseline"
+            class="flex items-center gap-4 bg-white rounded-2xl border border-senpai-200 p-5 hover:border-senpai-400 hover:shadow-md transition-all group"
+          >
+            <div class="w-12 h-12 bg-senpai-100 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-senpai-200 transition-colors">
+              <ChartBarIcon class="h-6 w-6 text-senpai-600" />
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-gray-900 group-hover:text-senpai-600">Record where you're starting from</h3>
+              <p class="text-sm text-gray-500">Takes a few minutes, and can only be done before induction. It's how we show what actually changed for you later.</p>
+            </div>
+            <ArrowRightIcon class="h-5 w-5 text-gray-400 shrink-0" />
+          </RouterLink>
 
           <!-- Complete your profile prompt -->
           <RouterLink
