@@ -6,6 +6,7 @@ import { SENPAI_MANIFESTO } from '@/content/manifesto'
 import { ALUMNI } from '@/content/alumni'
 import { vReveal } from '@/composables/useScrollReveal'
 import AlumniMarquee from '@/components/public/AlumniMarquee.vue'
+import IntakePanel from '@/components/public/IntakePanel.vue'
 import { BriefcaseIcon } from '@heroicons/vue/24/outline'
 
 const authStore = useAuthStore()
@@ -121,8 +122,14 @@ const { y: scrollY } = useWindowScroll()
         <p v-reveal.now="160" class="mt-8 text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           Senpai Collective is an elite community of creatives building the future of Africa through culture, technology, business, art, and systems. Your skills are verified against real work, reviewed by the people who built it with you. Not a portfolio. A record.
         </p>
+        <!-- Intake counter — seats and time left, so the cohort's state is
+             visible before someone commits to applying. -->
+        <div v-reveal.now="200" class="mt-8">
+          <IntakePanel />
+        </div>
+
         <!-- Apply CTA -->
-        <div v-reveal.now="240" class="mt-10">
+        <div v-reveal.now="240" class="mt-6">
           <!-- Apply Now CTA -->
           <div class="max-w-md mx-auto">
             <RouterLink

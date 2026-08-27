@@ -41,6 +41,14 @@ const postingAssignmentComment = ref(false)
 const reviewingId = ref<string | null>(null)
 
 const isProjectTask = computed(() => !!task.value?.project_id)
+
+// An induction task with shared hand-ins is the cohort wall: everyone admitted
+// to the same cohort reads each other here. The roster below is the same
+// component either way — only the framing changes, because "who else is
+// working on this" reads like a work queue, and this is an introduction.
+const isCohortWall = computed(() =>
+  !isProjectTask.value && task.value?.track === 'induction' && task.value?.show_submissions === true
+)
 // Any teammate on the project — not just the assignee — can see and review
 // this task's work, since progress on a project depends on everyone seeing
 // everyone's submissions, not just their own.
@@ -344,8 +352,14 @@ function dueTag(d?: string | null) {
              the project view uses, minus the review controls: seeing each
              other's work is the point, reviewing it is the reviewer's job. -->
         <section v-if="!isProjectTask && peers.length">
-          <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">// Who else is working on this</h2>
-          <p v-if="!task?.show_submissions" class="text-xs text-gray-400 mb-3">
+          <h2 class="text-[11px] font-mono uppercase tracking-widest text-gray-400 mb-3">
+            {{ isCohortWall ? '// Your cohort' : '// Who else is working on this' }}
+          </h2>
+          <p v-if="isCohortWall" class="text-xs text-gray-400 mb-3">
+            Everyone admitted to your cohort, and what they wrote. People join on a rolling basis, so
+            check back — the wall fills up as the cohort does.
+          </p>
+          <p v-else-if="!task?.show_submissions" class="text-xs text-gray-400 mb-3">
             Hand-ins on this task stay private to each member and their reviewer.
           </p>
           <div class="bg-white rounded-2xl border border-gray-200">

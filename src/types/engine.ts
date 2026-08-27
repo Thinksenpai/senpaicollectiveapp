@@ -647,3 +647,20 @@ export interface BaselineCoverage {
   percentage: number
   missing: { id: string; email: string; profile?: { full_name: string } }[]
 }
+
+// IntakeSnapshot is the public counter behind the landing page. target_size is
+// a target rather than a cap — over_target flags the cohort having passed it,
+// so the panel can switch from "spots left" to a plain headcount.
+export interface IntakeSnapshot {
+  cohort_name: string
+  cohort_slug: string
+  status: string
+  target_size: number
+  accepted: number
+  spots_left: number
+  over_target: boolean
+  applications: number
+  closes_at?: string | null
+  days_left?: number | null
+  is_open: boolean
+}
