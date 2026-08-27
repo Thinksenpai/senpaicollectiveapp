@@ -282,9 +282,6 @@ async function handleSubmit() {
   }
 }
 
-function goToLogin() {
-  router.push('/login')
-}
 
 function addLink() {
   if (form.value.additional_links.length < 5) {
@@ -329,15 +326,22 @@ function removeLink(index: number) {
             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         </div>
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
-        <p class="text-gray-600 mb-6">
-          Thank you for applying to join Senpai Collective. Please check your email to verify your account.
-          Once verified, our team will review your application.
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Application submitted</h2>
+        <!-- Confirming the email is a required step, not a courtesy, so it is
+             the whole message here rather than a clause inside a thank-you. -->
+        <p class="text-gray-700 mb-4">
+          <strong>Check your email — or your spam folder — and confirm your address.</strong>
+          We don't review your application until you do.
         </p>
         <p class="text-sm text-gray-500 mb-8">
-          We review every application carefully and will email you once we've made a decision.
+          Once it's confirmed we review every application carefully, and we'll email you our decision.
         </p>
-        <BaseButton @click="goToLogin">Go to Login</BaseButton>
+        <!-- Deliberately not a "Go to login" button: sign-in refuses
+             unconfirmed accounts, so it sent every new applicant straight into
+             an error on the one action we offered them. -->
+        <RouterLink to="/" class="text-sm font-medium text-senpai-600 hover:text-senpai-700">
+          Back to the homepage
+        </RouterLink>
       </div>
 
       <!-- Registration Form -->

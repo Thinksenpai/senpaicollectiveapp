@@ -698,3 +698,18 @@ export interface CohortDashboard {
   awaiting_review: number
   members: CohortMemberRow[]
 }
+
+// WallPost is one submission on the cohort wall — a shared hand-in, attributed.
+export interface WallPost {
+  assignment_id: string
+  task_id: string
+  task_title: string
+  member_id: string
+  full_name: string
+  photo_url?: string | null
+  primary_skill?: string | null
+  body?: string | null
+  link_url?: string | null
+  submitted_at?: string | null
+  is_mine: boolean
+}

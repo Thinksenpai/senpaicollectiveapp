@@ -14,6 +14,7 @@ import {
 import {
   Bars3Icon,
   XMarkIcon,
+  ChatBubbleLeftRightIcon,
   UserCircleIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
@@ -35,6 +36,7 @@ const authStore = useAuthStore()
 
 const navigation = ref([
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon, requiresAuth: true },
+  { name: 'Wall', href: '/wall', icon: ChatBubbleLeftRightIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Tasks', href: '/tasks', icon: ClipboardDocumentListIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Projects', href: '/projects', icon: RocketLaunchIcon, requiresAuth: true, requiresApproved: true },
   { name: 'Circles', href: '/circles', icon: ArrowPathRoundedSquareIcon, requiresAuth: true, requiresApproved: true },

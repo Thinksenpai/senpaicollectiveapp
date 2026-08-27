@@ -165,6 +165,14 @@ const router = createRouter({
       redirect: '/dashboard'
     },
     {
+      // The cohort wall — a destination in its own right. Everything on it was
+      // previously reachable only by opening the right task and scrolling.
+      path: '/wall',
+      name: 'wall',
+      component: () => import('@/views/member/WallPage.vue'),
+      meta: { requiresApproved: true }
+    },
+    {
       path: '/tasks',
       name: 'my-tasks',
       component: () => import('@/views/member/MemberTasksPage.vue'),

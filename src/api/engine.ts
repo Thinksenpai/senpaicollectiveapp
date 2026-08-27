@@ -12,6 +12,7 @@ import type {
   Pod,
   CohortMembership,
   CohortDashboard,
+  WallPost,
   Task,
   MembershipState,
   AssignmentStatus,
@@ -117,6 +118,12 @@ export const engineApi = {
   // collective, so this backs both the directory and the admin member view.
   async getMemberEnrichment(memberId: string): Promise<ApiResponse<MemberEnrichment | null>> {
     return apiClient.get(`/members/${memberId}/enrichment`)
+  },
+
+  // The cohort wall: every shared submission from the member's cohort, newest
+  // first. Empty for a member with no cohort — not an error.
+  async getWall(): Promise<ApiResponse<WallPost[]>> {
+    return apiClient.get('/me/wall')
   },
 
   async getSenpaiId(): Promise<ApiResponse<SenpaiID | null>> {

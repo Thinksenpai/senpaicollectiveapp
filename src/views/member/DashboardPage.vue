@@ -89,24 +89,6 @@ const senpaiAddress = computed(() => (senpai.value?.handle ? `${senpai.value.han
 //   locked  — not yet inducted; options withheld by the API
 //   choose  — inducted, options revealed, no handle picked
 //   claimed — handle set
-// 'accepted' means admitted and working through induction; the raw state was
-// being printed as a badge, so someone at 4/4 who had not yet attended the
-// ceremony saw "Accepted" with no sense of progress, and previously the
-// reverse — "Inducted" beside a countdown to induction.
-const inductionTasks = computed(() =>
-  (engine.value?.tasks ?? []).filter((t) => t.task?.track === 'induction' && t.task?.is_required)
-)
-const trackComplete = computed(() =>
-  inductionTasks.value.length > 0 && inductionTasks.value.every((t) => t.status === 'completed')
-)
-const membershipLabel = computed(() => {
-  const state = engine.value?.membership?.state
-  if (state === 'accepted') return trackComplete.value ? 'Ready for induction' : 'In induction'
-  if (state === 'inducted') return 'Inducted'
-  if (state === 'active') return 'Active member'
-  return state ?? ''
-})
-
 const senpaiIdRevealed = computed(() => !!senpai.value?.revealed_at)
 const senpaiOptions = computed(() => senpai.value?.offered_options ?? [])
 const choosingHandle = ref(false)
@@ -423,9 +405,14 @@ function commentTimeAgo(d: string) {
                 <div class="text-5xl leading-none select-none">🎉</div>
                 <p class="mt-3 text-xs font-medium uppercase tracking-wider text-senpai-600">You're officially in</p>
                 <p class="font-bold text-2xl text-gray-900 mt-0.5">{{ engine.cohort?.name || 'Your cohort' }}</p>
-                <span class="inline-block mt-3 text-xs px-2.5 py-1 rounded-full bg-senpai-100 text-senpai-700">{{ membershipLabel }}</span>
-                <p v-if="engine.cohort?.description" class="mt-3 text-sm text-gray-500 max-w-md mx-auto">{{ engine.cohort.description }}</p>
+                <span class="inline-block mt-3 text-xs px-2.5 py-1 rounded-full bg-senpai-100 text-senpai-700 capitalize">{{ engine.membership.state }}</span>
               </div>
+            </div>
+            <!-- The cohort's own words, left-aligned. Centring reads fine for a
+                 one-line tagline and badly for a paragraph — ragged on both
+                 edges, and it pushed the induction date below the fold. -->
+            <div v-if="engine.cohort?.description" class="border-t border-gray-100 px-6 py-4">
+              <p class="text-sm text-gray-600 leading-relaxed">{{ engine.cohort.description }}</p>
             </div>
             <div class="border-t border-gray-100 p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
               <!-- Induction -->
@@ -475,6 +462,17 @@ function commentTimeAgo(d: string) {
                 <p class="text-sm text-gray-400 flex items-center gap-1.5"><ChatBubbleLeftRightIcon class="h-4 w-4" /> Pod not assigned yet — we'll place you soon</p>
               </div>
             </div>
+            <RouterLink
+              to="/wall"
+              class="flex items-center justify-between border-t border-gray-100 px-6 py-4 hover:bg-gray-50 transition-colors"
+            >
+              <span class="text-sm font-medium text-gray-900 flex items-center gap-2">
+                <ChatBubbleLeftRightIcon class="h-4 w-4 text-senpai-600" /> Read the wall
+              </span>
+              <span class="text-xs text-gray-500 flex items-center gap-1">
+                What your cohort wrote <ArrowRightIcon class="h-4 w-4 text-gray-400" />
+              </span>
+            </RouterLink>
           </div>
 
           <!-- Baseline prompt. Ordered above the profile prompt because this one
