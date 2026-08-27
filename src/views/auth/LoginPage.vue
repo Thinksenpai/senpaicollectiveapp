@@ -5,7 +5,8 @@ import { useAuthStore } from '@/stores/auth'
 import BaseInput from '@/components/common/BaseInput.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseAlert from '@/components/common/BaseAlert.vue'
-import { ClockIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ClockIcon, XMarkIcon, EnvelopeIcon } from '@heroicons/vue/24/outline'
+import { authApi } from '@/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -18,6 +19,33 @@ const form = ref({
 
 const errors = ref<Record<string, string>>({})
 const showPendingMessage = ref(false)
+
+// Login refuses unverified accounts, and registration refuses a duplicate
+// email — so without a way back, anyone whose 24-hour verification link
+// expires is locked out of their own account with no self-serve route. This
+// is that route.
+const isUnverifiedError = computed(() =>
+  (authStore.error?.toLowerCase() || '').includes('not verified')
+)
+const resending = ref(false)
+const resendMessage = ref('')
+
+async function resendVerification() {
+  if (!form.value.email) {
+    errors.value.email = 'Enter your email address first'
+    return
+  }
+  resending.value = true
+  resendMessage.value = ''
+  try {
+    await authApi.resendVerification(form.value.email)
+  } finally {
+    // The response is identical whether or not the address is registered, so
+    // there is nothing to branch on — and nothing to leak.
+    resendMessage.value = 'If that account needs verifying, a new link is on its way. It expires in 24 hours.'
+    resending.value = false
+  }
+}
 
 // Check if the error indicates pending approval
 const isPendingError = computed(() => {
@@ -119,9 +147,29 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <BaseAlert v-if="authStore.error && !isPendingError" type="error" class="mb-6" dismissible @dismiss="authStore.clearError">
+        <BaseAlert v-if="authStore.error && !isPendingError && !isUnverifiedError" type="error" class="mb-6" dismissible @dismiss="authStore.clearError">
           {{ authStore.error }}
         </BaseAlert>
+
+        <!-- Unverified email: an error the member can actually fix, so it gets
+             the fix rather than just the message. -->
+        <div v-if="isUnverifiedError" class="mb-6 border border-amber-200 bg-amber-50 rounded-lg p-4">
+          <p class="flex items-center gap-2 text-sm font-medium text-gray-900">
+            <EnvelopeIcon class="h-4 w-4 text-amber-600" /> Confirm your email first
+          </p>
+          <p class="text-sm text-gray-600 mt-1">
+            We sent a link when you applied. Check your inbox — and your spam folder, since it
+            comes from a new sender.
+          </p>
+          <p v-if="resendMessage" class="text-sm text-gray-700 mt-3">{{ resendMessage }}</p>
+          <button
+            v-else
+            type="button"
+            class="mt-3 text-sm font-medium text-senpai-700 hover:text-senpai-800 disabled:opacity-50"
+            :disabled="resending"
+            @click="resendVerification"
+          >{{ resending ? 'Sending…' : 'Send me a new link' }}</button>
+        </div>
 
         <form @submit.prevent="handleSubmit" class="space-y-6">
           <BaseInput

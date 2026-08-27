@@ -38,6 +38,12 @@ export const authApi = {
     return apiClient.post('/auth/forgot-password', { email })
   },
 
+  // Issues a fresh verification link. The response is identical whether or not
+  // the address is registered, so it cannot be used to enumerate members.
+  async resendVerification(email: string): Promise<ApiResponse> {
+    return apiClient.post('/auth/resend-verification', { email })
+  },
+
   async resetPassword(token: string, password: string, passwordConfirm: string): Promise<ApiResponse> {
     return apiClient.post('/auth/reset-password', {
       token,
