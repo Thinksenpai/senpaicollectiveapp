@@ -11,6 +11,7 @@ import type {
   Cohort,
   Pod,
   CohortMembership,
+  CohortDashboard,
   Task,
   MembershipState,
   AssignmentStatus,
@@ -250,6 +251,16 @@ export const adminEngineApi = {
   // Members / memberships
   listCohortMembers(cohortId: string): Promise<ApiResponse<CohortMembership[]>> {
     return apiClient.get(`/admin/cohorts/${cohortId}/members`)
+  },
+  // The cohort control room: intake funnel, pacing against target and close
+  // date, baseline coverage, review backlog, and per-member induction progress.
+  getCohortDashboard(cohortId: string): Promise<ApiResponse<CohortDashboard>> {
+    return apiClient.get(`/admin/cohorts/${cohortId}/dashboard`)
+  },
+  // The induction ceremony: inducts everyone still 'accepted' and reveals
+  // their Senpai IDs. Idempotent — safe to re-run on the night.
+  runInduction(cohortId: string): Promise<ApiResponse<{ inducted: number; revealed: number }>> {
+    return apiClient.post(`/admin/cohorts/${cohortId}/induct`)
   },
   listCohortPrograms(cohortId: string): Promise<ApiResponse<Program[]>> {
     return apiClient.get(`/admin/cohorts/${cohortId}/programs`)

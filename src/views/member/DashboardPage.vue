@@ -81,6 +81,52 @@ const needsTerms = computed(() => !!engine.value && !engine.value.guidelines_acc
 const enrichmentComplete = computed(() => !!engine.value?.enrichment_complete)
 const senpai = computed(() => engine.value?.senpai_id ?? null)
 const senpaiAddress = computed(() => (senpai.value?.handle ? `${senpai.value.handle}@senpaicollective.com` : ''))
+
+// The Senpai ID has three states, and the card used to collapse them into one.
+// It printed "Revealed at induction" whenever no handle was set — which is not
+// the same condition, so a member who had been inducted and simply not chosen
+// yet was told to keep waiting.
+//   locked  — not yet inducted; options withheld by the API
+//   choose  — inducted, options revealed, no handle picked
+//   claimed — handle set
+// 'accepted' means admitted and working through induction; the raw state was
+// being printed as a badge, so someone at 4/4 who had not yet attended the
+// ceremony saw "Accepted" with no sense of progress, and previously the
+// reverse — "Inducted" beside a countdown to induction.
+const inductionTasks = computed(() =>
+  (engine.value?.tasks ?? []).filter((t) => t.task?.track === 'induction' && t.task?.is_required)
+)
+const trackComplete = computed(() =>
+  inductionTasks.value.length > 0 && inductionTasks.value.every((t) => t.status === 'completed')
+)
+const membershipLabel = computed(() => {
+  const state = engine.value?.membership?.state
+  if (state === 'accepted') return trackComplete.value ? 'Ready for induction' : 'In induction'
+  if (state === 'inducted') return 'Inducted'
+  if (state === 'active') return 'Active member'
+  return state ?? ''
+})
+
+const senpaiIdRevealed = computed(() => !!senpai.value?.revealed_at)
+const senpaiOptions = computed(() => senpai.value?.offered_options ?? [])
+const choosingHandle = ref(false)
+const handleError = ref('')
+
+async function claimHandle(handle: string) {
+  if (choosingHandle.value) return
+  choosingHandle.value = true
+  handleError.value = ''
+  try {
+    await engineApi.chooseSenpaiHandle(handle)
+    await loadEngine()
+  } catch (e: unknown) {
+    handleError.value =
+      (e as { response?: { data?: { message?: string } } }).response?.data?.message ||
+      'Could not claim that handle'
+  } finally {
+    choosingHandle.value = false
+  }
+}
 const inducted = computed(() => engine.value?.membership?.state === 'inducted' || engine.value?.membership?.state === 'active')
 const openTasks = computed(() => (engine.value?.tasks ?? []).filter((t) => t.status !== 'completed'))
 const doneTasks = computed(() => (engine.value?.tasks ?? []).filter((t) => t.status === 'completed'))
@@ -377,7 +423,7 @@ function commentTimeAgo(d: string) {
                 <div class="text-5xl leading-none select-none">🎉</div>
                 <p class="mt-3 text-xs font-medium uppercase tracking-wider text-senpai-600">You're officially in</p>
                 <p class="font-bold text-2xl text-gray-900 mt-0.5">{{ engine.cohort?.name || 'Your cohort' }}</p>
-                <span class="inline-block mt-3 text-xs px-2.5 py-1 rounded-full bg-senpai-100 text-senpai-700 capitalize">{{ engine.membership.state }}</span>
+                <span class="inline-block mt-3 text-xs px-2.5 py-1 rounded-full bg-senpai-100 text-senpai-700">{{ membershipLabel }}</span>
                 <p v-if="engine.cohort?.description" class="mt-3 text-sm text-gray-500 max-w-md mx-auto">{{ engine.cohort.description }}</p>
               </div>
             </div>
@@ -385,9 +431,14 @@ function commentTimeAgo(d: string) {
               <!-- Induction -->
               <div>
                 <p class="text-xs text-gray-500 mb-1">Induction</p>
-                <p v-if="engine.cohort?.induction_date" class="text-sm text-gray-900 flex items-center gap-1.5">
+                <!-- Once inducted the ceremony has happened, so a countdown to
+                     it is a contradiction, not a reminder. -->
+                <p v-if="inducted" class="text-sm text-gray-900 flex items-center gap-1.5">
+                  <CheckCircleIcon class="h-4 w-4 text-senpai-600" /> You're inducted
+                </p>
+                <p v-else-if="engine.cohort?.induction_date" class="text-sm text-gray-900 flex items-center gap-1.5">
                   <ClockIcon class="h-4 w-4 text-senpai-600" />
-                  <span v-if="daysUntil(engine.cohort.induction_date)">in {{ daysUntil(engine.cohort.induction_date) }} days</span>
+                  <span v-if="daysUntil(engine.cohort.induction_date)">{{ formatDate(engine.cohort.induction_date) }} · in {{ daysUntil(engine.cohort.induction_date) }} days</span>
                   <span v-else>{{ formatDate(engine.cohort.induction_date) }}</span>
                 </p>
                 <p v-else class="text-sm text-gray-400">Date to be announced</p>
@@ -396,6 +447,20 @@ function commentTimeAgo(d: string) {
               <div>
                 <p class="text-xs text-gray-500 mb-1">Senpai ID</p>
                 <p v-if="senpaiAddress" class="text-sm font-mono text-gray-900 break-all">{{ senpaiAddress }}</p>
+                <template v-else-if="senpaiIdRevealed && senpaiOptions.length">
+                  <p class="text-sm text-gray-900 mb-1.5">Yours to claim — pick one:</p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <button
+                      v-for="opt in senpaiOptions"
+                      :key="opt"
+                      class="font-mono text-xs px-2.5 py-1 border border-gray-200 rounded-lg hover:border-senpai-500 hover:bg-senpai-50 disabled:opacity-50"
+                      :disabled="choosingHandle"
+                      @click="claimHandle(opt)"
+                    >{{ opt }}@senpaicollective.com</button>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1.5">This is permanent — choose carefully.</p>
+                  <p v-if="handleError" class="text-xs text-red-600 mt-1">{{ handleError }}</p>
+                </template>
                 <p v-else class="text-sm text-gray-400 flex items-center gap-1.5"><LockClosedIcon class="h-4 w-4" /> Revealed at induction</p>
               </div>
               <!-- Pod — visible as soon as it's assigned, not gated behind induction -->

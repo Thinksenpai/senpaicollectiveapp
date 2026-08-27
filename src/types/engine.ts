@@ -664,3 +664,37 @@ export interface IntakeSnapshot {
   days_left?: number | null
   is_open: boolean
 }
+
+// CohortDashboard is the admin cohort control room. Distinct from Cohort:
+// this bundles the signals that decide whether an intake succeeds — pacing,
+// funnel, baseline coverage, and the founder's own review backlog.
+export interface CohortMemberRow {
+  member_id: string
+  full_name: string
+  email: string
+  state: MembershipState
+  membership_id: string
+  pod_id?: string | null
+  pod_name?: string | null
+  accepted_at?: string | null
+  induction_done: number
+  induction_total: number
+  awaiting_review: number
+  baseline_captured: boolean
+  last_active_at?: string | null
+}
+
+export interface CohortDashboard {
+  cohort: Cohort
+  pending_applications: number
+  approved_not_in_cohort: number
+  accepted: number
+  inducted: number
+  active: number
+  target_size: number
+  days_left?: number | null
+  is_open: boolean
+  baseline_captured: number
+  awaiting_review: number
+  members: CohortMemberRow[]
+}

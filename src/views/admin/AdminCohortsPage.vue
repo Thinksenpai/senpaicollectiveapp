@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { adminEngineApi, adminApi } from '@/api'
-import type { Cohort, Pod, CohortMembership, Member, MembershipState } from '@/types'
+import type { Cohort, Pod, CohortMembership, Member, MembershipState, CohortDashboard, CohortMemberRow } from '@/types'
 import AdminLayout from '@/components/layout/AdminLayout.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import BaseInput from '@/components/common/BaseInput.vue'
@@ -13,13 +13,15 @@ import BaseSelect from '@/components/common/BaseSelect.vue'
 import {
   PlusIcon, ChevronRightIcon, RectangleStackIcon, UsersIcon,
   ClipboardDocumentListIcon, ArrowRightIcon, SparklesIcon, PencilIcon,
-  ChatBubbleLeftRightIcon, MapPinIcon
+  ChatBubbleLeftRightIcon, MapPinIcon, ClockIcon, InboxArrowDownIcon,
+  CheckCircleIcon, ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 
 interface CohortData {
   members: CohortMembership[]
   pods: Pod[]
   approved: Member[]
+  dash: CohortDashboard | null
   loading: boolean
 }
 
@@ -61,18 +63,53 @@ onMounted(async () => {
 })
 
 async function loadCohortData(id: string) {
-  data[id] = data[id] || { members: [], pods: [], approved: [], loading: true }
+  data[id] = data[id] || { members: [], pods: [], approved: [], dash: null, loading: true }
   data[id].loading = true
-  const [m, p, approved] = await Promise.all([
+  const [m, p, approved, dash] = await Promise.all([
     adminEngineApi.listCohortMembers(id),
     adminEngineApi.listPods(id),
-    adminApi.getMembers({ status: 'approved', limit: 200 })
+    adminApi.getMembers({ status: 'approved', limit: 200 }),
+    adminEngineApi.getCohortDashboard(id)
   ])
   data[id].members = m.data ?? []
   data[id].pods = p.data ?? []
   data[id].approved = approved.data ?? []
+  data[id].dash = dash.data ?? null
   data[id].loading = false
   selected[id] = []
+}
+
+// ---- control-room helpers ----
+// Rows come from the dashboard when it loaded and fall back to the plain
+// membership list, so a dashboard failure degrades the extra columns rather
+// than emptying the table.
+function rows(cd: CohortData): CohortMemberRow[] {
+  return cd.dash?.members ?? []
+}
+function pct(done: number, total: number) {
+  return total > 0 ? Math.round((done / total) * 100) : 0
+}
+// Induction is judged on required tasks only — the same rule the backend uses
+// to flip a member to 'inducted'.
+function inductionLabel(r: CohortMemberRow) {
+  if (r.induction_total === 0) return 'No track'
+  return `${r.induction_done}/${r.induction_total}`
+}
+function shortDate(iso?: string | null) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+}
+function sinceLabel(iso?: string | null) {
+  if (!iso) return 'never'
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+  if (days <= 0) return 'today'
+  if (days === 1) return '1d ago'
+  return `${days}d ago`
+}
+// 14 days with no activity is the idle threshold pinned in IMPACT_TRACKING.md.
+function isIdle(iso?: string | null) {
+  if (!iso) return true
+  return Date.now() - new Date(iso).getTime() > 14 * 86400000
 }
 
 function toggleExpand(id: string) {
@@ -174,6 +211,33 @@ async function autoAssign(cid: string) {
     busy[cid] = false
   }
 }
+// ---- induction ceremony ----
+const inductModal = ref(false)
+const inductCohortId = ref('')
+const inducting = ref(false)
+function openInductModal(cid: string) {
+  inductCohortId.value = cid
+  inductModal.value = true
+}
+async function runInduction() {
+  inducting.value = true
+  try {
+    const res = await adminEngineApi.runInduction(inductCohortId.value)
+    await loadCohortData(inductCohortId.value)
+    inductModal.value = false
+    flash(`Inducted ${res.data?.inducted ?? 0} — ${res.data?.revealed ?? 0} Senpai IDs revealed`)
+  } catch (e: unknown) {
+    flash((e as { response?: { data?: { message?: string } } }).response?.data?.message || 'Could not run induction')
+  } finally {
+    inducting.value = false
+  }
+}
+// Everyone still 'accepted' is inducted, finished or not — induction is a
+// welcome, not an exam.
+function pendingInduction(cd: CohortData) {
+  return cd.dash?.accepted ?? 0
+}
+
 // ---- create cohort ----
 const cohortModal = ref(false)
 const savingCohort = ref(false)
@@ -328,7 +392,11 @@ async function savePod() {
               <div>
                 <p class="font-semibold text-gray-900">{{ c.name }}</p>
                 <p class="text-xs text-gray-500">
-                  <span v-if="data[c.id]">{{ d(c.id).members.length }} members · {{ d(c.id).pods.length }} pods</span>
+                  <span v-if="data[c.id] && d(c.id).dash">
+                    {{ d(c.id).dash!.accepted + d(c.id).dash!.inducted + d(c.id).dash!.active }} of
+                    {{ d(c.id).dash!.target_size }} · {{ d(c.id).pods.length }}
+                    {{ d(c.id).pods.length === 1 ? 'pod' : 'pods' }}
+                  </span>
                   <span v-else>Tap to manage</span>
                 </p>
               </div>
@@ -346,6 +414,73 @@ async function savePod() {
           <div v-if="expandedId === c.id" class="border-t border-gray-100">
             <div v-if="!data[c.id] || d(c.id).loading" class="flex justify-center py-10"><LoadingSpinner /></div>
             <div v-else class="p-5 space-y-8">
+              <!-- Control room: is this intake on track? The old page showed
+                   only inventory (who is in, which pod) and none of the
+                   signals that can still be acted on while intake is open. -->
+              <section v-if="d(c.id).dash">
+                <p v-if="c.description" class="text-sm text-gray-600 mb-4 max-w-2xl">{{ c.description }}</p>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 border border-gray-200 rounded-xl overflow-hidden">
+                  <div class="bg-white px-4 py-3">
+                    <p class="text-xs text-gray-500 flex items-center gap-1"><ClockIcon class="h-3.5 w-3.5" /> Intake closes</p>
+                    <p class="text-xl font-bold tabular-nums mt-1"
+                       :class="d(c.id).dash!.is_open ? 'text-gray-900' : 'text-gray-400'">
+                      {{ d(c.id).dash!.is_open ? (d(c.id).dash!.days_left ?? '—') : 'Closed' }}
+                      <span v-if="d(c.id).dash!.is_open && d(c.id).dash!.days_left != null" class="text-xs font-normal text-gray-500">{{ d(c.id).dash!.days_left === 1 ? 'day' : 'days' }}</span>
+                    </p>
+                  </div>
+                  <div class="bg-white px-4 py-3">
+                    <p class="text-xs text-gray-500 flex items-center gap-1"><UsersIcon class="h-3.5 w-3.5" /> Accepted</p>
+                    <p class="text-xl font-bold text-gray-900 tabular-nums mt-1">
+                      {{ d(c.id).dash!.accepted + d(c.id).dash!.inducted + d(c.id).dash!.active }}
+                      <span class="text-xs font-normal text-gray-500">of {{ d(c.id).dash!.target_size }}</span>
+                    </p>
+                  </div>
+                  <div class="bg-white px-4 py-3">
+                    <p class="text-xs text-gray-500 flex items-center gap-1"><CheckCircleIcon class="h-3.5 w-3.5" /> Baseline captured</p>
+                    <p class="text-xl font-bold tabular-nums mt-1"
+                       :class="d(c.id).dash!.baseline_captured < d(c.id).members.length ? 'text-amber-600' : 'text-gray-900'">
+                      {{ d(c.id).dash!.baseline_captured }}
+                      <span class="text-xs font-normal text-gray-500">of {{ d(c.id).members.length }}</span>
+                    </p>
+                  </div>
+                  <div class="bg-white px-4 py-3">
+                    <p class="text-xs text-gray-500 flex items-center gap-1"><InboxArrowDownIcon class="h-3.5 w-3.5" /> Waiting on you</p>
+                    <p class="text-xl font-bold tabular-nums mt-1"
+                       :class="d(c.id).dash!.awaiting_review ? 'text-senpai-600' : 'text-gray-900'">
+                      {{ d(c.id).dash!.awaiting_review }}
+                      <span class="text-xs font-normal text-gray-500">{{ d(c.id).dash!.awaiting_review === 1 ? 'hand-in' : 'hand-ins' }}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Front of the funnel. Both numbers live on other pages, so
+                     without this the intake looks healthier than it is. -->
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-1 mt-3 text-xs text-gray-500">
+                  <RouterLink to="/admin/applications" class="hover:text-senpai-600">
+                    <span class="font-semibold text-gray-900">{{ d(c.id).dash!.pending_applications }}</span> awaiting review
+                  </RouterLink>
+                  <span><span class="font-semibold text-gray-900">{{ d(c.id).dash!.approved_not_in_cohort }}</span> approved, not placed</span>
+                  <span><span class="font-semibold text-gray-900">{{ d(c.id).dash!.inducted + d(c.id).dash!.active }}</span> inducted</span>
+                  <span v-if="!c.induction_date" class="text-amber-600 flex items-center gap-1">
+                    <ExclamationTriangleIcon class="h-3.5 w-3.5" /> No induction date set
+                  </span>
+                </div>
+
+                <!-- The ceremony. Nothing else confers a Senpai ID, so this
+                     button is the only path from 'accepted' to a real member. -->
+                <div v-if="pendingInduction(d(c.id))" class="mt-4 flex flex-wrap items-center gap-3 border border-senpai-200 bg-senpai-50 rounded-xl px-4 py-3">
+                  <div class="flex-1 min-w-[16rem]">
+                    <p class="text-sm font-medium text-gray-900">
+                      {{ pendingInduction(d(c.id)) }}
+                      {{ pendingInduction(d(c.id)) === 1 ? 'member is' : 'members are' }} waiting to be inducted
+                    </p>
+                    <p class="text-xs text-gray-600 mt-0.5">Run this on induction night — it reveals their Senpai IDs.</p>
+                  </div>
+                  <BaseButton :disabled="inducting" @click="openInductModal(c.id)">Run induction</BaseButton>
+                </div>
+              </section>
+
               <!-- Pods -->
               <section>
                 <div class="flex items-center justify-between mb-3">
@@ -414,16 +549,54 @@ async function savePod() {
                         </th>
                         <th class="px-4 py-2 font-medium">Member</th>
                         <th class="px-4 py-2 font-medium">State</th>
+                        <th class="px-4 py-2 font-medium">Induction</th>
+                        <th class="px-4 py-2 font-medium">Baseline</th>
                         <th class="px-4 py-2 font-medium">Pod</th>
+                        <th class="px-4 py-2 font-medium">Last active</th>
                         <th class="px-4 py-2 font-medium text-right"></th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                       <tr v-for="m in d(c.id).members" :key="m.id" class="hover:bg-gray-50">
                         <td class="px-4 py-2"><input type="checkbox" class="rounded border-gray-300 text-senpai-600" :checked="isSelected(c.id, m.id)" @change="toggleSelect(c.id, m.id)" /></td>
-                        <td class="px-4 py-2 font-medium text-gray-900">{{ memberName(m) }}</td>
+                        <td class="px-4 py-2">
+                          <p class="font-medium text-gray-900">{{ memberName(m) }}</p>
+                          <p class="text-xs text-gray-400">Joined {{ shortDate(m.accepted_at) }}</p>
+                        </td>
                         <td class="px-4 py-2"><span class="text-xs px-2 py-0.5 rounded-full capitalize" :class="stateStyles[m.state]">{{ m.state }}</span></td>
+
+                        <!-- Induction progress, required tasks only, with the
+                             review backlog called out — nothing completes
+                             without a reviewer accepting the hand-in. -->
+                        <td class="px-4 py-2">
+                          <template v-for="r in rows(d(c.id)).filter((x) => x.member_id === m.member_id)" :key="r.member_id">
+                            <div class="flex items-center gap-2">
+                              <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-senpai-500" :style="{ width: pct(r.induction_done, r.induction_total) + '%' }" />
+                              </div>
+                              <span class="text-xs text-gray-600 tabular-nums">{{ inductionLabel(r) }}</span>
+                            </div>
+                            <p v-if="r.awaiting_review" class="text-xs text-senpai-600 mt-0.5">{{ r.awaiting_review }} to review</p>
+                          </template>
+                        </td>
+
+                        <td class="px-4 py-2">
+                          <template v-for="r in rows(d(c.id)).filter((x) => x.member_id === m.member_id)" :key="r.member_id">
+                            <CheckCircleIcon v-if="r.baseline_captured" class="h-4 w-4 text-green-600" />
+                            <span v-else class="text-xs text-amber-600">Missing</span>
+                          </template>
+                        </td>
+
                         <td class="px-4 py-2 text-gray-600">{{ podName(d(c.id), m.pod_id) || '—' }}</td>
+
+                        <td class="px-4 py-2">
+                          <template v-for="r in rows(d(c.id)).filter((x) => x.member_id === m.member_id)" :key="r.member_id">
+                            <span class="text-xs" :class="isIdle(r.last_active_at) ? 'text-amber-600' : 'text-gray-500'">
+                              {{ sinceLabel(r.last_active_at) }}
+                            </span>
+                          </template>
+                        </td>
+
                         <td class="px-4 py-2 text-right">
                           <button v-if="nextState(m)" class="text-senpai-600 hover:text-senpai-700 text-xs font-medium inline-flex items-center gap-1" @click="advanceState(c.id, m)">Mark {{ nextState(m) }} <ArrowRightIcon class="h-3 w-3" /></button>
                         </td>
@@ -455,6 +628,22 @@ async function savePod() {
         </div>
       </div>
     </div>
+
+    <!-- Induction ceremony confirmation -->
+    <BaseModal :show="inductModal" title="Run induction" subtitle="This is the ceremony — it can't be undone." @close="inductModal = false">
+      <p class="text-sm text-gray-600">
+        Every member still waiting will be marked <strong>inducted</strong>, and their Senpai ID options
+        will be revealed so they can claim a handle.
+      </p>
+      <p class="text-sm text-gray-600 mt-3">
+        Members who haven't finished their induction tasks are included — their outstanding tasks stay
+        assigned and still need completing.
+      </p>
+      <div class="flex justify-end gap-2 mt-6">
+        <BaseButton variant="secondary" @click="inductModal = false">Cancel</BaseButton>
+        <BaseButton :loading="inducting" @click="runInduction">Induct the cohort</BaseButton>
+      </div>
+    </BaseModal>
 
     <!-- Create cohort modal -->
     <BaseModal :show="cohortModal" title="New cohort" subtitle="Just give it a name — we handle the rest." @close="cohortModal = false">
